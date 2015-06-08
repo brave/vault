@@ -1,8 +1,11 @@
 var koa = require('koa');
 var route = require('koa-route');
+var logger = require('koa-logger');
 var app = koa();
 var intents = require('./controllers/intents');
 var adManifest = require('./controllers/ad-manifest');
+
+app.use(logger());
 
 app.use(route.get('/ad-manifest', adManifest.get));
 app.use(route.post('/intents', intents.push));
