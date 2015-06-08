@@ -8,7 +8,8 @@ Brave will log intent signals to be stored in the Vault. What's an intent signal
 
 * Page navigation.
 * App state change.
-* Scrolling content into and out of view.
+* Scrolling ad and other content into and out of view.
+* Eye tracking (see https://github.com/wallarelvo/camgaze.js/tree/master).
 * Idle time based on all input devices.
 * Bookmarking, this page or this link or this group (tabs or links).
 * Opening a link in a new tab (see LinkBubble Android browser).
