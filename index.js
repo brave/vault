@@ -2,7 +2,9 @@ var koa = require('koa');
 var route = require('koa-route');
 var app = koa();
 var intents = require('./controllers/intents');
+var adManifest = require('./controllers/ad-manifest');
 
+app.use(route.get('/ad-manifest', adManifest.get));
 app.use(route.post('/intents', intents.push));
 
 var server = app.listen(3000, function() {
