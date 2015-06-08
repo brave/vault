@@ -1,5 +1,5 @@
 # vault
-Brave personal data store vault
+Brave Vault - a Personal Data Store for holding high-value user behavior with high privacy.
 
 Design notes, very rough. Not a README yet!
 
