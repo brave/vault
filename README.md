@@ -19,6 +19,6 @@ We may not know how to condense or abstract this log into a user model for bette
 
 Therefore one idea is to log everything, compressed and in the brackground, and dump it into big log files in S3 buckets. Use AWS spot instances since we don't care about latency. Worry about reliability (TODO, lol).
 
-Then the Vault becomes a personal data mine. The challenge at lowest level is to process log files. See https://github.com/mozilla-services/heka for one way to do this.
+Then instead of a NoSQL DB with its own consistency and abstraction costs, the Vault becomes a personal data mine of log files. The challenge at lowest level is to process log files. See https://github.com/mozilla-services/heka for one way to do this.
 
 /be
