@@ -3,9 +3,11 @@ var parse = require('co-body');
 // TODO: Replace with some real storage
 var intents = [];
 
-module.exports.push = function * push(data,next) {
+module.exports.push = function * push(data, next) {
   console.log('Intents: ', intents);
-  if ('POST' != this.method) return yield next;
+  if (this.method !== 'POST') {
+    return yield next;
+  }
 
   var intent = yield parse.json(this, { limit: '10kb' });
 

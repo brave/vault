@@ -10,10 +10,10 @@ app.use(logger());
 app.use(route.get('/ad-manifest', adManifest.get));
 app.use(route.post('/intents', intents.push));
 
-var server = app.listen(3000, function() {
+app.listen(3000, function() {
     console.log('Koa is listening to http://localhost:3000');
 });
 
 app.on('error', function(err){
-  log.error('server error', err);
+  console.error('server error', err);
 });

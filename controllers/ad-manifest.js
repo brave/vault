@@ -3,6 +3,8 @@ var mockDB = {
 };
 
 module.exports.get = function *(next) {
-  if ('GET' != this.method) return yield next;
+  if (this.method !== 'GET') {
+    return yield next;
+  }
   this.body = JSON.stringify(mockDB);
 };
