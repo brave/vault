@@ -1,3 +1,5 @@
+[![Build Status](https://magnum.travis-ci.com/brave/vault.svg?token=tEKWpRH3WZFkPWrgxB9T)](https://magnum.travis-ci.com/brave/vault)
+
 # Brave Vault
 
 A Personal Data Store for holding high-value user behavior with high privacy.
