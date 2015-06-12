@@ -9,6 +9,9 @@ var sync = require('./controllers/sync');
 
 app.use(logger());
 
+app.use(route.get('/', function * () {
+	this.body = 'Welcome to the Vault.';
+}));
 app.use(route.get('/ad-manifest', adManifest.get));
 app.use(route.post('/intents', intents.push));
 app.use(route.get('/sync/:userId', sync.get));
