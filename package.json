@@ -4,7 +4,7 @@
   "description": "A Personal Data Store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "DEBUG=* node --harmony index.js"
   },
   "repository": {
     "type": "git",
