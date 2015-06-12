@@ -2,6 +2,7 @@ var koa = require('koa');
 var route = require('koa-route');
 var logger = require('koa-logger');
 var app = koa();
+var debug = require('debug')('index')
 var intents = require('./controllers/intents');
 var adManifest = require('./controllers/ad-manifest');
 var sync = require('./controllers/sync');
@@ -14,9 +15,9 @@ app.use(route.get('/sync/:userId', sync.get));
 app.use(route.post('/sync', sync.push));
 
 app.listen(3000, function() {
-    console.log('Koa is listening to http://localhost:3000');
+  debug('webserver started at http://localhost:3000');
 });
 
 app.on('error', function(err){
-  console.error('server error', err);
+  debug('server error', err);
 });
