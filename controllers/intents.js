@@ -1,10 +1,11 @@
+var debug = require('debug')('intents')
 var parse = require('co-body');
 
 // TODO: Replace with some real storage
 var intents = [];
 
 module.exports.push = function * push(data, next) {
-  console.log('Intents: ', intents);
+  debug('intents', intents);
   if (this.method !== 'POST') {
     return yield next;
   }
@@ -15,9 +16,9 @@ module.exports.push = function * push(data, next) {
     this.throw(400, 'intent must have a type!');
   }
 
-  console.log('Registering intent: ', intent);
+  debug('registering intent', intent);
 
   intents.push(intent);
-  console.log('Intents: ', intents);
+  debug('Intents', intents);
   this.body = 'OK!';
 };
