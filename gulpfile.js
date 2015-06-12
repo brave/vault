@@ -2,10 +2,11 @@ var gulp = require('gulp');
 var gutil = require('gulp-util');
 var del = require('del');
 var eslint = require('gulp-eslint');
+var nodemon = require('gulp-nodemon');
 var runSequence = require('run-sequence');
 var shell = require('gulp-shell');
 
-SRC = ['app.js', 'controllers/**/*.js']
+SRC = ['index.js', 'controllers/**/*.js']
 
 /**
  * Runs travis tests.
@@ -17,8 +18,19 @@ gulp.task('travis-test', function(cb) {
 });
 
 gulp.task('run', function() {
-  gulp.src('')
-    .pipe(shell('node --harmony index.js'));
+  nodemon({
+    script: 'index.js',
+    ext: 'js',
+    env: { 'DEBUG': '*' },
+    execMap: {
+      js: 'node --harmony'
+    },
+    watch: SRC
+  })
+  .on('change', ['lint', 'run'])
+  .on('restart', function() {
+    console.log('restarted!');
+  });
 });
 
 /**
@@ -42,18 +54,11 @@ gulp.task('pre-commit', function() {
 });
 
 /**
- * Watch for changes on the file system, and rebuild if so.
- */
-gulp.task('watch', function() {
-  gulp.watch(SRC, ['lint']);
-});
-
-/**
  * The default task when `gulp` is run.
  * Adds a listener which will re-build on a file save.
  */
 gulp.task('default', function() {
-  runSequence('lint', 'watch');
+  runSequence('lint', 'run');
 });
 
 /**

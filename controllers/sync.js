@@ -1,5 +1,5 @@
 var parse = require('co-body');
-var debug = require('debug')('sync')
+var debug = require('debug')('sync');
 
 // TODO: Replace with some real storage
 var storage = {};

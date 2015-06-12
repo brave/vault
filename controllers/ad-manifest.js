@@ -1,4 +1,4 @@
-var debug = require('debug')('ad-manifest')
+var debug = require('debug')('ad-manifest');
 var mockDB = {
   replacementAd: 'http://github.com'
 };

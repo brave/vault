@@ -33,6 +33,7 @@
     "eslint-plugin-random": "0.0.1",
     "gulp": "^3.9.0",
     "gulp-eslint": "^0.13.2",
+    "gulp-nodemon": "^2.0.3",
     "gulp-shell": "^0.4.2",
     "gulp-util": "^3.0.5",
     "run-sequence": "^1.1.0"

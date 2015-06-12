@@ -1,4 +1,4 @@
-var debug = require('debug')('intents')
+var debug = require('debug')('intents');
 var parse = require('co-body');
 
 // TODO: Replace with some real storage

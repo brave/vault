@@ -4,6 +4,12 @@
 
 A Personal Data Store for holding high-value user behavior with high privacy.
 
+
+## Running the server
+
+Use `gulp` to run the server in development. This also sets up watchers and will restart the server on a file change.
+
+
 Design notes, very rough. Not a README yet!
 
 Brave will log intent signals to be stored in the Vault. What's an intent signal? Lots of user actions:
