@@ -9,10 +9,10 @@ var shell = require('gulp-shell');
 SRC = ['index.js', 'controllers/**/*.js']
 
 /**
- * Runs travis tests.
+ * Runs travis tests and the pre-commit hook.
  */
 var failOnLint = false;
-gulp.task('travis-test', function(cb) {
+gulp.task('angry-lint', function(cb) {
   failOnLint = true;
   runSequence(['lint'], cb);
 });

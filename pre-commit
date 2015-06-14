@@ -1,2 +1,2 @@
 #!/bin/sh
-gulp lint
+gulp angry-lint
