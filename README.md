@@ -9,6 +9,7 @@ A Personal Data Store for holding high-value user behavior with high privacy.
 
 Use `gulp` to run the server in development. This also sets up watchers and will restart the server on a file change.
 
+## Design notes
 
 Design notes, very rough. Not a README yet!
 

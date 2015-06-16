@@ -5,7 +5,6 @@ var parse = require('co-body');
 var intents = [];
 
 module.exports.push = function * push(data, next) {
-  debug('intents', intents);
   if (this.method !== 'POST') {
     return yield next;
   }
@@ -19,6 +18,5 @@ module.exports.push = function * push(data, next) {
   debug('registering intent', intent);
 
   intents.push(intent);
-  debug('Intents', intents);
   this.body = 'OK!';
 };
