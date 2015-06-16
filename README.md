@@ -11,23 +11,4 @@ Use `gulp` to run the server in development. This also sets up watchers and will
 
 ## Design notes
 
-Design notes, very rough. Not a README yet!
-
-Brave will log intent signals to be stored in the Vault. What's an intent signal? Lots of user actions:
-
-* Page navigation.
-* App state change.
-* Scrolling ad and other content into and out of view.
-* Eye tracking (see https://github.com/wallarelvo/camgaze.js/tree/master).
-* Idle time based on all input devices.
-* Bookmarking, this page or this link or this group (tabs or links).
-* Opening a link in a new tab (see LinkBubble Android browser).
-* Form data including passwords.
-
-We may not know how to condense or abstract this log into a user model for better high-privacy ads and other economic actions, in advance. We may need to do machine learning (and human learning among ourselves) to get the right reductions in place. And the "right reductions" will change over time.
-
-Therefore one idea is to log everything, compressed and in the brackground, and dump it into big log files in S3 buckets. Use AWS spot instances since we don't care about latency. Worry about reliability (TODO, lol).
-
-Then instead of a NoSQL DB with its own consistency and abstraction costs, the Vault becomes a personal data mine of log files. The challenge at lowest level is to process log files. See https://github.com/mozilla-services/heka for one way to do this.
-
-/be
+Intents: https://github.com/brave/vault/wiki/Intents
