@@ -1,22 +1,22 @@
 var debug = require('debug')('intents');
 var parse = require('co-body');
 
-// TODO: Replace with some real storage
-var intents = [];
+module.exports.push = function (runtime) {
+  return function * (data, next) {
+    if (this.method !== 'POST') {
+      return yield next;
+    }
 
-module.exports.push = function * push(data, next) {
-  if (this.method !== 'POST') {
-    return yield next;
-  }
+    var intent = yield parse.json(this, { limit: '10kb' });
 
-  var intent = yield parse.json(this, { limit: '10kb' });
+    if (!intent.type) {
+      this.throw(400, 'intent must have a type!');
+    }
 
-  if (!intent.type) {
-    this.throw(400, 'intent must have a type!');
-  }
+    debug('registering intent', intent);
 
-  debug('registering intent', intent);
-
-  intents.push(intent);
-  this.body = 'OK!';
+    var intents = runtime.db.get('intents');
+    yield intents.insert(intent);
+    this.body = 'OK!';
+  };
 };

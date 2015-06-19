@@ -1,35 +1,40 @@
 var parse = require('co-body');
 var debug = require('debug')('sync');
 
-// TODO: Replace with some real storage
-var storage = {};
+module.exports.push = function(runtime) {
+  return function * (data, next) {
+    if (this.method !== 'POST') {
+      return yield next;
+    }
 
-module.exports.push = function * push(data, next) {
-  debug('Storage: ', storage);
-  if (this.method !== 'POST') {
-    return yield next;
-  }
+    var state = yield parse.json(this, { limit: '10kb' });
+    debug('state is:', state);
 
-  var state = yield parse.json(this, { limit: '10kb' });
-  debug('state is:', state);
+    if (!state.userId) {
+      this.throw(400, 'state must have a userId!');
+    }
 
-  if (!state.userId) {
-    this.throw(400, 'state must have a userId!');
-  }
+    debug('Registering state: ', state);
 
-  debug('Registering state: ', state);
-
-  storage[state.userId] = state;
-  debug('storage: ', storage);
-  this.body = 'OK!';
+    var userState = runtime.db.get('user_states');
+    yield userState.update({userId: state.userId}, state, {upsert: true});
+    this.body = 'OK!';
+  };
 };
 
-module.exports.get = function * push(userId, next) {
-  debug('getting state', userId);
-  if (this.method !== 'GET') {
-    return yield next;
-  }
+module.exports.get = function(runtime) {
+  return function * (userId, next) {
+    debug('getting state', userId);
+    if (this.method !== 'GET') {
+      return yield next;
+    }
 
-  this.body = storage[userId];
-  debug('body', this.body);
+    var userState = runtime.db.get('user_states');
+    var resp = yield userState.findOne({userId: userId});
+
+    resp = resp || {};
+
+    this.body = resp;
+    debug('body', resp);
+  };
 };

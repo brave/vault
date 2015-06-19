@@ -6,21 +6,29 @@ var debug = require('debug')('index');
 var intents = require('./controllers/intents');
 var adManifest = require('./controllers/ad-manifest');
 var sync = require('./controllers/sync');
+var DB = require('./db');
 
-var PORT = process.env.PORT || 3000;
+var config = {
+  port: process.env.PORT || 3000,
+  database: process.env.MONGO_URI || 'localhost/test'
+};
+
+var runtime = {
+  db: new DB(config)
+};
 
 app.use(logger());
 
 app.use(route.get('/', function * () {
   this.body = 'Welcome to the Vault.';
 }));
-app.use(route.get('/ad-manifest', adManifest.get));
-app.use(route.post('/intents', intents.push));
-app.use(route.get('/sync/:userId', sync.get));
-app.use(route.post('/sync', sync.push));
+app.use(route.get('/ad-manifest', adManifest.get(runtime)));
+app.use(route.post('/intents', intents.push(runtime)));
+app.use(route.get('/sync/:userId', sync.get(runtime)));
+app.use(route.post('/sync', sync.push(runtime)));
 
-app.listen(PORT, function() {
-  debug('webserver started on port 3000');
+app.listen(config.port, function() {
+  debug('webserver started on port', config.port);
 });
 
 app.on('error', function(err){
