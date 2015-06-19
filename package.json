@@ -18,10 +18,12 @@
   "homepage": "https://github.com/brave/vault",
   "dependencies": {
     "co-body": "^2.0.0",
+    "co-monk": "^1.0.0",
     "debug": "^2.2.0",
     "koa": "^0.21.0",
     "koa-logger": "^1.2.2",
-    "koa-route": "^2.4.1"
+    "koa-route": "^2.4.1",
+    "monk": "^1.0.1"
   },
   "engines": {
     "node": "0.12.4"
