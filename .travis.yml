@@ -5,3 +5,6 @@ script: gulp angry-lint
 notifications:
   slack:
     secure: PSj5eta2pbs4STQLRDDVat/rs///2BUDR17sfFJyiy729FMFlPuK46hTv4DfFEY9NoiLFgt7wutGSZlI32VslOkotefhKfPifQUZXw4DiSTIhNteLOPwjloug3TnwrUeWcGOvHXwZVO7lZRri789qcAKTqFdtn74vvuh8PY769g=
+branches:
+  only:
+    - master
