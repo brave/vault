@@ -19,7 +19,7 @@ gulp.task('angry-lint', function(cb) {
 
 gulp.task('run', function() {
   nodemon({
-    script: 'index.js',
+    script: 'src/index.js',
     ext: 'js',
     env: { 'DEBUG': '*' },
     execMap: {

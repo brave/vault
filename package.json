@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/brave/vault",
   "dependencies": {
+    "bitgo": "^0.11.32",
     "co-body": "^2.0.0",
     "co-monk": "^1.0.0",
     "debug": "^2.2.0",
