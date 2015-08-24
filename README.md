@@ -15,6 +15,14 @@ Install MongoDB: `brew update && brew install mongodb`
 
 Start MongoDB. There are a variety of ways to do this, one option on a mac: `brew tap homebrew/services && brew services start mongodb`
 
+
+## Configuration
+
+For staging or production environments configuration variables are stored as environment preferences. See config/config.production.js for a list of these variables. 
+
+For local development you can copy config/config.development.js.tpl to config/config.development.js and define the local config variables.
+
+
 ## Running the server
 
 Use `gulp` to run the server in development. This also sets up watchers and will restart the server on a file change.
