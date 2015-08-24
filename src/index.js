@@ -12,7 +12,7 @@ var DB = require('./db');
 var Wallet = require('./wallet');
 
 var profile = process.env.PROFILE || 'development';
-var config = require('./config/config.' + profile + '.js');
+var config = require('./../config/config.' + profile + '.js');
 
 var runtime = {
   db: new DB(config),
