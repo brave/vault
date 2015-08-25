@@ -3,6 +3,7 @@ var route = require('koa-route');
 var logger = require('koa-logger');
 var app = koa();
 var debug = require('debug')('index');
+var ad = require('./controllers/ad');
 var auth = require('./controllers/auth');
 var intents = require('./controllers/intents');
 var adManifest = require('./controllers/ad-manifest');
@@ -25,6 +26,7 @@ app.use(route.get('/', function * () {
   this.body = 'Welcome to the Vault.';
 }));
 app.use(route.get('/ad-manifest', adManifest.get(runtime)));
+app.use(route.get('/ad', ad.get(runtime)));
 app.use(route.post('/auth', auth.push(runtime)));
 app.use(route.post('/intents', intents.push(runtime)));
 app.use(route.get('/sync/:userId', sync.get(runtime)));
