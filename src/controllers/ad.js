@@ -5,7 +5,8 @@ module.exports.get = function () {
     if (this.method !== 'GET') {
       return yield next;
     }
-    debug('serving ad', this.query);
-    this.body = 'Hello this is ad for: ' + JSON.stringify(this.query);
+    var url = 'data:text/html,<html style="background-color:white"><body style="background-color: red; width: ' + this.query.width + 'px; height: ' + this.query.height + 'px">hi</body></html>';
+    debug('serving ad for query ', this.query, ' with url: ', url);
+    this.redirect(url);
   };
 };
