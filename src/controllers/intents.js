@@ -17,6 +17,15 @@ module.exports.push = function (runtime) {
 
     var intents = runtime.db.get('intents');
     yield intents.insert(intent);
-    this.body = 'OK!';
+
+    // Return the user record as a response.
+    var users = runtime.db.get('users');
+    var user = yield users.find({
+        userId: intent.userId
+      }, {
+        userId: true,
+        statAdReplaceCount: true
+      });
+    this.body = user[0];
   };
 };
