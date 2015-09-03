@@ -18,7 +18,7 @@ module.exports.get = function (runtime) {
       '$inc' : {'statAdReplaceCount': 1 }
     });
 
-    var url = 'data:text/html,<html style="background-color:white"><body style="background-color: red; width: ' + this.query.width + 'px; height: ' + this.query.height + 'px">hi</body></html>';
+    var url = 'data:text/html,<html><body style="width: ' + this.query.width + 'px; height: ' + this.query.height + 'px"><img src="https://placeimg.com/' + this.query.width + '/' + this.query.height + '"/><div style="background-color:blue; color: white; font-weight: bold; position: absolute; top: 0;">Use Brave</div></body></html>';
     debug('serving ad for query ', this.query, ' with url: ', url);
     this.redirect(url);
   };
