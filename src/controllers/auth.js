@@ -18,15 +18,19 @@ module.exports.push = function (runtime) {
     var users = runtime.db.get('users');
 
     // Create a wallet for the user.
-    var walletResult = yield runtime.wallet.generate(user);
+    try {
+      var walletResult = yield runtime.wallet.generate(user);
 
-    debug('created walled', walletResult);
-    user.wallet = {
-      id: walletResult.wallet.id(),
-      label: walletResult.wallet.label(),
-      userKeychainEncryptedXprv: walletResult.userKeychain.encryptedXprv,
-      backupKeychainEncryptedXprv: walletResult.backupKeychain.encryptedXprv
-    };
+      debug('created walled', walletResult);
+      user.wallet = {
+        id: walletResult.wallet.id(),
+        label: walletResult.wallet.label(),
+        userKeychainEncryptedXprv: walletResult.userKeychain.encryptedXprv,
+        backupKeychainEncryptedXprv: walletResult.backupKeychain.encryptedXprv
+      };
+    } catch(e) {
+      debug('could not create wallet', e);
+    }
 
     debug('new user', user);
     yield users.insert(user);
