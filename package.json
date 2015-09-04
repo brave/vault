@@ -4,7 +4,7 @@
   "description": "A Personal Data Store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {
-    "start": "DEBUG=* node --harmony src/index.js"
+    "start": "DEBUG=* ./node_modules/.bin/babel-node src/index.js"
   },
   "repository": {
     "type": "git",
@@ -17,13 +17,11 @@
   },
   "homepage": "https://github.com/brave/vault",
   "dependencies": {
+    "babel": "^5.8.23",
     "bitgo": "^0.11.32",
-    "co-body": "^2.0.0",
-    "co-monk": "^1.0.0",
     "debug": "^2.2.0",
-    "koa": "^0.21.0",
-    "koa-logger": "^1.2.2",
-    "koa-route": "^2.4.1",
+    "hapi": "^9.1.0",
+    "hapi-async-handler": "^1.0.3",
     "monk": "^1.0.1"
   },
   "engines": {
