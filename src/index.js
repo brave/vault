@@ -34,6 +34,10 @@ app.use(route.post('/sync', sync.push(runtime)));
 
 app.listen(config.port, function() {
   debug('webserver started on port', config.port);
+  // Hook to notify start script.
+  if (process.send) {
+    process.send('started');
+  }
 });
 
 app.on('error', function(err){
