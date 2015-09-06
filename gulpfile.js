@@ -6,7 +6,10 @@ var nodemon = require('gulp-nodemon');
 var runSequence = require('run-sequence');
 var shell = require('gulp-shell');
 
-SRC = ['index.js', 'controllers/**/*.js']
+var SRC = [
+  'src/**/*.js',
+  'src/controllers/**/*.js'
+];
 
 /**
  * Runs travis tests and the pre-commit hook.
