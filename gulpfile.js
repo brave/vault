@@ -26,7 +26,7 @@ gulp.task('run', function() {
     ext: 'js',
     env: { 'DEBUG': '*' },
     execMap: {
-      js: 'node --harmony'
+      js: './node_modules/.bin/babel-node'
     },
     watch: SRC
   })

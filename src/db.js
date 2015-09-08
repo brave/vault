@@ -1,5 +1,4 @@
 var monk = require('monk');
-var wrap = require('co-monk');
 
 function DB(config) {
   this.config = config;
@@ -8,7 +7,7 @@ function DB(config) {
 
 DB.prototype = {
   get: function(collection) {
-    return wrap(this.db.get(collection));
+    return this.db.get(collection);
   }
 };
 

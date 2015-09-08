@@ -4,11 +4,8 @@ var mockDB = {
 };
 
 module.exports.get = function () {
-  return function * (next) {
-    if (this.method !== 'GET') {
-      return yield next;
-    }
+  return async function (request, reply) {
     debug('mockDB', mockDB);
-    this.body = JSON.stringify(mockDB);
+    reply(JSON.stringify(mockDB));
   };
 };
