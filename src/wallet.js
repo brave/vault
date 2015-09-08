@@ -2,7 +2,7 @@ function Wallet(config) {
   this.config = config;
   this.bitgo = new (require('bitgo')).BitGo({accessToken: config.bitogAccessToken});
 
-  this.bitgo.authenticate({ username: config.bitgoUser, password: config.bitgoPassword}, function(err, result) {
+  this.bitgo.authenticate({ username: config.bitgoUser, password: config.bitgoPassword}, function(err) {
     if (err) { console.dir(err); }
   });
 

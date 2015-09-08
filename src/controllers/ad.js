@@ -4,17 +4,16 @@ module.exports.get = function (runtime) {
   return async function (request, reply) {
     // Increment users.statAdReplaceCount
     var users = runtime.db.get('users');
-    var user = await users.find({
-      userId: request.query.braveUserId
-    });
     await users.update({
       userId: request.query.braveUserId
     },
     {
-      '$inc' : {'statAdReplaceCount': 1 }
+      '$inc': {'statAdReplaceCount': 1 }
     });
 
-    var url = 'data:text/html,<html><body style="width: ' + request.query.width + 'px; height: ' + request.query.height + 'px"><img src="https://placeimg.com/' + request.query.width + '/' + request.query.height + '"/><div style="background-color:blue; color: white; font-weight: bold; position: absolute; top: 0;">Use Brave</div></body></html>';
+    var url = 'data:text/html,<html><body style="width: ' + request.query.width + 'px; height: ' + request.query.height + 'px">' +
+      '<img src="https://placeimg.com/' + request.query.width + '/' + request.query.height + '"/>' +
+      '<div style="background-color:blue; color: white; font-weight: bold; position: absolute; top: 0;">Use Brave</div></body></html>';
     debug('serving ad for query ', request.query, ' with url: ', url);
     reply.redirect(url);
   };
