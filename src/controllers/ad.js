@@ -11,7 +11,7 @@ module.exports.get = function (runtime) {
       '$inc': {'statAdReplaceCount': 1 }
     });
 
-    var url = 'data:text/html,<html><body style="width: ' + request.query.width + 'px; height: ' + request.query.height + 'px">' +
+    var url = 'data:text/html,<html><body style="width: ' + request.query.width + 'px; height: ' + request.query.height + 'px; padding: 0; margin: 0;">' +
       '<img src="https://placeimg.com/' + request.query.width + '/' + request.query.height + '"/>' +
       '<div style="background-color:blue; color: white; font-weight: bold; position: absolute; top: 0;">Use Brave</div></body></html>';
     debug('serving ad for query ', request.query, ' with url: ', url);
