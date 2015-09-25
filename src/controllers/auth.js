@@ -16,7 +16,6 @@ module.exports.push = function (runtime) {
     try {
       var walletResult = await runtime.wallet.generate(user);
 
-      debug('created walled', walletResult);
       user.wallet = {
         id: walletResult.wallet.id(),
         label: walletResult.wallet.label(),
