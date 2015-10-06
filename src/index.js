@@ -6,24 +6,23 @@ var auth = require('./controllers/auth');
 var intents = require('./controllers/intents');
 var adManifest = require('./controllers/ad-manifest');
 var sync = require('./controllers/sync');
-var sonobi = require('./sonobi');
 
 var DB = require('./db');
+var Sonobi = require('./sonobi').Sonobi;
 var Wallet = require('./wallet');
 
 var profile = process.env.NODE_ENV || 'development';
 var config = require('./../config/config.' + profile + '.js');
 
+var database = new DB(config);
 var runtime = {
-  db: new DB(config),
-  wallet: new Wallet(config)
+  db: database,
+  wallet: new Wallet(config),
+  sonobi: new Sonobi(config, database)
 };
 
-// install the Sonobi helper in the runtime
-runtime.son = new sonobi.Sonobi(config, runtime.db);
-
 // TODO - do we wait for a pre-fill to complete before starting the server?
-runtime.son.prefill();
+runtime.sonobi.prefill();
 
 var server = new Hapi.Server();
 server.connection({port: config.port});
@@ -53,7 +52,7 @@ server.route([
     method: 'GET',
     path: '/ad',
     handler: {
-	  async: ad.get(runtime)
+      async: ad.get(runtime)
     }
   },
   {
