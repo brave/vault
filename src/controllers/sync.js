@@ -1,6 +1,6 @@
 var debug = require('debug')('sync');
 
-module.exports.push = function(runtime) {
+module.exports.post = function(runtime) {
   return async function (request, reply) {
     var state = request.payload;
     debug('state is:', state);

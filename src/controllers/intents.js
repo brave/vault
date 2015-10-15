@@ -1,6 +1,6 @@
 var debug = require('debug')('intents');
 
-module.exports.push = function (runtime) {
+module.exports.post = function (runtime) {
   return async function (request, reply) {
     var intent = request.payload;
 

@@ -24,7 +24,8 @@
     "hapi-async-handler": "^1.0.3",
     "monk": "^1.0.1",
     "priorityqueuejs": "^1.0.0",
-    "request": "^2.64.0"
+    "request": "^2.64.0",
+    "underscore": "1.8.3"
   },
   "engines": {
     "node": "4.0.0"
