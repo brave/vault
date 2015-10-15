@@ -1,6 +1,6 @@
 var debug = require('debug')('users');
 
-module.exports.push = function (runtime) {
+module.exports.post = function (runtime) {
   return async function (request, reply) {
     var user = request.payload;
 

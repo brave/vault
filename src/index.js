@@ -59,14 +59,14 @@ server.route([
     method: 'POST',
     path: '/auth',
     handler: {
-      async: auth.push(runtime)
+      async: auth.post(runtime)
     }
   },
   {
     method: 'POST',
     path: '/intents',
     handler: {
-      async: intents.push(runtime)
+      async: intents.post(runtime)
     }
   },
   {
@@ -80,7 +80,7 @@ server.route([
     method: 'POST',
     path: '/sync',
     handler: {
-      async: sync.push(runtime)
+      async: sync.post(runtime)
     }
   }
 ]);
