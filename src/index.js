@@ -1,7 +1,8 @@
+var newrelic = require('newrelic')
+
 var Hapi = require('hapi');
 
 var debug = require('debug')('index');
-var newrelic = require('newrelic')
 
 var ad = require('./controllers/ad');
 var auth = require('./controllers/auth');
