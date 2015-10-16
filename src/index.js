@@ -1,4 +1,4 @@
-var newrelic = require('newrelic')
+if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) require(‘newrelic’);
 
 var Hapi = require('hapi');
 
