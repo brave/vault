@@ -1,6 +1,8 @@
 var Hapi = require('hapi');
 
 var debug = require('debug')('index');
+var newrelic = require('newrelic')
+
 var ad = require('./controllers/ad');
 var auth = require('./controllers/auth');
 var intents = require('./controllers/intents');
@@ -91,7 +93,6 @@ server.on('internalError', function (request, err) {
 
 server.start(function () {
   debug('webserver started on port', config.port);
-  debug('[exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"]')
   // Hook to notify start script.
   if (process.send) {
     process.send('started');
