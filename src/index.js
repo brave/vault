@@ -91,6 +91,7 @@ server.on('internalError', function (request, err) {
 
 server.start(function () {
   debug('webserver started on port', config.port);
+  debug('[exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"]')
   // Hook to notify start script.
   if (process.send) {
     process.send('started');
