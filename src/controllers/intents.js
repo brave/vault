@@ -1,26 +1,46 @@
-var debug = require('debug')('intents');
+var braveHapi  = require('../brave-hapi')
+  , Joi        = require('joi')
+  , underscore = require('underscore')
+  ;
 
-module.exports.push = function (runtime) {
-  return async function (request, reply) {
-    var intent = request.payload;
 
-    if (!intent.type) {
-      throw new Error('intent must have a type');
+var v0 = {};
+
+
+/*
+   POST /intents
+        { "type": "...", "userId": "...", ... }
+ */
+
+v0.post =
+{ handler           : function (runtime) {
+    return async function (request, reply) {
+        var user
+          , debug   = braveHapi.debug(module, request)
+          , intent  = request.payload
+          , intents = runtime.db.get('intents')
+          , users   = runtime.db.get('users')
+          ;
+
+        debug('payload=', intent);
+        await intents.insert(intent);
+
+        user = await users.find({ userId : intent.userId }, { userId : true, statAdReplaceCount : true });
+        reply(underscore.omit(user[0], '_id'));
+    };
+  }
+
+, validate          :
+  { payload         :
+    { type          : Joi.string().min(6).required()
+    , userId        : Joi.string().guid().required()
+    , timestamp     : Joi.number().positive().optional()
+    , payload       : Joi.object().optional()
     }
-
-    debug('registering intent', intent);
-
-    var intents = runtime.db.get('intents');
-    await intents.insert(intent);
-
-    // Return the user record as a response.
-    var users = runtime.db.get('users');
-    var user = await users.find({
-        userId: intent.userId
-      }, {
-        userId: true,
-        statAdReplaceCount: true
-      });
-    reply(user[0]);
-  };
+  }
 };
+
+
+module.exports.routes =
+[ braveHapi.routes.async().post().path('/intents').config(v0.post)
+];

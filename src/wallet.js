@@ -1,34 +1,36 @@
-var debug = require('debug')('wallet');
+var debug      = require('./sdebug')('wallet');
 
-function Wallet(config) {
-  this.config = config;
-  this.bitgo = new (require('bitgo')).BitGo({accessToken: config.bitogAccessToken});
 
-  this.bitgo.authenticate({ username: config.bitgoUser, password: config.bitgoPassword}, function(err) {
-    if (err) { console.dir(err); }
-  });
+var Wallet = function (config) {
+    if (!(this instanceof Wallet)) { return new Wallet(config); }
 
-}
+    this.config = config;
+    this.bitgo = new (require('bitgo')).BitGo({accessToken: config.bitgoAccessToken});
 
-Wallet.prototype = {
+    this.bitgo.authenticate({ username: config.bitgoUser, password: config.bitgoPassword}, function(err) {
+        if (err) { debug('authentication', err); }
+    });
+};
 
-	generate: async function(user) {
+Wallet.prototype =
+{ generate : async function(user) {
     var walletLabel = 'Brave Wallet - ' + user.userId;
 
     return new Promise(function (resolve) {
       // Create the wallet
-      this.bitgo.wallets().createWalletWithKeychains({'passphrase': this.config.bitgoPassword, 'label': walletLabel}, function(err, result) {
-        if (err) {
-          // TODO: We should queue of retry failed API requests.
-          debug('error creating wallet. BitGo api key may be invalid, you can safely ignore wallet errors for now.');
-          resolve();
-          return;
-        }
-        resolve(result);
-      });
+        this.bitgo.wallets().createWalletWithKeychains({'passphrase': this.config.bitgoPassword, 'label': walletLabel},
+                                                       function(err, result) {
+            if (err) {
+                // TODO: We should queue of retry failed API requests.
+                debug('error creating wallet. BitGo api key may be invalid, you can safely ignore wallet errors for now.', err);
+                resolve();
+                return;
+            }
+            resolve(result);
+        });
     }.bind(this));
-	}
-
+  }
 };
+
 
 module.exports = Wallet;
