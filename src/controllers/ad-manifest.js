@@ -21,7 +21,6 @@ v0.get =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var modifiers, query, result
-          , debug    = braveHapi.debug(module, request)
           , id       = request.query.id
           , limit    = request.query.limit
           , since    = request.query.since
@@ -33,7 +32,7 @@ v0.get =
 
             if (!limit || limit === 1) {
               result = await siteInfo.findOne({ _id: id });
-              return reply(underscore.omit(result || {}, '_id'));
+              return reply(result || {});
             }
 
             query = { _id: { $gte: siteInfo.oid(id) } };
@@ -46,9 +45,7 @@ v0.get =
         }
 
         result = await siteInfo.find(query, underscore.extend({ limit: limit }, modifiers));
-        result = underscore.map(result, function(entry) { return underscore.omit(entry, '_id'); });
 
-        debug('result=', result);
         reply(result);
     };
   }
@@ -71,7 +68,6 @@ v0.getHostname =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var result
-          , debug    = braveHapi.debug(module, request)
           , hostname = request.params.hostname
           , siteInfo = runtime.db.get('site_info')
           ;
@@ -79,7 +75,6 @@ v0.getHostname =
         result = await siteInfo.findOne({ hostname : hostname });
         if (!result) { return reply(boom.notFound('', { hostname: hostname })); }
 
-        debug('result=', result);
         reply(result);
     };
   }
@@ -117,7 +112,6 @@ v0.post =
         result = await siteInfo.findOne({ hostname: state.hostname });
         if (!result) { return reply(boom.badImplementation('database lookup failed', { hostname: state.hostname })); }
 
-        debug('result=', result);
         reply(result);
     };
   }
@@ -145,7 +139,6 @@ v0.putHostname =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var result
-          , debug    = braveHapi.debug(module, request)
           , hostname = request.params.hostname
           , state    = request.payload
           , siteInfo = runtime.db.get('site_info')
@@ -157,7 +150,6 @@ v0.putHostname =
         underscore.extend(result, state, { lastUpdated: new Date().getTime() });
         await siteInfo.update({ hostname: hostname }, result, { upsert: true });
 
-        debug('result=', result);
         reply(result);
     };
   }
