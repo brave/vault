@@ -128,7 +128,9 @@ v1.delete =
           ;
 
         count = await sessions.update({ sessionId : sessionId, userId : userId }
-                                     , { $currentDate : { completedAt : { $type : 'timestamp' } } }
+                                     , { $currentDate : { timestamp : { $type : 'timestamp' } }
+                                       , $set         : { activity  : 'delete' }
+                                       }
                                      , { upsert : false });
         if (typeof count === 'object') { count = count.nMatched; }
         if (count === 0) { return reply(boom.notFound('', { sessionId : sessionId, userId : userId })); }
@@ -165,7 +167,7 @@ module.exports.initialize = async function (debug, runtime) {
     , { category : runtime.db.get('sessions')
       , name     : 'sessions'
       , property : 'sessionId'
-      , empty    : { sessionId : '', userId: '', timestamp : bson.Timestamp.ZERO }
+      , empty    : { userId : '', sessionId : '', timestamp : bson.Timestamp.ZERO }
       , unique   : [ { sessionId : 1 } ]
       , others   : [ { userId : 1 }, { timestamp : 1 } ]
       }

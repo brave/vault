@@ -118,7 +118,10 @@ server.start(function (err) {
         }
       });
 
-    if (err) { return debug('unable to start server', err); }
+    if (err) {
+        debug('unable to start server', err);
+        throw err;
+    }
 
     debug('webserver started on port', config.port);
 

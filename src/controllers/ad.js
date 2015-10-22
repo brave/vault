@@ -78,7 +78,7 @@ v1.get =
     return async function (request, reply) {
         var ad, count, href, img, result, url
           , debug     = braveHapi.debug(module, request)
-          , sessionId = request.query.width
+          , sessionId = request.query.sessionId
           , height    = request.query.height
           , width     = request.query.width
           , userId    = request.params.userId

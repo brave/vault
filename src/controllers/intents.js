@@ -18,16 +18,24 @@ var v0 = {};
 v0.post =
 { handler           : function (runtime) {
     return async function (request, reply) {
-        var user
-          , debug   = braveHapi.debug(module, request)
-          , intent  = request.payload
-          , userId  = intent.userId
-          , intents = runtime.db.get('intents')
-          , users   = runtime.db.get('users')
+        var intent, user
+          , debug     = braveHapi.debug(module, request)
+          , userId    = request.payload.userId
+          , type      = request.payload.type
+          , timestamp = request.payload.timestamp || new Date().getTime()
+          , payload   = request.payload.payload
+          , intents   = runtime.db.get('intents')
+          , users     = runtime.db.get('users')
           ;
 
         user = await users.findOne({ userId : userId }, { userId : true, statAdReplaceCount : true });
         reply(underscore.omit(user, '_id'));
+
+        intent = { userId    : userId
+                 , timestamp : bson.Timestamp.ZERO
+                 , type      : type
+                 , payload   : underscore.extend(payload, { timestamp : timestamp })
+                 };
 
         try {
             await intents.insert(intent);
@@ -76,8 +84,8 @@ v1.post =
 
         intent = { userId    : userId
                  , sessionID : sessionId
-                 , type      : type
                  , timestamp : bson.Timestamp.ZERO
+                 , type      : type
                  , payload   : underscore.extend(payload, { timestamp : timestamp })
                  };
         try {
@@ -122,7 +130,7 @@ module.exports.initialize = async function (debug, runtime) {
     [ { category : runtime.db.get('intents')
       , name     : 'intents'
       , property : 'userId'
-      , empty    : { userId : '', sessionId : '', timestamp : bson.Timestamp.ZERO }
+      , empty    : { userId : '', sessionId : '', timestamp : bson.Timestamp.ZERO, type : '', payload : {} }
       , others   : [ { userId : 1 }, { sessionId : 1 }, { timestamp : 1 } ]
       }
     ]);
