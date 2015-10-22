@@ -116,8 +116,9 @@ v1.get =
 
         try {
             await sessions.update({ sessionId : sessionId, userId : userId }
-                                 , { $currentDate : { timestamp : { $type : 'timestamp' } }
-                                   , $set         : { activity  : 'ad' }
+                                 , { $currentDate : { timestamp          : { $type : 'timestamp' } }
+                                   , $set         : { activity           : 'ad' }
+                                   , $inc         : { statAdReplaceCount : 1 }
                                    }
                                  , { upsert  : true });
         } catch(ex) {

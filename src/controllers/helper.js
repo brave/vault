@@ -17,6 +17,18 @@ exports.userId2stats = async function (runtime, userId) {
 };
 
 
+exports.sessionId2stats = async function (runtime, userId, sessionId) {
+    var session
+      , sessions = runtime.db.get('sessions')
+      ;
+
+    session = await sessions.findOne({ userId: userId, sessionId : sessionId }, { statAdReplaceCount : true });
+    if (!session) { return undefined; }
+
+    return { replacements : session.statAdReplaceCount };
+};
+
+
 exports.checkIndices = async function (debug, entries) {
     entries.forEach(async function (entry) {
         var doneP, indices

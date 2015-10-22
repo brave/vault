@@ -135,7 +135,7 @@ v1.delete =
         if (typeof count === 'object') { count = count.nMatched; }
         if (count === 0) { return reply(boom.notFound('', { sessionId : sessionId, userId : userId })); }
 
-        result = await helper.userId2stats(runtime, userId);
+        result = await helper.sessionId2stats(runtime, userId, sessionId);
         reply(result || {});
     };
   }
