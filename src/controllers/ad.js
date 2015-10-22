@@ -78,6 +78,8 @@ v1.get =
     return async function (request, reply) {
         var ad, count, href, img, result, url
           , debug     = braveHapi.debug(module, request)
+          , host      = request.headers.host
+          , protocol  = request.url.protocol || 'http'
           , sessionId = request.query.sessionId
           , height    = request.query.height
           , width     = request.query.width
@@ -107,10 +109,10 @@ v1.get =
         url = 'data:text/html,<html><body style="width: ' + width
               + 'px; height: ' + height
               + 'px; padding: 0; margin: 0;">'
-              + '<a href="http://.../v1/ad-clicks/' + result['_' + 'id'] + '" target="_blank">' + img + '</a>'
+              + '<a href="' + protocol + '://' + host + '/v1/ad-clicks/' + result['_' + 'id'] + '" target="_blank">' + img + '</a>'
               + '<div style="background-color:blue; color: white; font-weight: bold; position: absolute; top: 0;">Use Brave</div></body></html>';
 
-        reply.redirect(url);
+        reply.redirect(url).header('x-brave', protocol + '://' + host + '/v1/ad-clicks/' + result['_' + 'id']);
 
         try { runtime.sonobi.prefill(); } catch(ex) { debug('prefill failed', ex); }
 
