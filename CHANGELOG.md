@@ -1,6 +1,6 @@
 # ChangeLog for Brave Vault
 
-## [0.0.1]
+## [integration candidate 0.0.2]
 
 * deprecated: `POST /auth` by `PUT /v1/users/{userId}`
     * `{ userId: '...' }` no longer passed as the body, now part of the path
@@ -20,3 +20,13 @@
 
 * deprecated: `GET /sync/{userId}` and `POST /sync` by `GET /v1/users/{userId}/appState` and `PUT /v1/users/{userId}/appState`
     * supports _advisory locking_ using "last timestamp" strategy
+
+## [integration candidate 0.0.1](https://github.com/brave/vault/commit/e462354cb52a474a1dfb8fe87ab05aee1e8b56df)
+
+* mtr-i-ness: modified `.eslintrc` to allow for comma-first and more horizontal space
+
+* hapi-ness: blipp, boom, joi, plus new module-to-be `brave-hapi`
+
+    * `src/index.js` and `controllers/*.js` re-factored for DRI, etc.
+
+* log-i-ness: new debug module that does structure data in addition to free-form with module-to-be `sdebug`

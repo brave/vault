@@ -5,9 +5,9 @@ var Wallet = function (config) {
     if (!(this instanceof Wallet)) { return new Wallet(config); }
 
     this.config = config;
-    this.bitgo = new (require('bitgo')).BitGo({accessToken: config.bitgoAccessToken});
+    this.bitgo = new (require('bitgo')).BitGo({accessToken : config.bitgoAccessToken});
 
-    this.bitgo.authenticate({ username: config.bitgoUser, password: config.bitgoPassword}, function(err) {
+    this.bitgo.authenticate({ username : config.bitgoUser, password : config.bitgoPassword}, function(err) {
         if (err) { debug('authentication', err); }
     });
 };

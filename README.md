@@ -46,7 +46,7 @@ Commonly used data types are:
 | `stats`       | a [statistics summary](#statisticssummary) for the user's behavior                                          |
 | `userId`      | [UUID v4](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29) string        |
 | `tagName`     | string identifing an HTML tag (e.g., `'iframe'` for the `<iframe/>` tag)                                    |
-| `timestamp`   | number (usually integer) indicating the number of milli-seconds since the UNIX epoch                        |
+| `timestamp`   | opaque string identifying a unique instance of time                                                         |
 | `userId`      | [UUID v4](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29) string        |
 
 Errors are "boomlets", e.g.,
@@ -67,7 +67,7 @@ The result of the operation is one of:
 
 | code | payload      | meaning                                                  |
 | ----:|:------------:|:-------------------------------------------------------- |
-| 201  | `sessionId`  | `user` entry created                                     |
+| 201  |              | `user` entry created                                     |
 | 422  | `boomlet`    | `user entry` already exists                              |
 
 Once a `userId` is successfully registered,
@@ -110,7 +110,7 @@ The parameters are:
 | -----------:|:---------------------------------------------------------------- |
 | `sessionId` | string, containing a UUID v4 value                               |
 | `type`      | e.g., `"browser.site.visit"`                                     |
-| `timestamp` | when the user activity started                                   |
+| `timestamp` | opaque number (usually integer) identifying a instance of time   |
 | `payload`   | an opaque JSON object                                            |
 
 The result of the operation is:
@@ -161,10 +161,10 @@ The browser uses the `GET /v1/users/{userId}/appState` operation to retrieve inf
 the corresponding user.
 The result of the operation is one of:
 
-| code | payload       | meaning                                                 |
+| code | payload      | meaning                                                 |
 | ----:|:------------:|:-------------------------------------------------------- |
-| 200  | `timestamp`   | the current timestamp of the stored state               |
-|      | `payload`     | an opaque JSON object                                   |
+| 200  | `timestamp`  | an opaque string identifying the stored state            |
+|      | `payload`    | an opaque JSON object                                    |
 | 404  | `boomlet`    | `userId` does not refer to an existing user              |
 
 The `payload` object is opaque to the server -- the applications are responsible for determining the syntax and semantics
@@ -178,15 +178,15 @@ The parameters are:
 
 | parameter   | meaning                                                          |
 | -----------:|:---------------------------------------------------------------- |
-| `timestamp`  | the timestamp associated with the `payload`                     |
+| `timestamp`  | an opaque string identifying the stored state                   |
 | `payload`    | an opaque JSON object                                           |
 
 The result of the operation is one of:
 
 | code | payload       | meaning                                                                |
 | ----:|:------------:|:----------------------------------------------------------------------- |
-| 200  | `timestamp`   | the current timestamp of the `payload` stored                          |
-| 404  | `boomlet`     | `userId` does not refer to an existing user                             |
+| 200  | `timestamp`   | an opaque string identifying the `payload` stored                      |
+| 404  | `boomlet`     | `userId` does not refer to an existing user                            |
 | 422  | `boomlet`     | `timestamp` parameter does not match the timestamp of the stored state |
 
 Accordingly,

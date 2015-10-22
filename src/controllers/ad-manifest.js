@@ -1,11 +1,13 @@
 var boom       = require('boom')
   , braveHapi  = require('../brave-hapi')
+  , bson       = require('bson')
+  , helper     = require('./helper')
   , Joi        = require('joi')
   , underscore = require('underscore')
   ;
 
 
-var v0 = {};
+var v1 = {};
 
 
 /*
@@ -17,7 +19,7 @@ var v0 = {};
 
  */
 
-v0.get =
+v1.get =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var modifiers, query, result
@@ -31,30 +33,32 @@ v0.get =
             if (since) { return reply(boom.badData('since and id parameters may not both be present', request.query)); }
 
             if (!limit || limit === 1) {
-              result = await siteInfo.findOne({ _id: id });
+              result = await siteInfo.findOne({ _id : id });
               return reply(result || {});
             }
 
-            query = { _id: { $gte: siteInfo.oid(id) } };
-            modifiers = { sort: { _id: 1 } };
+            query = { _id : { $gte : siteInfo.oid(id) } };
+            modifiers = { sort : { _id : 1 } };
         } else {
-            since = since || 0;
+            try { since = (since || 0) ? bson.Timestamp.fromString(since) : bson.Timestamp.ZERO; } catch(ex) {
+                return reply(boom.badRequest('invalid since value', { since : since }));
+            }
+
             limit = 100;
-            query = { lastUpdated: { $gte: new Date(since).getTime() } };
-            modifiers = { sort: { lastUpdated: 1 } };
+            query = { timestamp : { $gte : since } };
+            modifiers = { sort : { timestamp : 1 } };
         }
 
-        result = await siteInfo.find(query, underscore.extend({ limit: limit }, modifiers));
-
+        result = await siteInfo.find(query, underscore.extend({ limit : limit }, modifiers));
         reply(result);
     };
   }
 
-, validate          :
-  { query           :
-    { id            : Joi.string().hex().optional()
-    , limit         : Joi.number().positive().optional()
-    , since         : Joi.date().format('x').optional()
+, validate               :
+  { query                :
+    { id                 : Joi.string().hex().optional()
+    , limit              : Joi.number().positive().optional()
+    , since              : Joi.string().regex(/^[0-9]+$/).min(19).optional()
     }
   }
 };
@@ -64,7 +68,7 @@ v0.get =
    GET  /ad-manifest/{hostname}
  */
 
-v0.getHostname =
+v1.getHostname =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var result
@@ -73,16 +77,15 @@ v0.getHostname =
           ;
 
         result = await siteInfo.findOne({ hostname : hostname });
-        if (!result) { return reply(boom.notFound('', { hostname: hostname })); }
+        if (!result) { return reply(boom.notFound('ad-manifest entry does not exist', { hostname : hostname })); }
 
         reply(result);
     };
   }
 
-, validate          :
-  { params          :
-    { hostname      : Joi.string().hostname().required()
-    }
+, validate               :
+  { params               :
+    { hostname           : Joi.string().hostname().required() }
   }
 };
 
@@ -93,37 +96,38 @@ v0.getHostname =
         create (entry MUST not exist)
  */
 
-v0.post =
+v1.post =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var result
           , debug    = braveHapi.debug(module, request)
-          , state    = request.payload
+          , payload  = request.payload
+          , hostname = payload.hostname
           , siteInfo = runtime.db.get('site_info')
           ;
 
         try {
-            await siteInfo.insert(underscore.extend(state, { lastUpdated: new Date().getTime() }));
+            await siteInfo.insert(underscore.extend(payload, { timestamp : bson.Timestamp.ZERO }));
         } catch(ex) {
             debug('insert error', ex);
-            return reply(boom.badData('entry already exists', { hostname: state.hostname }));
+            return reply(boom.badData('ad-manifest entry already exists', { hostname : hostname }));
         }
 
-        result = await siteInfo.findOne({ hostname: state.hostname });
-        if (!result) { return reply(boom.badImplementation('database lookup failed', { hostname: state.hostname })); }
+        result = await siteInfo.findOne({ hostname : hostname });
+        if (!result) { return reply(boom.badImplementation('database lookup failed', { hostname : hostname })); }
 
         reply(result);
     };
   }
 
-, validate          :
-  { payload         :
-    { hostname      : Joi.string().hostname().required()
-    , replacementAd : Joi.array().items(Joi.object().keys({ width     : Joi.number().positive().required()
-                                                          , height    : Joi.number().positive().required()
-                                                          , replaceId : Joi.string().required()
-                                                          })).required()
-    , lastUpdated   : Joi.any().forbidden()
+, validate               :
+  { payload              :
+    { hostname           : Joi.string().hostname().required()
+    , timestamp          : Joi.any().forbidden()
+    , replacementAd      : Joi.array().items(Joi.object().keys({ width     : Joi.number().positive().required()
+                                                               , height    : Joi.number().positive().required()
+                                                               , replaceId : Joi.string().required()
+                                                               })).required()
     }
   }
 };
@@ -135,64 +139,60 @@ v0.post =
         update (entry MUST exist)
  */
 
-v0.putHostname =
+v1.putHostname =
 { handler           : function (runtime) {
     return async function (request, reply) {
-        var result
+        var result, state
           , hostname = request.params.hostname
-          , state    = request.payload
           , siteInfo = runtime.db.get('site_info')
           ;
 
-        result = await siteInfo.findOne({ hostname: hostname });
-        if (!result) { return reply(boom.notFound()); }
+        result = await siteInfo.findOne({ hostname : hostname });
+        if (!result) { return reply(boom.notFound('ad-manifest entry does not exist', { hostname : hostname })); }
 
-        underscore.extend(result, state, { lastUpdated: new Date().getTime() });
-        await siteInfo.update({ hostname: hostname }, result, { upsert: true });
+        state = { $currentDate : { timestamp : { $type : 'timestamp' } }
+                , $set         : request.payload
+                };
+        await siteInfo.update({ hostname : hostname }, state, { upsert : true });
+
+        result = await siteInfo.findOne({ hostname : hostname });
+        if (!result) { return reply(boom.badImplementation('database lookup failed', { hostname : hostname })); }
 
         reply(result);
     };
   }
 
-, validate          :
-  { params          :
-    { hostname      : Joi.string().hostname().required()
-    }
-  , payload         :
-    { hostname      : Joi.any().forbidden()
-    , replacementAd : Joi.array().items(Joi.object().keys({ width     : Joi.number().positive().required()
-                                                          , height    : Joi.number().positive().required()
-                                                          , replaceId : Joi.string().required()
-                                                          })).required()
-    , lastUpdated   : Joi.any().forbidden()
+, validate               :
+  { params               :
+    { hostname           : Joi.string().hostname().required() }
+  , payload              :
+    { hostname           : Joi.any().forbidden()
+    , timestamp          : Joi.any().forbidden()
+    , replacementAd      : Joi.array().items(Joi.object().keys({ width     : Joi.number().positive().required()
+                                                               , height    : Joi.number().positive().required()
+                                                               , replaceId : Joi.string().required()
+                                                               })).required()
     }
   }
 };
 
 
 module.exports.routes =
-[ braveHapi.routes.async().path('/ad-manifest').config(v0.get)
-, braveHapi.routes.async().path('/ad-manifest/{hostname}').config(v0.getHostname)
-, braveHapi.routes.async().post().path('/ad-manifest').config(v0.post)
-, braveHapi.routes.async().put().path('/ad-manifest/{hostname}').config(v0.putHostname)
+[ braveHapi.routes.async().path('/v1/ad-manifest').config(v1.get)
+, braveHapi.routes.async().path('/v1/ad-manifest/{hostname}').config(v1.getHostname)
+, braveHapi.routes.async().post().path('/v1/ad-manifest').config(v1.post)
+, braveHapi.routes.async().put().path('/v1/ad-manifest/{hostname}').config(v1.putHostname)
 ];
 
+
 module.exports.initialize = async function (debug, runtime) {
-    var doneP, indices
-      , siteInfo = runtime.db.get('site_info')
-      ;
-
-    try { indices = await siteInfo.indexes(); } catch (ex) { indices = []; }
-    doneP = underscore.keys(indices).indexOf('hostname_1') !== -1;
-
-    debug('site_info indices ' + (doneP ? 'already' : 'being') + ' created');
-    if (doneP) { return; }
-
-    try {
-        if (indices.length === 0) { await siteInfo.insert({ hostname: '' }); }
-
-        await siteInfo.index({ hostname : 1 }, { unique : true });
-    } catch (ex) {
-        debug('unable to create site_info hostname index', ex);
-    }
+    helper.checkIndices(debug,
+    [ { category : runtime.db.get('site_info')
+      , name     : 'site_info'
+      , property : 'hostname'
+      , empty    : { hostname : '', timestamp : bson.Timestamp.ZERO }
+      , unique   : [ { hostname : 1 } ]
+      , others   : [ { timestamp: 1 } ]
+      }
+    ]);
 };
