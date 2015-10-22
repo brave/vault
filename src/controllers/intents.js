@@ -67,6 +67,7 @@ v1.post =
           , timestamp = request.payload.timestamp
           , payload   = request.payload.payload
           , intents   = runtime.db.get('intents')
+          , sessions  = runtime.db.get('sessions')
           ;
 
         result = await helper.userId2stats(runtime, userId);
@@ -83,6 +84,16 @@ v1.post =
             await intents.insert(intent);
         } catch(ex) {
             debug('insert error', ex);
+        }
+
+        try {
+            await sessions.update({ sessionId : sessionId, userId : userId }
+                                 , { $currentDate : { timestamp : { $type : 'timestamp' } }
+                                   , $set         : { activity  : 'intent' }
+                                   }
+                                 , { upsert  : true });
+        } catch(ex) {
+            debug('update failed', ex);
         }
     };
   }

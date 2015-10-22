@@ -106,7 +106,6 @@ v1.put =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var count, result, state
-          , debug     = braveHapi.debug(module, request)
           , userId    = request.params.userId
           , timestamp = request.payload.timestamp
           , appStates = runtime.db.get('app_states')
