@@ -43,12 +43,12 @@ AsyncRoute.prototype.delete = function () {
     return this;
 };
 
-AsyncRoute.prototype.path = function(path) {
+AsyncRoute.prototype.path = function (path) {
     this.internal.path = path;
     return this;
 };
 
-AsyncRoute.prototype.config = function(config) {
+AsyncRoute.prototype.config = function (config) {
     if (typeof config === 'function') { config = { handler : config }; }
     if (typeof config.handler === 'undefined') { throw new Error('undefined handler for ' + JSON.stringify(this.internal)); }
 
@@ -78,6 +78,11 @@ var ErrorInspect = function (err) {
 };
 
 exports.error = { inspect : ErrorInspect };
+
+
+var TimeStamp = function (a, b) { return a.timestamp - b.timestamp; };
+
+exports.comparators = { timeStamp : TimeStamp };
 
 
 module.exports = exports;

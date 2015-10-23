@@ -112,6 +112,7 @@ v1.get =
               + '<a href="' + protocol + '://' + host + '/v1/ad-clicks/' + result['_' + 'id'] + '" target="_blank">' + img + '</a>'
               + '<div style="background-color:blue; color: white; font-weight: bold; position: absolute; top: 0;">Use Brave</div></body></html>';
 
+        // NB: X-Brave: header is just for debugging
         reply.redirect(url).header('x-brave', protocol + '://' + host + '/v1/ad-clicks/' + result['_' + 'id']);
 
         try { runtime.sonobi.prefill(); } catch(ex) { debug('prefill failed', ex); }
@@ -150,14 +151,23 @@ v1.getClicks =
 { handler           : function (runtime) {
     return async function (request, reply) {
         var result
+          , debug    = braveHapi.debug(module, request)
           , adUnitId = request.params.adUnitId
-          , adUnits = runtime.db.get('ad_units')
+          , adUnits  = runtime.db.get('ad_units')
           ;
 
         result = await adUnits.findOne({ _id : adUnitId });
         if (!result) { return reply(boom.notFound('', { adUnitId : adUnitId })); }
 
         reply.redirect(result.href);
+
+        try {
+            await adUnits.update({ _id : adUnitId }
+                                 , { $currentDate : { timestamp          : { $type : 'timestamp' } } }
+                                 , { upsert  : true });
+        } catch(ex) {
+            debug('update failed', ex);
+        }
     };
   }
 

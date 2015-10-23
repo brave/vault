@@ -1,7 +1,7 @@
 var monk       = require('monk');
 
 
-var DB = function(config) {
+var DB = function (config) {
     if (!(this instanceof DB)) { return new DB(config); }
 
     this.config = config;

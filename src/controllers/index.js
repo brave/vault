@@ -9,7 +9,7 @@ var exports = {};
 
 exports.routes = function (debug, runtime) {
     var entries = {}
-      , routes = [];
+      , routes  = [];
 
     fs.readdirSync(__dirname).forEach(function (name) {
         var module = require(path.join(__dirname, name));

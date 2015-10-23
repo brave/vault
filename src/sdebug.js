@@ -23,7 +23,7 @@ exports = module.exports = function (namespace) {
       , initial     = ''
       ;
 
-    var sdelement = function(params) {
+    var sdelement = function (params) {
         var sdata = '';
 
         var sdname = function (name) {
@@ -80,7 +80,7 @@ exports = module.exports = function (namespace) {
             else {
                 value = arg.tags;
                 if (underscore.isArray(value)) {
-                    truths = underscore.times(value.length, function() { return true; });
+                    truths = underscore.times(value.length, function () { return true; });
                     arg.tags = underscore.object(value, truths);
                 }
                 prefix += sdelement(arg);

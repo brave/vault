@@ -8,17 +8,19 @@ var Hapi       = require('hapi')
   ;
 
 var DB         = require('./db')
+  , OIP        = require('./oip')
   , Sonobi     = require('./sonobi').Sonobi
   , Wallet     = require('./wallet')
   ;
 
 var profile    = process.env.NODE_ENV || 'development'
-  , config     = require('./../config/config.' + profile + '.js')
+  , config     = require('../config/config.' + profile + '.js')
   , database   = new DB(config)
   , runtime    =
     { db       : database
     , wallet   : new Wallet(config)
     , sonobi   : new Sonobi(config, database)
+//  , oip      : new OIP(config)
     }
 ;
 
@@ -33,7 +35,7 @@ server.connection({ port : config.port });
 server.register(
 [ require('hapi-async-handler')
 , require('blipp')
-], function(err) {
+], function (err) {
     if (err) { debug('error', err); }
 });
 
@@ -43,7 +45,7 @@ server.route(
     { method    : 'GET'
     , path      : '/'
     , config    :
-      { handler : function(request, reply) {
+      { handler : function (request, reply) {
             request.log([], 'Welcome to the Vault.');
             reply('Welcome to the Vault.');
         }
