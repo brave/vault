@@ -126,7 +126,7 @@ module.exports.routes =
 
 
 module.exports.initialize = async function (debug, runtime) {
-    helper.checkIndices(debug,
+    runtime.db.checkIndices(debug,
     [ { category : runtime.db.get('intents')
       , name     : 'intents'
       , property : 'userId'

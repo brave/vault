@@ -1,6 +1,5 @@
 var boom       = require('boom')
   , braveHapi  = require('../brave-hapi')
-  , helper     = require('./helper')
   , Joi        = require('joi')
   , underscore = require('underscore')
   ;
@@ -186,7 +185,7 @@ module.exports.routes =
 
 
 module.exports.initialize = async function (debug, runtime) {
-    helper.checkIndices(debug,
+    runtime.db.checkIndices(debug,
     [ { category : runtime.db.get('ad_units')
       , name     : 'ad_units'
       , property : 'adUnitId'

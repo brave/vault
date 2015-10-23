@@ -8,7 +8,7 @@ var Hapi       = require('hapi')
   ;
 
 var DB         = require('./db')
-  , OIP        = require('./oip')
+//, OIP        = require('./oip')
   , Sonobi     = require('./sonobi').Sonobi
   , Wallet     = require('./wallet')
   ;

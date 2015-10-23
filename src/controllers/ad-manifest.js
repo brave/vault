@@ -1,7 +1,6 @@
 var boom       = require('boom')
   , braveHapi  = require('../brave-hapi')
   , bson       = require('bson')
-  , helper     = require('./helper')
   , Joi        = require('joi')
   , underscore = require('underscore')
   ;
@@ -186,7 +185,7 @@ module.exports.routes =
 
 
 module.exports.initialize = async function (debug, runtime) {
-    helper.checkIndices(debug,
+    runtime.db.checkIndices(debug,
     [ { category : runtime.db.get('site_info')
       , name     : 'site_info'
       , property : 'hostname'
