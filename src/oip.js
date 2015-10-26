@@ -11,8 +11,11 @@ var OIP = function (config) {
   this.config.oip = underscore.defaults(config.oip || {},
                                        { server: 'http://brave-development.go.sonobi.com/oip.json',
                                          sizes:
-                                         { '728x90': { category: 'BANNER' },
-                                           '300x250': { category: 'BOX' }
+                                         { '728x90': {},
+                                           '320x50': {},
+                                           '300x250': {},
+                                           '160x600': {}
+
                                          },
                                          categories: require('../config/sonobi-codes.js')
                                        })
