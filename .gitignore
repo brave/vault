@@ -1,5 +1,9 @@
 config/config.development.js
 
+# newrelic
+./newrelic.js
+./newrelic_agent.log
+
 # Logs
 logs
 *.log

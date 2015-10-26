@@ -1,6 +1,7 @@
-var debug = require('debug')('sonobi');
-var request = require('request');
+var debug      = require('./sdebug')('sonobi');
+var request    = require('request');
 var PriorityQueue = require('priorityqueuejs');
+
 
 // TODO - add IAB size names
 const BOX = {'tsize': '300x250'};

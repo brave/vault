@@ -3,5 +3,5 @@ module.exports = {
   database: process.env.MONGO_URI || 'localhost/test',
   bitgoUser: 'whoareyou@brave',
   bitgoPassword: 'YourPassword',
-  bitogAccessToken: 'YourAPIToken'
+  bitgoAccessToken: 'YourAPIToken'
 };

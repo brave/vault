@@ -1,26 +1,137 @@
-var debug = require('debug')('intents');
+var boom       = require('boom')
+  , braveHapi  = require('../brave-hapi')
+  , bson       = require('bson')
+  , helper     = require('./helper')
+  , Joi        = require('joi')
+  , underscore = require('underscore')
+  ;
 
-module.exports.push = function (runtime) {
-  return async function (request, reply) {
-    var intent = request.payload;
 
-    if (!intent.type) {
-      throw new Error('intent must have a type');
+var v0 = {};
+
+
+/*
+   POST /intents
+        { "type": "...", "userId": "...", ... }
+ */
+
+v0.post =
+{ handler           : function (runtime) {
+    return async function (request, reply) {
+        var intent, user
+          , debug     = braveHapi.debug(module, request)
+          , userId    = request.payload.userId
+          , type      = request.payload.type
+          , timestamp = request.payload.timestamp || new Date().getTime()
+          , payload   = request.payload.payload
+          , intents   = runtime.db.get('intents')
+          , users     = runtime.db.get('users')
+          ;
+
+        user = await users.findOne({ userId : userId }, { userId : true, statAdReplaceCount : true });
+        reply(underscore.omit(user, '_id'));
+
+        intent = { userId    : userId
+                 , timestamp : bson.Timestamp.ZERO
+                 , type      : type
+                 , payload   : underscore.extend(payload, { timestamp : timestamp })
+                 };
+
+        try {
+            await intents.insert(intent);
+        } catch(ex) {
+            debug('insert error', ex);
+        }
+    };
+  }
+
+, validate               :
+  { payload              :
+    { type               : Joi.string().min(6).required()
+    , userId             : Joi.string().guid().required()
+    , timestamp          : Joi.number().positive().optional()
+    , payload            : Joi.object().optional()
     }
+  }
+};
 
-    debug('registering intent', intent);
 
-    var intents = runtime.db.get('intents');
-    await intents.insert(intent);
+var v1 = {};
 
-    // Return the user record as a response.
-    var users = runtime.db.get('users');
-    var user = await users.find({
-        userId: intent.userId
-      }, {
-        userId: true,
-        statAdReplaceCount: true
-      });
-    reply(user[0]);
-  };
+
+/*
+   POST /v1/users/{userId}/intents
+        { "sessionID": "...", "type": "...", "timestamp": "...", "payload": "..." }
+ */
+
+v1.post =
+{ handler           : function (runtime) {
+    return async function (request, reply) {
+        var intent, result
+          , debug     = braveHapi.debug(module, request)
+          , userId    = request.params.userId
+          , sessionId = request.payload.sessionId
+          , type      = request.payload.type
+          , timestamp = request.payload.timestamp
+          , payload   = request.payload.payload
+          , intents   = runtime.db.get('intents')
+          , sessions  = runtime.db.get('sessions')
+          ;
+
+        result = await helper.userId2stats(runtime, userId);
+        if (!result) { return reply(boom.notFound('user entry does not exist', { userId : userId })); }
+        reply(result);
+
+        intent = { userId    : userId
+                 , sessionID : sessionId
+                 , timestamp : bson.Timestamp.ZERO
+                 , type      : type
+                 , payload   : underscore.extend(payload, { timestamp : timestamp })
+                 };
+        try {
+            await intents.insert(intent);
+        } catch(ex) {
+            debug('insert error', ex);
+        }
+
+        try {
+            await sessions.update({ sessionId : sessionId, userId : userId }
+                                 , { $currentDate : { timestamp : { $type : 'timestamp' } }
+                                   , $set         : { activity  : 'intent' }
+                                   }
+                                 , { upsert  : true });
+        } catch(ex) {
+            debug('update failed', ex);
+        }
+    };
+  }
+
+, validate               :
+  { params               :
+    { userId             : Joi.string().guid().required() }
+  , payload              :
+    { sessionId          : Joi.string().guid().required()
+    , type               : Joi.string().min(6).required()
+    , timestamp          : Joi.date().format('x').required()
+    , payload            : Joi.object().required()
+    }
+  }
+};
+
+
+module.exports.routes =
+[ braveHapi.routes.async().post().path('/intents').config(v0.post)
+, braveHapi.routes.async().post().path('/v1/users/{userId}/intents').config(v1.post)
+];
+
+
+module.exports.initialize = async function (debug, runtime) {
+    runtime.db.checkIndices(debug,
+    [ { category : runtime.db.get('intents')
+      , name     : 'intents'
+      , property : 'userId'
+      , empty    : { userId : '', sessionId : '', timestamp : bson.Timestamp.ZERO, type : '', payload : {} }
+      , others   : [ { userId : 1 }, { sessionId : 1 }, { timestamp : 1 } ]
+      }
+    ]);
 };
