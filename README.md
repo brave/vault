@@ -15,6 +15,9 @@ Install MongoDB: `brew update && brew install mongodb`
 
 Start MongoDB. There are a variety of ways to do this, one option on a mac: `brew tap homebrew/services && brew services start mongodb`
 
+## StandardJS
+
+For linting we use [StandardJS](https://github.com/feross/standard). It's recommended that you install the necessary IDE plugin. Since this repo uses ES7 features, you'll need a global install of both the standard and babel-eslint packages.
 
 ## Configuration
 
