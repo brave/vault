@@ -5,6 +5,7 @@ var eslint = require('gulp-eslint');
 var nodemon = require('gulp-nodemon');
 var runSequence = require('run-sequence');
 var shell = require('gulp-shell');
+var standard = require('gulp-standard')
 
 var SRC = [
   'src/**/*.js',
@@ -43,9 +44,10 @@ gulp.task('lint', function() {
   // Note: To have the process exit with an error code (1) on
   // lint error, return the stream and pipe to failOnError last.
   return gulp.src(SRC)
-    .pipe(eslint())
-    .pipe(eslint.format())
-    .pipe(failOnLint ? eslint.failOnError() : gutil.noop());
+    .pipe(standard())
+    .pipe(standard.reporter('default', {
+      breakOnError: failOnLint
+    }))
 });
 
 /**
