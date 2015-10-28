@@ -75,8 +75,4 @@ var ErrorInspect = function (err) {
 
 exports.error = { inspect: ErrorInspect }
 
-var TimeStamp = function (a, b) { return a.timestamp - b.timestamp }
-
-exports.comparators = { timeStamp: TimeStamp }
-
 module.exports = exports

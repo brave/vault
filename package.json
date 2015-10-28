@@ -27,6 +27,7 @@
     "hapi-async-handler": "^1.0.3",
     "joi": "6.9.1",
     "monk": "^1.0.1",
+    "natural": "0.2.1",
     "newrelic": "1.22.2",
     "priorityqueuejs": "^1.0.0",
     "request": "^2.64.0",

@@ -150,13 +150,13 @@ module.exports.initialize = async function (debug, runtime) {
   [ { category: runtime.db.get('users'),
       name: 'users',
       property: 'userId',
-      empty: { userId: '' },
+      empty: { userId: '', intents: [] },
       unique: [ { userId: 1 } ]
     },
     { category: runtime.db.get('sessions'),
       name: 'sessions',
       property: 'sessionId',
-      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO },
+      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO, intents: [] },
       unique: [ { sessionId: 1 } ],
       others: [ { userId: 1 }, { timestamp: 1 } ]
     }

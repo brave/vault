@@ -88,7 +88,7 @@ exports = module.exports = function (namespace) {
     return args
   }
 
-  sdebug = debug(path.parse(namespace).name)
+  sdebug = new (require('debug'))(path.parse(namespace).name)
 
   sdebug.config = function (config) {
     options = underscore.extend(options, config)
