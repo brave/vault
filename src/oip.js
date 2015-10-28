@@ -230,7 +230,7 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
     suffix = { category: category, name: this.config.oip.categories[category] }
   }.bind(this))
 
-  if (!result) return debug('nothing matching ' + JSON.stringify(intents))
+  if (!result) return debug('nothing matching intents of ' + JSON.stringify(intents))
 
   pq = result.sizes[size]
   pq.impressions--
