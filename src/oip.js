@@ -281,8 +281,11 @@ OIP.prototype.categories = function () {
   return result
 }
 
+var bootTime = new Date().getTime()
+
 OIP.prototype.statistics = function () {
-  var result = { categories: { active: 0, total: underscore.keys(this.config.oip.categories).length },
+  var result = { uptime: (new Date().getTime() - bootTime) / 1000,
+                 categories: { active: 0, total: underscore.keys(this.config.oip.categories).length },
                  errors: 0,
                  options: this.config.oip.options,
                  sizes: {}

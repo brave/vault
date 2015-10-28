@@ -60,7 +60,7 @@ server.ext('onRequest', function (request, reply) {
             params: request.url.params,
             headers: request.headers,
             remote:
-            { address: request.headers['x-forwarded-for'] || request.info.remoteAddress,
+            { address: (request.headers['x-forwarded-for'] || request.info.remoteAddress).split(', ')[0],
               port: request.headers['x-forwarded-port'] || request.info.remotePort
             }
           }
