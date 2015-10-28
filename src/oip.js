@@ -89,12 +89,12 @@ OIP.prototype.reload = function () {
       var depth = pq.impressions
       var tile = []
 
-      if ((depth >= pq.lowWater) || (this.timestamp <= pq.retry)) { return }
+      this.trim(pq)
+      if ((depth >= pq.lowWater) || (depth <= pq.highWater) || (this.timestamp <= pq.retry)) { return }
       pq.retry = this.timestamp + this.config.oip.options.retryInterval
 
       sizes.push(size)
-      depth = pq.highWater - depth
-      while (depth-- > 0) { tile.push({ tsize: size }) }
+      for (depth = pq.highWater - depth; depth > 0; depth--) { tile.push({ tsize: size }) }
       payload.elements.tiles.push(tile)
     }.bind(this))
     if (payload.elements.tiles.length === 0) { return }
@@ -209,10 +209,10 @@ OIP.prototype.trim = function (pq) {
 
 OIP.prototype.adUnitForIntents = function (intents, width, height) {
   var ad, pq, result, suffix
-  var score = 0
+  var score = -1
   var size = width + 'x' + height
 
-  underscore.keys(this.config.oip.categories).forEach(function (category) {
+  underscore.shuffle(underscore.keys(this.config.oip.categories)).forEach(function (category) {
     var ilength, pqs
 
     pqs = this.pqs[category]
@@ -281,24 +281,28 @@ OIP.prototype.categories = function () {
 }
 
 OIP.prototype.statistics = function () {
-  var result = { categories: underscore.keys(this.config.oip.categories).length,
+  var result = { categories: { active: 0, total: underscore.keys(this.config.oip.categories).length },
                  errors: 0,
                  options: this.config.oip.options,
                  sizes: {}
                }
 
   underscore.keys(this.config.oip.categories).forEach(function (category) {
+    var activeP = 0
     var pqs = this.pqs[category]
 
     result.errors += pqs.errors
     underscore.keys(pqs.sizes).forEach(function (size) {
       var pq = pqs.sizes[size]
 
+      if (pq.impressions > 0) activeP = 0
       if (!result.sizes[size]) result.sizes[size] = { empties: 0, impressions: 0, queue: 0 }
       result.sizes[size].empties += pq.empties
       result.sizes[size].impressions += pq.impressions
       result.sizes[size].queue += pq.queue.size()
     })
+
+    if (activeP) result.categories.active++
   }.bind(this))
 
   return result
