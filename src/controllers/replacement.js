@@ -39,13 +39,13 @@ v0.get =
       if (ad) tag = ad.name
     }
 
-    // What to do if there are no valid ads? server a placeholder?
-    image = '<img src="https://placeimg.com/' + width + '/' + height + '"/>'
-
     // TODO - ensure ad.lp and ad.url are safe
     if (ad) {
       image = '<a href="' + ad.lp + '" target="_blank"><img src="' + ad.url + '"/></a>'
     } else {
+      // What to do if there are no valid ads? server a placeholder?
+      image = '<img src="https://placeimg.com/' + width + '/' + height + '"/>'
+
       debug('default ad returned')
     }
 
