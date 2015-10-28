@@ -6,7 +6,7 @@ var underscore = require('underscore')
 var v0 = {}
 
 /*
-   GET  /ad?braveUserId={userId}
+   GET  /replacement?braveUserId={userId}
  */
 
 v0.get =
@@ -66,7 +66,7 @@ validate:
 var v1 = {}
 
 /*
-   GET  /v1/users/{userId}/ad?...
+   GET  /v1/users/{userId}/replacement?...
  */
 
 v1.get =
@@ -171,8 +171,11 @@ validate:
 }
 
 module.exports.routes =
-[ braveHapi.routes.async().path('/ad').config(v0.get),
-  braveHapi.routes.async().path('/v1/users/{userId}/ad').config(v1.get),
+[
+  // Remove /ad once clients have moved onto /replacement or /v1/
+  braveHapi.routes.async().path('/ad').config(v0.get),
+  braveHapi.routes.async().path('/replacement').config(v0.get),
+  braveHapi.routes.async().path('/v1/users/{userId}/replacement').config(v1.get),
   braveHapi.routes.async().path('/v1/ad-clicks/{adUnitId}').config(v1.getClicks)
 ]
 
