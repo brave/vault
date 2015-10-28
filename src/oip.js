@@ -1,4 +1,4 @@
-var debug = require('./sdebug')('oip')
+var debug = new (require('./sdebug'))('oip')
 var natural = require('natural')
 var PriorityQ = require('priorityqueuejs')
 var Trie = natural.Trie

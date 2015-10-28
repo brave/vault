@@ -35,13 +35,8 @@ v0.get =
     } else {
       user = await users.findOne({ userId: userId }, { intents: true })
       if (user) intents = user.intents
-      console.log('\nintents, ad, tag')
-      console.log(intents)
       ad = (intents) && runtime.oip.adUnitForIntents(intents, width, height)
-      console.log(ad)
       if (ad) tag = ad.name
-      console.log(tag)
-      console.log('\n')
     }
 
     // What to do if there are no valid ads? server a placeholder?
