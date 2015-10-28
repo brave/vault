@@ -35,6 +35,7 @@ v0.get =
     } else {
       user = await users.findOne({ userId: userId }, { intents: true })
       if (user) intents = user.intents
+      debug('user intents: ' + JSON.stringify(user.intents))
       ad = (intents) && runtime.oip.adUnitForIntents(intents, width, height)
       if (ad) tag = ad.name
     }
@@ -92,7 +93,7 @@ v1.get =
     var sessions = runtime.db.get('sessions')
     var users = runtime.db.get('users')
 
-    count = await users.update({ userId: userId }, { $inc: { statAdReplaceCount: 1 } }, { upsert: false })
+    count = await users.update({ userId: userId }, { $inc: { statAdReplaceCount: 1 } }, { upsert: true })
     if (typeof count === 'object') { count = count.nMatched }
     if (count === 0) { return reply(boom.notFound('user entry does not exist', { braveUserId: userId })) }
 
@@ -103,6 +104,7 @@ v1.get =
         if (s.intents) intents = underscore.union(intents, s.intents)
       })
     }
+    debug('intents: ' + JSON.stringify(intents))
     ad = (intents) && runtime.oip.adUnitForIntents(intents, width, height)
 
     if (ad) {

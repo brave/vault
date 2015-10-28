@@ -121,8 +121,8 @@ v1.delete =
     count = await sessions.update({ sessionId: sessionId, userId: userId },
                                   { $currentDate: { timestamp: { $type: 'timestamp' } },
                                     $set: { activity: 'delete' }
-                                   },
-                                 { upsert: false })
+                                  },
+                                  { upsert: false })
     if (typeof count === 'object') { count = count.nMatched }
     if (count === 0) { return reply(boom.notFound('', { sessionId: sessionId, userId: userId })) }
 
