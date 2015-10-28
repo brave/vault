@@ -9,7 +9,10 @@ var underscore = require('underscore')
 var exports = {}
 
 exports.debug = function (info, request) {
-  return require('./sdebug')(info.id).initialize({ request: { id: request.id } })
+  var sdebug = new (require('./sdebug'))(info.id)
+
+  sdebug.initialize({ request: { id: request.id } })
+  return sdebug
 }
 
 var AsyncRoute = function () {

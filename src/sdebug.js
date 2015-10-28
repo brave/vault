@@ -92,8 +92,6 @@ exports = module.exports = function (namespace) {
 
   sdebug.config = function (config) {
     options = underscore.extend(options, config)
-
-    return sdebug
   }
 
   sdebug.initialize = function (params) {
@@ -102,8 +100,6 @@ exports = module.exports = function (namespace) {
     sdata += sdelement(params)
     if (sdata === '') { sdata = options.nilvalue + ' ' }
     initial = ' ' + sdata
-
-    return sdebug
   }
 
   return sdebug
