@@ -230,12 +230,13 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
     suffix = { category: category, name: this.config.oip.categories[category] }
   }.bind(this))
 
-  if (!result) return
+  if (!result) return debug('nothing matching ' + JSON.stringify(intents))
 
   pq = result.sizes[size]
   pq.impressions--
   ad = pq.queue.deq()
   if ((ad.impressions -= 1) > 0) pq.queue.enq(ad)
+  debug('mapping intents of ' + intents.length + ' to ' + ad.name)
 
   return underscore.extend({}, ad, suffix)
 }

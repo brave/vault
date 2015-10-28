@@ -51,12 +51,16 @@ exports = module.exports = function (namespace) {
   }
 
   require('debug').formatArgs = function () {
+    var prefix
     var args = [ '' ]
     var name = this.namespace
-    var prefix = this.initial
+
+    if (!this.initial) this.initial = ''
+    if (!this.options) this.options = { nilvalue: '-', lowercase: false, separator: '_', pen: 1104 }
 
     if (this.useColors) { name = '\u001b[3' + this.color + ';1m' + name + '\u001b[0m' }
 
+    prefix = this.initial
     underscore.rest(arguments).forEach(function (arg) {
       var truths, value
       var keys = underscore.keys(arg)
