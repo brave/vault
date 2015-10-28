@@ -1,4 +1,4 @@
-var debug = require('./sdebug')('sonobi')
+var debug = new (require('./sdebug'))('sonobi')
 var request = require('request')
 var PriorityQueue = require('priorityqueuejs')
 
