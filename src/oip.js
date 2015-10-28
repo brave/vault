@@ -90,7 +90,7 @@ OIP.prototype.reload = function () {
       var tile = []
 
       this.trim(pq)
-      if ((depth >= pq.lowWater) || (depth <= pq.highWater) || (this.timestamp <= pq.retry)) { return }
+      if ((depth >= pq.lowWater) || (this.timestamp <= pq.retry)) { return }
       pq.retry = this.timestamp + this.config.oip.options.retryInterval
 
       sizes.push(size)
@@ -270,6 +270,7 @@ OIP.prototype.categories = function () {
         if (earliest > element.expires) earliest = element.expires
         if (latest < element.expires) latest = element.expires
       })
+      if (latest === 0) earliest = 0
       result[category].sizes[size] = underscore.extend(datum,
                                                        { earliest: Math.max(earliest - now, 0) / 1000,
                                                          latest: Math.max(latest - now, 0) / 1000
@@ -295,7 +296,7 @@ OIP.prototype.statistics = function () {
     underscore.keys(pqs.sizes).forEach(function (size) {
       var pq = pqs.sizes[size]
 
-      if (pq.impressions > 0) activeP = 0
+      if (pq.impressions > 0) activeP = 1
       if (!result.sizes[size]) result.sizes[size] = { empties: 0, impressions: 0, queue: 0 }
       result.sizes[size].empties += pq.empties
       result.sizes[size].impressions += pq.impressions
