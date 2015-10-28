@@ -7,8 +7,8 @@ var debug = require('./sdebug')('server')
 var routes = require('./controllers/index')
 
 var DB = require('./db')
-// var OIP        = require('./oip')
-var Sonobi = require('./sonobi').Sonobi
+var OIP = require('./oip')
+// var Sonobi = require('./sonobi').Sonobi
 var Wallet = require('./wallet')
 
 var profile = process.env.NODE_ENV || 'development'
@@ -17,12 +17,12 @@ var database = new DB(config)
 var runtime = {
   db: database,
   wallet: new Wallet(config),
-  sonobi: new Sonobi(config, database)
-  // oip: new OIP(config)
+//  sonobi: new Sonobi(config, database),
+  oip: new OIP(config)
 }
 
 // TODO - do we wait for a pre-fill to complete before starting the server?
-runtime.sonobi.prefill()
+if (runtime.sonobi) runtime.sonobi.prefill()
 
 var server = new Hapi.Server()
 server.connection({ port: config.port })
@@ -82,9 +82,9 @@ server.on('log', function (event, tags) {
           }
         })
 }).on('response', function (request) {
-  var duration;
+  var duration
 
-  (request['_' + 'logger'] || []).forEach(function (entry) {
+  (request._logger || []).forEach(function (entry) {
     if ((entry.data) && (typeof entry.data.msec === 'number')) { duration = entry.data.msec }
   })
 
@@ -96,12 +96,17 @@ server.on('log', function (event, tags) {
             duration: duration
             },
           headers: request.response.headers,
-          error: braveHapi.error.inspect(request.response['_' + 'error'])
+          error: braveHapi.error.inspect(request.response._error)
           }
         })
 })
 
 server.start(function (err) {
+  if (err) {
+    debug('unable to start server', err)
+    throw err
+  }
+
   debug.initialize(
     { 'server':
       { id: server.info.id,
@@ -111,11 +116,6 @@ server.start(function (err) {
       version: server.version
       }
     })
-
-  if (err) {
-    debug('unable to start server', err)
-    throw err
-  }
 
   debug('webserver started on port', config.port)
 
