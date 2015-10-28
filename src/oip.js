@@ -236,7 +236,7 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
   pq.impressions--
   ad = pq.queue.deq()
   if ((ad.impressions -= 1) > 0) pq.queue.enq(ad)
-  debug('mapping intents of ' + intents.length + ' to ' + ad.name)
+  debug('mapping intents of ' + intents.length + ' to ' + result.name)
 
   return underscore.extend({}, ad, suffix)
 }
