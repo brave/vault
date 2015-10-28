@@ -36,7 +36,7 @@ var OIP = function (config) {
     var trie = new Trie()
 
     trie.addStrings(this.tokenizer.tokenize(this.config.oip.categories[category]))
-    this.pqs[category] = { errors: 0, sizes: {}, trie: trie, intents: trie.keysWithPrefix('') }
+    this.pqs[category] = { category: category, errors: 0, sizes: {}, trie: trie, intents: trie.keysWithPrefix('') }
     underscore.keys(this.config.oip.sizes).forEach(function (size) {
       this.pqs[category].sizes[size] = { queue: new PriorityQ(pqComparator),
                                         lowWater: this.config.oip.options.lowWater,
@@ -140,10 +140,15 @@ OIP.prototype.reload = function () {
 
             parts = frequency.time_frame.toString().split(' ')
             if (parts.length === 2) {
-              frequency.time_frame = parseInt(parts[0], 10) * { weeks: 7 * 24 * 60 * 60,
+              frequency.time_frame = parseInt(parts[0], 10) * { week: 7 * 24 * 60 * 60,
+                                                                weeks: 7 * 24 * 60 * 60,
+                                                                day: 24 * 60 * 60,
                                                                 days: 24 * 60 * 60,
+                                                                hour: 60 * 60,
                                                                 hours: 60 * 60,
+                                                                minute: 60,
                                                                 minutes: 60,
+                                                                second: 1,
                                                                 seconds: 1 }[parts[1]]
             }
             if (isNum(frequency.time_frame)) {
@@ -236,7 +241,7 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
   pq.impressions--
   ad = pq.queue.deq()
   if ((ad.impressions -= 1) > 0) pq.queue.enq(ad)
-  debug('mapping intents of ' + intents.length + ' to ' + result.name)
+  debug('mapping intents of ' + intents.length + ' to ' + this.config.oip.categories[result.category])
 
   return underscore.extend({}, ad, suffix)
 }
