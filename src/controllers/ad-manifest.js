@@ -49,6 +49,12 @@ v1.get =
   }
 },
 
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
+
 validate:
   { query:
     { id: Joi.string().hex().optional(),
@@ -75,6 +81,12 @@ v1.getHostname =
     reply(result)
   }
 },
+
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
 
 validate:
   { params:
@@ -110,6 +122,12 @@ v1.post =
     reply(result)
   }
 },
+
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
 
 validate:
   { payload:
@@ -150,6 +168,12 @@ v1.putHostname =
     reply(result)
   }
 },
+
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
 
 validate:
   { params:

@@ -5,6 +5,7 @@ var Hapi = require('hapi')
 var braveHapi = require('./brave-hapi')
 var debug = new (require('./sdebug'))('server')
 var routes = require('./controllers/index')
+var underscore = require('underscore')
 
 var DB = require('./db')
 var OIP = require('./oip')
@@ -18,7 +19,8 @@ var runtime = {
   db: database,
   wallet: new Wallet(config),
 //  sonobi: new Sonobi(config, database),
-  oip: new OIP(config)
+  oip: new OIP(config),
+  hello: require('../config/hello.js')
 }
 
 // TODO - do we wait for a pre-fill to complete before starting the server?
@@ -27,11 +29,35 @@ if (runtime.sonobi) runtime.sonobi.prefill()
 var server = new Hapi.Server()
 server.connection({ port: config.port })
 
+debug.initialize({ 'server': { id: server.info.id } })
+
 server.register(
-[ require('hapi-async-handler'),
-  require('blipp')
+[ require('bell'),
+  require('blipp'),
+  require('hapi-async-handler'),
+  require('hapi-auth-cookie')
 ], function (err) {
-  if (err) { debug('error', err) }
+  if (err) {
+    debug('unable to register extensions', err)
+    throw err
+  }
+
+  server.auth.strategy('github', 'bell', {
+    provider: 'github',
+    password: 'github-encryption-password',
+    clientId: runtime.hello.clientId,
+    clientSecret: runtime.hello.clientSecret,
+    isSecure: false,
+    scope: ['user:email', 'read:org']
+  })
+
+  server.auth.strategy('session', 'cookie', {
+    password: 'cookie-encryption-password',
+    cookie: 'sid',
+    isSecure: false
+  })
+
+  debug('extensions registered')
 })
 
 server.route(
@@ -58,7 +84,7 @@ server.ext('onRequest', function (request, reply) {
             },
             query: request.url.query,
             params: request.url.params,
-            headers: request.headers,
+            headers: underscore.omit(request.headers, 'cookie'),
             remote:
             { address: (request.headers['x-forwarded-for'] || request.info.remoteAddress).split(', ')[0],
               port: request.headers['x-forwarded-port'] || request.info.remotePort
@@ -93,7 +119,7 @@ server.on('log', function (event, tags) {
           { request:
             { id: request.id,
             statusCode: request.response.statusCode,
-            duration: duration
+            duration: (duration) && (duration / 1000)
             },
           headers: request.response.headers,
           error: braveHapi.error.inspect(request.response._error)
@@ -107,17 +133,12 @@ server.start(function (err) {
     throw err
   }
 
-  debug.initialize(
-    { 'server':
-      { id: server.info.id,
-      protocol: server.info.protocol,
-      address: server.info.address,
-      port: config.port,
-      version: server.version
-      }
-    })
-
-  debug('webserver started on port', config.port)
+  debug('webserver started',
+  { protocol: server.info.protocol,
+    address: server.info.address,
+    port: config.port,
+    version: server.version
+  })
 
 // Hook to notify start script.
   if (process.send) { process.send('started') }

@@ -53,12 +53,16 @@ AsyncRoute.prototype.config = function (config) {
   if (typeof config.handler === 'undefined') { throw new Error('undefined handler for ' + JSON.stringify(this.internal)) }
 
   return function (runtime) {
+    var payload = { handler: { async: config.handler(runtime) } }
+
+    underscore.keys(config).forEach(function (key) {
+      if ((key !== 'handler') && (typeof config[key] !== 'undefined')) payload[key] = config[key]
+    })
+
     return {
       method: this.internal.method,
       path: this.internal.path,
-      config: { handler: { async: config.handler(runtime) },
-        validate: config.validate
-      }
+      config: payload
     }
   }.bind(this)
 }
