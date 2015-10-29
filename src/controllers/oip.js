@@ -29,9 +29,16 @@ v1.getCategories =
         result[category].sizes[size] = sizes[size]
       })
     })
-    reply(result)
+
+    reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')
   }
 },
+
+auth:
+  { strategy: 'session',
+    scope: 'devops',
+    mode: 'required'
+  },
 
 validate:
   { query:
@@ -47,9 +54,17 @@ validate:
 v1.getStatistics =
 { handler: function (runtime) {
   return async function (request, reply) {
-    reply(runtime.oip.statistics())
+    var result = runtime.oip.statistics()
+
+    reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')
   }
 },
+
+auth:
+  { strategy: 'session',
+    scope: 'devops',
+    mode: 'required'
+  },
 
 validate:
   { query: {}
@@ -70,9 +85,15 @@ v1.getCategory =
     result = categories[category]
     if (!result) { return reply(boom.notFound('oip entry does not exist', { category: category })) }
 
-    reply(result)
+    reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')
   }
 },
+
+auth:
+  { strategy: 'session',
+    scope: 'devops',
+    mode: 'required'
+  },
 
 validate:
   { params:
