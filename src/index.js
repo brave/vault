@@ -47,7 +47,7 @@ server.register(
     password: 'github-encryption-password',
     clientId: runtime.hello.clientId,
     clientSecret: runtime.hello.clientSecret,
-    isSecure: false,
+    isSecure: runtime.hello.isSecure,
     scope: ['user:email', 'read:org']
   })
 
