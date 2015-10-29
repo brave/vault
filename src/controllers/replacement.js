@@ -172,8 +172,6 @@ validate:
 
 module.exports.routes =
 [
-  // Remove /ad once clients have moved onto /replacement or /v1/
-  braveHapi.routes.async().path('/ad').config(v0.get),
   braveHapi.routes.async().path('/replacement').config(v0.get),
   braveHapi.routes.async().path('/v1/users/{userId}/replacement').config(v1.get),
   braveHapi.routes.async().path('/v1/ad-clicks/{adUnitId}').config(v1.getClicks)
