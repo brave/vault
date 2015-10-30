@@ -1,10 +1,39 @@
 module.exports =
 { 
+/*
   "2": "Automotive",
   "14": "Society",
   "17": "Sports",
   "20": "Travel",
   "21": "Real Estate",
+ */
+
+  "1": "Arts & Entertainment",
+  "2": "Automotive",
+  "3": "Business",
+  "4": "Careers",
+  "5": "Education",
+  "6": "Family & Parenting",
+  "7": "Health & Fitness",
+  "8": "Food & Drink",
+  "9": "Hobbies & Interests",
+  "10": "Home & Garden",
+  "11": "Law, Gov't & Politics",
+  "12": "News",
+  "13": "Personal Finance",
+  "14": "Society",
+  "15": "Science",
+  "16": "Pets",
+  "17": "Sports",
+  "18": "Style & Fashion",
+  "19": "Technology & Computing",
+  "20": "Travel",
+  "21": "Real Estate",
+  "22": "Shopping",
+  "23": "Religion & Spirituality",
+  "24": "Uncategorized",
+  "25": "Non-Standard Content",
+  "26": "Illegal Content"
 
 /*
   "IAB2": "Automotive",
