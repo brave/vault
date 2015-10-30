@@ -42,22 +42,24 @@ server.register(
     throw err
   }
 
+  debug('extensions registered')
+
   server.auth.strategy('github', 'bell', {
     provider: 'github',
-    password: 'github-encryption-password',
+    password: require('cryptiles').randomString(64),
     clientId: runtime.hello.clientId,
     clientSecret: runtime.hello.clientSecret,
     isSecure: runtime.hello.isSecure,
+    forceHttps: runtime.hello.isSecure,
     scope: ['user:email', 'read:org']
   })
+  debug('github authentication: forceHttps=' + runtime.hello.isSecure)
 
   server.auth.strategy('session', 'cookie', {
     password: 'cookie-encryption-password',
     cookie: 'sid',
-    isSecure: false
+    isSecure: runtime.hello.isSecure
   })
-
-  debug('extensions registered')
 })
 
 server.route(
