@@ -13,10 +13,11 @@ v1.getCategories =
 { handler: function (runtime) {
   return async function (request, reply) {
     var categories, result
-    var compress = request.query.compress
+    var compressP = request.query.compress
+    var formatP = request.query.format
 
     categories = runtime.oip.categories()
-    if (!compress) { return reply(categories) }
+    if (!compressP) { return reply(categories) }
 
     result = {}
     underscore.keys(categories).forEach(function (category) {
@@ -30,6 +31,7 @@ v1.getCategories =
       })
     })
 
+    if (!formatP) return reply(result)
     reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')
   }
 },
@@ -42,7 +44,8 @@ auth:
 
 validate:
   { query:
-    { compress: Joi.boolean().optional()
+    { compress: Joi.boolean().optional(),
+      format: Joi.boolean().optional()
     }
   }
 }
@@ -54,8 +57,10 @@ validate:
 v1.getStatistics =
 { handler: function (runtime) {
   return async function (request, reply) {
+    var formatP = request.query.format
     var result = runtime.oip.statistics()
 
+    if (!formatP) return reply(result)
     reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')
   }
 },
@@ -67,8 +72,7 @@ auth:
   },
 
 validate:
-  { query: {}
-  }
+  { query: { format: Joi.boolean().optional() } }
 }
 
 /*
@@ -80,11 +84,13 @@ v1.getCategory =
   return async function (request, reply) {
     var result
     var category = request.params.category
+    var formatP = request.query.format
     var categories = runtime.oip.categories()
 
     result = categories[category]
     if (!result) { return reply(boom.notFound('oip entry does not exist', { category: category })) }
 
+    if (!formatP) return reply(result)
     reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')
   }
 },
@@ -96,7 +102,8 @@ auth:
   },
 
 validate:
-  { params:
+  { query: { format: Joi.boolean().optional() },
+    params:
     { category: Joi.number().positive() }
   }
 }
