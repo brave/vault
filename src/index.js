@@ -106,8 +106,9 @@ server.on('log', function (event, tags) {
         })
 }).on('response', function (request) {
   var duration
+  var logger = request._logger || []
 
-  (request._logger || []).forEach(function (entry) {
+  logger.forEach(function (entry) {
     if ((entry.data) && (typeof entry.data.msec === 'number')) { duration = entry.data.msec }
   })
 
