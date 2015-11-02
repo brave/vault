@@ -6,18 +6,16 @@ var Joi = require('joi')
 var v1 = {}
 
 /*
-   GET  /v1/hello
+   GET  /v1/login
  */
 
-v1.hello =
+v1.login =
 { handler: function (runtime) {
   return async function (request, reply) {
     var debug = braveHapi.debug(module, request)
     var credentials = request.auth.credentials
 
     if (!request.auth.isAuthenticated) return reply(boom.forbidden())
-
-    request.auth.session.set(credentials)
 
     var gh = new GitHub({ version: '3.0.0', debug: false })
     gh.authenticate({ type: 'token', token: credentials.token })
@@ -26,11 +24,17 @@ v1.hello =
 
       credentials.scope = []
       data.forEach(function (team) {
-        if (team.organization.login === runtime.hello.organization) credentials.scope.push(team.name)
+        if (team.organization.login === runtime.login.organization) credentials.scope.push(team.name)
       })
+      if (credentials.scope.length === 0) {
+        debug('failed ' + credentials.provider + ' ' + credentials.profile.email)
+        return reply(boom.forbidden())
+      }
 
       debug('login  ' + credentials.provider + ' ' + credentials.profile.email + ': ' + JSON.stringify(credentials.scope))
-      return reply.redirect(runtime.hello.world)
+
+      request.auth.session.set(credentials)
+      return reply.redirect(runtime.login.world)
     })
   }
 },
@@ -46,10 +50,10 @@ validate:
 }
 
 /*
-   GET /v1/goodbye
+   GET /v1/logout
  */
 
-v1.goodbye =
+v1.logout =
 { handler: function (runtime) {
   return async function (request, reply) {
     var debug = braveHapi.debug(module, request)
@@ -58,7 +62,7 @@ v1.goodbye =
     debug('logout ' + credentials.provider + ' ' + credentials.profile.email + ': ' + JSON.stringify(credentials.scope))
 
     request.auth.session.clear()
-    reply.redirect(runtime.hello.bye)
+    reply.redirect(runtime.login.bye)
   }
 },
 
@@ -73,6 +77,6 @@ validate:
 }
 
 module.exports.routes =
-[ braveHapi.routes.async().path('/v1/hello').config(v1.hello),
-  braveHapi.routes.async().path('/v1/goodbye').config(v1.goodbye)
+[ braveHapi.routes.async().path('/v1/login').config(v1.login),
+  braveHapi.routes.async().path('/v1/logout').config(v1.logout)
 ]

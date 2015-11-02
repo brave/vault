@@ -125,7 +125,7 @@ The result of the operation is:
 | 422  | `boomlet`    | missing parameter                                        |
 
 ### Replacing Advertisements
-The browser uses the `GET /v1/users/{userId}/ad?...` operation to get information on how to perform a replacement.
+The browser uses the `GET /v1/users/{userId}/replacement?...` operation to get information on how to perform a replacement.
 The parameters are:
 
 | parameter   | meaning                                                          |
@@ -209,7 +209,7 @@ if an application *must* unilaterally overwrite the shared information,
 it omits the `timestamp` parameter to the `PUT /v1/users/{userId}/appState` operation.
 
 ### Management operations
-**Q: `/ad-manifest` ?**
+**TBD.**
 
 ## Practice of Operation
 **TBD.**
@@ -219,6 +219,3 @@ it omits the `timestamp` parameter to the `PUT /v1/users/{userId}/appState` oper
 ### Bitcoin wallet provisioning
 
 ### Advertisement provisioning
-
-cf., https://github.com/brave/vault/wiki/Content-Categories
-https://docs.google.com/document/d/10_dluieRIRQpRc9sBMOuV-27rzQxLHm1_5Y-RztAx0w

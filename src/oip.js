@@ -99,7 +99,7 @@ OIP.prototype.reload = function () {
     }.bind(this))
     if (payload.elements.tiles.length === 0) { return }
 
-    payload.cat[category] = ''
+    payload.cat[category] = 24 * 60 * 60
 
     this.refills++
     wreck.post(this.config.oip.server,

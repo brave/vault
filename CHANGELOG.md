@@ -1,6 +1,28 @@
 # ChangeLog for Brave Vault
 
-## [integration candidate 0.0.2]
+## [integration candidate 0.0.3]
+
+* added:
+    * /v1/login & /v1/logout for admin/devops using github authentication and team membership
+    * /v1/oip/ads/statistics, /v1/oip/ads/categories, and /v1/oip/ads/categories/{category}
+
+* replaced: replace previous OIP driver
+    * temporary algorithm for intent mapping
+    * /v1/oip/ads/* for devops
+    * /v1/ad-manifest/* for admin and devops
+
+* fixed:
+    * properly interpret heroku x-forwared-for: header
+    * sdebug _finally_ working properly
+
+* moved:
+    * `/ad` now `/replacement`
+    * `/v1/users/{userId}/ad` now `/v1/users/{userId}/replacement`
+
+* standardjs: now conformant
+
+
+## [integration candidate 0.0.2](https://github.com/brave/vault/commit/0d286b7484a168a3f0d7958a8155b3414376a1ef)
 
 * deprecated: `POST /auth` by `PUT /v1/users/{userId}`
     * `{ userId: '...' }` no longer passed as the body, now part of the path

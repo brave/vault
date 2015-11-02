@@ -9,7 +9,6 @@ var underscore = require('underscore')
 
 var DB = require('./db')
 var OIP = require('./oip')
-// var Sonobi = require('./sonobi').Sonobi
 var Wallet = require('./wallet')
 
 var profile = process.env.NODE_ENV || 'development'
@@ -18,13 +17,9 @@ var database = new DB(config)
 var runtime = {
   db: database,
   wallet: new Wallet(config),
-//  sonobi: new Sonobi(config, database),
   oip: new OIP(config),
-  hello: require('../config/hello.js')
+  login: config.login
 }
-
-// TODO - do we wait for a pre-fill to complete before starting the server?
-if (runtime.sonobi) runtime.sonobi.prefill()
 
 var server = new Hapi.Server()
 server.connection({ port: config.port })
@@ -47,18 +42,18 @@ server.register(
   server.auth.strategy('github', 'bell', {
     provider: 'github',
     password: require('cryptiles').randomString(64),
-    clientId: runtime.hello.clientId,
-    clientSecret: runtime.hello.clientSecret,
-    isSecure: runtime.hello.isSecure,
-    forceHttps: runtime.hello.isSecure,
+    clientId: runtime.login.clientId,
+    clientSecret: runtime.login.clientSecret,
+    isSecure: runtime.login.isSecure,
+    forceHttps: runtime.login.isSecure,
     scope: ['user:email', 'read:org']
   })
-  debug('github authentication: forceHttps=' + runtime.hello.isSecure)
+  debug('github authentication: forceHttps=' + runtime.login.isSecure)
 
   server.auth.strategy('session', 'cookie', {
     password: 'cookie-encryption-password',
     cookie: 'sid',
-    isSecure: runtime.hello.isSecure
+    isSecure: runtime.login.isSecure
   })
 })
 
