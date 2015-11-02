@@ -7,11 +7,11 @@ var underscore = require('underscore')
 var v1 = {}
 
 /*
-   GET  /ad-manfest?since={milliseconds since epoch}&limit={positive integer}
-        defaults to since=0 limit=100
+   GET /v1/ad-manfest?since={milliseconds since epoch}&limit={positive integer}
+       defaults to since=0 limit=100
 
-   GET  /ad-manifest?id={database key}&limit={positive integer}
-        no default for id, limit=1
+   GET /v1/ad-manifest?id={database key}&limit={positive integer}
+       no default for id, limit=1
 
  */
 
@@ -65,7 +65,7 @@ validate:
 }
 
 /*
-   GET  /ad-manifest/{hostname}
+   GET /v1/ad-manifest/{hostname}
  */
 
 v1.getHostname =
@@ -95,7 +95,7 @@ validate:
 }
 
 /*
-   POST /ad-manifest
+   POST /v1/ad-manifest
         { "hostname": "...", "replacementAd": "..." }
         create (entry MUST not exist)
  */
@@ -142,9 +142,9 @@ validate:
 }
 
 /*
-   PUT /ad-manifest/{hostname}
-        { "replacementAd": "..." }
-        update (entry MUST exist)
+   PUT /v1/ad-manifest/{hostname}
+       { "replacementAd": "..." }
+       update (entry MUST exist)
  */
 
 v1.putHostname =

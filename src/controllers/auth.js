@@ -7,8 +7,8 @@ var Joi = require('joi')
 var v0 = {}
 
 /*
-   POST  /auth
-         { "userId": "..." }
+   POST /auth
+        { "userId": "..." }
         create (entry MUST not exist)
  */
 
@@ -55,8 +55,8 @@ validate:
 var v1 = {}
 
 /*
-   PUT  /v1/users/{userId}
-        create (entry MUST not exist)
+   PUT /v1/users/{userId}
+       create (entry MUST not exist)
  */
 
 v1.put =

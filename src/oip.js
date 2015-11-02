@@ -246,7 +246,7 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
   return underscore.extend({}, ad, suffix)
 }
 
-OIP.prototype.categories = function () {
+OIP.prototype.categories = function (formatP) {
   var now = new Date().getTime()
   var result = {}
 
@@ -267,7 +267,7 @@ OIP.prototype.categories = function () {
       this.trim(pq)
       datum = { empties: pq.empties,
                 queue: pq.queue.size(),
-                retryIn: retry / 1000,
+                retryIn: formatP ? retry / 1000 : pq.retry,
                 impressions: pq.impressions
               }
       earliest = Number.MAX_SAFE_INTEGER
@@ -278,8 +278,8 @@ OIP.prototype.categories = function () {
       })
       if (latest === 0) earliest = 0
       result[category].sizes[size] = underscore.extend(datum,
-                                                       { earliest: Math.max(earliest - now, 0) / 1000,
-                                                         latest: Math.max(latest - now, 0) / 1000
+                                                       { earliest: formatP ? Math.max(earliest - now, 0) / 1000 : earliest,
+                                                         latest: formatP ? Math.max(latest - now, 0) / 1000 : latest
                                                        })
     }.bind(this))
   }.bind(this))
@@ -289,8 +289,8 @@ OIP.prototype.categories = function () {
 
 var bootTime = new Date().getTime()
 
-OIP.prototype.statistics = function () {
-  var result = { uptime: (new Date().getTime() - bootTime) / 1000,
+OIP.prototype.statistics = function (formatP) {
+  var result = { uptime: formatP ? (new Date().getTime() - bootTime) / 1000 : bootTime,
                  categories: { active: 0, total: underscore.keys(this.config.oip.categories).length },
                  errors: 0,
                  options: this.config.oip.options,

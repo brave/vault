@@ -209,7 +209,97 @@ if an application *must* unilaterally overwrite the shared information,
 it omits the `timestamp` parameter to the `PUT /v1/users/{userId}/appState` operation.
 
 ### Management operations
-**TBD.**
+The `GET /v1/login` operation is used to authenticate either an `admin` or `devops` for the server.
+The user is asked to authenticate their GitHub identity,
+and are assigned permissions based on team-membership.
+Operations are henceforth authenticated via an encrypted session cookie.
+
+The `GET /v1/logout` operation is used to remove the cookie.
+
+### Ad Manifest operations
+
+   GET /ad-manfest?since={milliseconds since epoch}&limit={positive integer}
+       defaults to since=0 limit=100
+
+   GET /ad-manifest?id={database key}&limit={positive integer}
+       no default for id, limit=1
+
+   GET /ad-manifest/{hostname}
+
+   POST /ad-manifest
+        { "hostname": "...", "replacementAd": "..." }
+        create (entry MUST not exist)
+
+   PUT /ad-manifest/{hostname}
+       { "replacementAd": "..." }
+       update (entry MUST exist)
+
+### OIP statistic operations
+The OIP subsystem attempts to do "just in time" caching of advertisements.
+These are used when performing the `/v1/users/{userId}/replacement` operation.
+Each of the statistics operations takes an optional `format` parameter that defaults to `false`.
+If set to `true` then instead of returning `application/json`, `text/html` is returned.
+
+The operator uses the `GET /v1/oip/ads/categories` operation to get information about all advertising categories known
+to the server.
+The parameters are:
+
+| parameter   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `compress`  | boolean, whether information on empty categories should be returned    |
+| `format`    | boolean, whether the results should be formatted for human-readability |
+
+The result of the operation is a JSON object containing information about each category.
+Each category is an object with these attributes:
+
+| attribute   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `name`      | string, textual name of the category                                   |
+| `errors`    | integer, the number of times a retrieval resulted in a network error   |
+| `intents`   | array of strings, the keywords associated with this category           |
+| `sizes`     | array of objects, for each ad size associated with the category        |
+
+Each size is an object with these attributes:
+
+| attribute     | meaning                                                              |
+| -------------:|:-------------------------------------------------------------------- |
+| `empties`     | integer, the number of times a retrieval resulted in an empty result |
+| `queue`       | integer, the number of ads in the queue for this size                |
+| `retryIn`     | timestamp, when the next retrieval for this size will occur          |
+| `impressions` | integer, the number of impressions remaining for this size           |
+| `earliest`    | timestamp, the earliest expiration date for this size                |
+| `latest`      | timestamp, the latest expiration date for this size                  |
+
+If `format` is true, then timestamps are returned in _relative_ seconds;
+otherwise, they are returned in the number of micro-seconds since the UNIX epoch.
+
+The operator uses the `GET /v1/oip/ads/categories/{category}` to get information about a particular advertising category.
+The parameters are:
+
+| parameter   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `category`  | string, the desired category, e.g., "IAB1"                             |
+| `format`    | boolean, whether the results should be formatted for human-readability |
+
+The result of the operation is a JSON object containing information about the desired category.
+
+The operator uses the `/v1/oip/ads/statistics` operation to get high-level information about the categories and sizes in the
+system.
+The parameters are:
+
+| parameter   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `format`    | boolean, whether the results should be formatted for human-readability |
+
+The result of the operation is a JSON object containing these attributes:
+
+| attribute    | meaning                                                                |
+| ------------:|:---------------------------------------------------------------------- |
+| `uptime`     | timestamp, when the OIP subsystem started                              |
+| `categories` | an object containing `active` and `total` attributes                   |
+| `errors`     | integer, the total number of errors encountered during retrievals      |
+| `options`    | an object listing the tuning parameters for the OIP subsystem          |
+| `sizes`      | array of objects, containing `empties`, `impressions`, and `queue`     |
 
 ## Practice of Operation
 **TBD.**

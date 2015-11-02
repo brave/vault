@@ -6,7 +6,7 @@ var Joi = require('joi')
 var v1 = {}
 
 /*
-   GET  /v1/login
+   GET /v1/login
  */
 
 v1.login =

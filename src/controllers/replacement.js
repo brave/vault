@@ -6,7 +6,7 @@ var underscore = require('underscore')
 var v0 = {}
 
 /*
-   GET  /replacement?braveUserId={userId}
+   GET /replacement?braveUserId={userId}
  */
 
 v0.get =
@@ -62,7 +62,7 @@ validate:
 var v1 = {}
 
 /*
-   GET  /v1/users/{userId}/replacement?...
+   GET /v1/users/{userId}/replacement?...
  */
 
 v1.get =
@@ -145,7 +145,7 @@ validate:
 }
 
 /*
-   GET  /v1/ad-clicks/{adUnitId}
+   GET /v1/ad-clicks/{adUnitId}
  */
 
 v1.getClicks =

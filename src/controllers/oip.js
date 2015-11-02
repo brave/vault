@@ -6,7 +6,8 @@ var underscore = require('underscore')
 var v1 = {}
 
 /*
-   GET  /oip/ads/categories
+   GET /v1/oip/ads/categories?compress={boolean}&format={boolean}
+       defaults to compress=false, format=false
  */
 
 v1.getCategories =
@@ -16,7 +17,7 @@ v1.getCategories =
     var compressP = request.query.compress
     var formatP = request.query.format
 
-    categories = runtime.oip.categories()
+    categories = runtime.oip.categories(formatP)
     if (compressP) {
       result = {}
       underscore.keys(categories).forEach(function (category) {
@@ -53,7 +54,8 @@ validate:
 }
 
 /*
-   GET  /oip/ads/categories/{category}
+   GET /v1/oip/ads/categories/{category}&format={boolean}
+       defaults to format=false
  */
 
 v1.getCategory =
@@ -62,7 +64,7 @@ v1.getCategory =
     var result
     var category = request.params.category
     var formatP = request.query.format
-    var categories = runtime.oip.categories()
+    var categories = runtime.oip.categories(formatP)
 
     result = categories[category]
     if (!result) { return reply(boom.notFound('oip entry does not exist', { category: category })) }
@@ -85,7 +87,8 @@ validate:
 }
 
 /*
-   GET  /oip/ads/statistics
+   GET /v1/oip/ads/statistics&format={boolean}
+       defaults to format=false
  */
 
 v1.getStatistics =
