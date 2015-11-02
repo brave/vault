@@ -10,6 +10,6 @@ module.exports =
     bye: 'https://brave.com',
     clientId: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    isSecure: process.env.GITHUB_FORCE_HTTPS || false
+    isSecure: true
   }
 };
