@@ -1,7 +1,15 @@
-module.exports = {
-  port: process.env.PORT,
+module.exports =
+{ port: process.env.PORT,
   database: process.env.MONGO_URI,
   bitgoUser: process.env.BITGO_USER,
   bitgoPassword: process.env.BITGO_PASSWORD,
-  bitgoAccessToken: process.env.BITGO_TOKEN
+  bitgoAccessToken: process.env.BITGO_TOKEN,
+  login:
+  { organization: 'brave',
+    world: '/v1/oip/ads/statistics?format=on',
+    bye: 'https://brave.com',
+    clientId: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    isSecure: process.env.GITHUB_FORCE_HTTPS || false
+  }
 };

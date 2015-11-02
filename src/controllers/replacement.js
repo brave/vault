@@ -23,30 +23,17 @@ v0.get =
     if (typeof count === 'object') { count = count.nMatched }
     if (count === 0) { return reply(boom.notFound('user entry does not exist', { braveUserId: userId })) }
 
-    tag = 'Use Brave'
-    if (runtime.sonobi) {
-      // retrieve an ad for an intent and size
-      ad = runtime.sonobi.adUnitForIntent(request.query, width, height)
+    user = await users.findOne({ userId: userId }, { intents: true })
+    if (user) intents = user.intents
+    debug('user intents: ' + JSON.stringify(user.intents))
 
-      // TODO - refill the in memory caches
-      // Warning - this is a fire and forget call - we are NOT
-      // waiting for the results.
-      runtime.sonobi.prefill()
-    } else {
-      user = await users.findOne({ userId: userId }, { intents: true })
-      if (user) intents = user.intents
-      debug('user intents: ' + JSON.stringify(user.intents))
-      ad = (intents) && runtime.oip.adUnitForIntents(intents, width, height)
-      if (ad) tag = ad.name
-    }
-
-    // TODO - ensure ad.lp and ad.url are safe
+    ad = (intents) && runtime.oip.adUnitForIntents(intents, width, height)
     if (ad) {
       image = '<a href="' + ad.lp + '" target="_blank"><img src="' + ad.url + '"/></a>'
+      tag = ad.name
     } else {
-      // What to do if there are no valid ads? server a placeholder?
       image = '<img src="https://placeimg.com/' + width + '/' + height + '"/>'
-
+      tag = 'Use Brave'
       debug('default ad returned')
     }
 
