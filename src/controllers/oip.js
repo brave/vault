@@ -95,7 +95,7 @@ v1.getStatistics =
 { handler: function (runtime) {
   return async function (request, reply) {
     var formatP = request.query.format
-    var result = runtime.oip.statistics()
+    var result = runtime.oip.statistics(formatP)
 
     if (!formatP) return reply(result)
     reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')

@@ -217,22 +217,49 @@ Operations are henceforth authenticated via an encrypted session cookie.
 The `GET /v1/logout` operation is used to remove the cookie.
 
 ### Ad Manifest operations
+The Ad Manifest subsystem maintains a repository of ad placement information for different sites.
 
-   GET /ad-manfest?since={milliseconds since epoch}&limit={positive integer}
-       defaults to since=0 limit=100
+The administrator uses the `GET /v1/ad-manifest` operation to incrementally get information about sites.
+The parameters are:
 
-   GET /ad-manifest?id={database key}&limit={positive integer}
-       no default for id, limit=1
+| parameter   | meaning                                                                     |
+| -----------:|:--------------------------------------------------------------------------- |
+| `id`        | the database identifier of the first entry to return                        |
+| `since`     | string, an opaque monotonically-increasing value                            |
+| `limit`     | positive integer, the maximum number of entries to return                   |
 
-   GET /ad-manifest/{hostname}
+Either the `id` or `since` entry must be present, but not both.
+If the `id` parameter is present, then the `limit` parameter defaults to `1`.
+If the `id` parameter is not present, the the `since` parameter defaults to `0` and the `limit` parameter defaults to `100`.
 
-   POST /ad-manifest
-        { "hostname": "...", "replacementAd": "..." }
-        create (entry MUST not exist)
+The result of the operation is a JSON array containing zero or more entries.
+Each entry is an object with these attributes:
 
-   PUT /ad-manifest/{hostname}
-       { "replacementAd": "..." }
-       update (entry MUST exist)
+| attribute       | meaning                                                                    |
+| ---------------:|:-------------------------------------------------------------------------- |
+| `_id`           | string, a unique identifier for the entry                                  |
+| `hostname`      | string, a domain name corresponding to the entry                           |
+| `replacementAd` | an array of objects                                                        |
+| `timestamp`     | string, an opaque value uniquely identifying the entry's modification time |
+
+
+The administrator uses the `GET /v1/ad-manifest/{hostname} operation to get information on the entry corresponding to a
+particular hostname. The result of the oepration is a JSON object.
+
+The administrator uses the `POST /v1/ad-manifest` operation to create an entry.
+The parameters are:
+
+| parameter      | meaning                                                                     |
+| ---------------:|:-------------------------------------------------------------------------- |
+| `hostname`      | string, a domain name corresponding to the entry                           |
+| `replacementAd` | an array of objects                                                        |
+
+Similarly, the administrator uses the `PUT /v1/ad-manifest/{hostname}` opreation to modify an entry.
+The parameters are:
+
+| parameter      | meaning                                                                     |
+| ---------------:|:-------------------------------------------------------------------------- |
+| `replacementAd` | an array of objects                                                        |
 
 ### OIP statistic operations
 The OIP subsystem attempts to do "just in time" caching of advertisements.
@@ -270,8 +297,8 @@ Each size is an object with these attributes:
 | `earliest`    | timestamp, the earliest expiration date for this size                |
 | `latest`      | timestamp, the latest expiration date for this size                  |
 
-If `format` is true, then timestamps are returned in _relative_ seconds;
-otherwise, they are returned in the number of micro-seconds since the UNIX epoch.
+If `format` is `true`, then timestamps are returned in _relative_ seconds;
+otherwise, they are returned in the number of milliseconds since the UNIX epoch.
 
 The operator uses the `GET /v1/oip/ads/categories/{category}` to get information about a particular advertising category.
 The parameters are:
