@@ -32,12 +32,12 @@ var OIP = function (config) {
 
   this.pqs = {}
   this.tokenizer = new natural.WordTokenizer()
-  underscore.keys(this.config.oip.categories).forEach(function (category) {
+  underscore.keys(this.config.oip.categories).forEach(category => {
     var trie = new Trie()
 
     trie.addStrings(this.tokenizer.tokenize(this.config.oip.categories[category]))
     this.pqs[category] = { category: category, errors: 0, sizes: {}, trie: trie, intents: trie.keysWithPrefix('') }
-    underscore.keys(this.config.oip.sizes).forEach(function (size) {
+    underscore.keys(this.config.oip.sizes).forEach(size => {
       this.pqs[category].sizes[size] = { queue: new PriorityQ(pqComparator),
                                         lowWater: this.config.oip.options.lowWater,
                                         highWater: this.config.oip.options.highWater,
@@ -45,8 +45,8 @@ var OIP = function (config) {
                                         impressions: 0,
                                         retry: 0
                                        }
-    }.bind(this))
-  }.bind(this))
+    })
+  })
 
   this.refills = 0
   this.refill()
@@ -71,7 +71,7 @@ OIP.prototype.refill = function () {
 }
 
 OIP.prototype.reload = function () {
-  underscore.keys(this.config.oip.categories).forEach(function (category) {
+  underscore.keys(this.config.oip.categories).forEach(category => {
     var payload =
         { elements:
           { 'content_types': [ 'image/gif', 'image/png', 'image/jpeg' ],
@@ -84,7 +84,7 @@ OIP.prototype.reload = function () {
 
     if (this.refills >= this.config.oip.options.maxFlights) { return }
 
-    underscore.keys(this.pqs[category].sizes).forEach(function (size) {
+    underscore.keys(this.pqs[category].sizes).forEach(size => {
       var pq = this.pqs[category].sizes[size]
       var depth = pq.impressions
       var tile = []
@@ -96,7 +96,7 @@ OIP.prototype.reload = function () {
       sizes.push(size)
       for (depth = pq.highWater - depth; depth > 0; depth--) { tile.push({ tsize: size }) }
       payload.elements.tiles.push(tile)
-    }.bind(this))
+    })
     if (payload.elements.tiles.length === 0) { return }
 
     payload.cat[category] = 24 * 60 * 60
@@ -106,7 +106,7 @@ OIP.prototype.reload = function () {
                { payload: JSON.stringify(payload),
                  headers: { 'Content-Type': 'application/json' }
                },
-        function (err, response, body) {
+        (err, response, body) => {
           var offset, result
           var now = new Date().getTime()
 
@@ -117,9 +117,9 @@ OIP.prototype.reload = function () {
             result = JSON.parse(body)
           } catch (ex) {
             this.pqs[category].errors++
-            sizes.forEach(function (size) {
+            sizes.forEach(size => {
               this.pqs[category].sizes[size].retry = now + this.config.oip.options.retryInterval
-            }.bind(this))
+            })
 
             if ((body) && (body.length !== 0)) {
               ex.payload = payload
@@ -129,7 +129,7 @@ OIP.prototype.reload = function () {
           }
 
           offset = 0
-          sizes.forEach(function (size) {
+          sizes.forEach(size => {
             var parts
             var count = 0
             var frequency = util.isArray(result.elements.fcap) ? (result.elements.fcap[offset] || result.elements.fcap[0])
@@ -167,7 +167,7 @@ OIP.prototype.reload = function () {
             }
             if (frequency.impression_limit <= 0) frequency.impression_limit = 1
 
-            result.elements.tiles[offset].forEach(function (ad) {
+            result.elements.tiles[offset].forEach(ad => {
               if (ad.url) {
                 pq.queue.enq(underscore.extend(ad, { expires: now + (frequency.time_frame * 1000),
                                                      impressions: frequency.impression_limit
@@ -182,20 +182,20 @@ OIP.prototype.reload = function () {
               } else {
                 this.pqs[category].sizes[size].empties = 0
               }
-            }.bind(this))
+            })
 
             offset++
-          }.bind(this))
+          })
           if (!util.isArray(result.elements.fcap)) return debug('frequency caps not an array')
 
-          result.elements.fcap.forEach(function (frequency) {
+          result.elements.fcap.forEach(frequency => {
             if (frequency.intent_data) {
               this.pqs[category].trie.addStrings(this.tokenizer.tokenize(frequency.intent_data))
               this.pqs[category].intents = this.pqs[category].trie.keysWithPrefix('')
             }
-          }.bind(this))
-        }.bind(this))
-  }.bind(this))
+          })
+        })
+  })
 
   if (this.refills > 0) { setTimeout(this.reload.bind(this), 500) }
 }
@@ -217,7 +217,7 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
   var score = -1
   var size = width + 'x' + height
 
-  underscore.shuffle(underscore.keys(this.config.oip.categories)).forEach(function (category) {
+  underscore.shuffle(underscore.keys(this.config.oip.categories)).forEach(category => {
     var ilength, pqs
 
     pqs = this.pqs[category]
@@ -233,7 +233,7 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
     result = pqs
     score = ilength
     suffix = { category: category, name: this.config.oip.categories[category] }
-  }.bind(this))
+  })
 
   if (!result) return debug('nothing matching intents of ' + JSON.stringify(intents))
 
@@ -250,7 +250,7 @@ OIP.prototype.categories = function (formatP) {
   var now = new Date().getTime()
   var result = {}
 
-  underscore.keys(this.config.oip.categories).forEach(function (category) {
+  underscore.keys(this.config.oip.categories).forEach(category => {
     var pqs = this.pqs[category]
 
     result[category] = { name: this.config.oip.categories[category],
@@ -259,7 +259,7 @@ OIP.prototype.categories = function (formatP) {
                          sizes: {}
                        }
 
-    underscore.keys(pqs.sizes).forEach(function (size) {
+    underscore.keys(pqs.sizes).forEach(size => {
       var datum, earliest, latest
       var pq = pqs.sizes[size]
       var retry = Math.max(pq.retry - now, 0)
@@ -281,8 +281,8 @@ OIP.prototype.categories = function (formatP) {
                                                        { earliest: formatP ? Math.max(earliest - now, 0) / 1000 : earliest,
                                                          latest: formatP ? Math.max(latest - now, 0) / 1000 : latest
                                                        })
-    }.bind(this))
-  }.bind(this))
+    })
+  })
 
   return result
 }
@@ -297,7 +297,7 @@ OIP.prototype.statistics = function (formatP) {
                  sizes: {}
                }
 
-  underscore.keys(this.config.oip.categories).forEach(function (category) {
+  underscore.keys(this.config.oip.categories).forEach(category => {
     var activeP = 0
     var pqs = this.pqs[category]
 
@@ -313,7 +313,7 @@ OIP.prototype.statistics = function (formatP) {
     })
 
     if (activeP) result.categories.active++
-  }.bind(this))
+  })
 
   return result
 }
