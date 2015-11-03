@@ -59,17 +59,14 @@ v1.logout =
     var debug = braveHapi.debug(module, request)
     var credentials = request.auth.credentials
 
-    debug('logout ' + credentials.provider + ' ' + credentials.profile.email + ': ' + JSON.stringify(credentials.scope))
+    if (credentials) {
+      debug('logout ' + credentials.provider + ' ' + credentials.profile.email + ': ' + JSON.stringify(credentials.scope))
+    }
 
     request.auth.session.clear()
     reply.redirect(runtime.login.bye)
   }
 },
-
-auth:
-  { strategy: 'session',
-    mode: 'required'
-  },
 
 validate:
   { query: {}
