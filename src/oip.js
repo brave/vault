@@ -1,10 +1,10 @@
+var braveHapi = require('./brave-hapi')
 var debug = new (require('./sdebug'))('oip')
 var natural = require('natural')
 var PriorityQ = require('priorityqueuejs')
 var Trie = natural.Trie
 var underscore = require('underscore')
 var util = require('util')
-var wreck = require('wreck')
 
 var OIP = function (config) {
   if (!(this instanceof OIP)) { return new OIP(config) }
@@ -70,8 +70,8 @@ OIP.prototype.refill = function () {
   this.reload()
 }
 
-OIP.prototype.reload = function () {
-  underscore.keys(this.config.oip.categories).forEach(category => {
+OIP.prototype.reload = async function () {
+  for (let category of underscore.keys(this.config.oip.categories)) {
     var payload =
         { elements:
           { 'content_types': [ 'image/gif', 'image/png', 'image/jpeg' ],
@@ -84,7 +84,7 @@ OIP.prototype.reload = function () {
 
     if (this.refills >= this.config.oip.options.maxFlights) { return }
 
-    underscore.keys(this.pqs[category].sizes).forEach(size => {
+    for (let size of underscore.keys(this.pqs[category].sizes)) {
       var pq = this.pqs[category].sizes[size]
       var depth = pq.impressions
       var tile = []
@@ -96,106 +96,105 @@ OIP.prototype.reload = function () {
       sizes.push(size)
       for (depth = pq.highWater - depth; depth > 0; depth--) { tile.push({ tsize: size }) }
       payload.elements.tiles.push(tile)
-    })
+    }
     if (payload.elements.tiles.length === 0) { return }
 
     payload.cat[category] = 24 * 60 * 60
 
     this.refills++
-    wreck.post(this.config.oip.server,
-               { payload: JSON.stringify(payload),
-                 headers: { 'Content-Type': 'application/json' }
-               },
-        (err, response, body) => {
-          var offset, result
-          var now = new Date().getTime()
+    var body
+    try {
+      body = await braveHapi.wreck.post(this.config.oip.server,
+                                       { payload: JSON.stringify(payload),
+                                         headers: { 'Content-Type': 'application/json' }
+                                       })
 
-          this.refills--
+      var offset, result
+      var now = new Date().getTime()
 
-          try {
-            if (err) { throw err }
-            result = JSON.parse(body)
-          } catch (ex) {
-            this.pqs[category].errors++
-            sizes.forEach(size => {
-              this.pqs[category].sizes[size].retry = now + this.config.oip.options.retryInterval
-            })
+      this.refills--
 
-            if ((body) && (body.length !== 0)) {
-              ex.payload = payload
-              if (body) { ex.body = body.toString() }
-            }
-            return debug('error for OIP category ' + category, ex)
-          }
+      result = JSON.parse(body)
+    } catch (ex) {
+      this.pqs[category].errors++
+      sizes.forEach(size => {
+        this.pqs[category].sizes[size].retry = now + this.config.oip.options.retryInterval
+      })
 
-          offset = 0
-          sizes.forEach(size => {
-            var parts
-            var count = 0
-            var frequency = util.isArray(result.elements.fcap) ? (result.elements.fcap[offset] || result.elements.fcap[0])
-                                : { intent_type: '', intent_data: '', time_frame: 0, impression_limit: 0 }
-            var pq = this.pqs[category].sizes[size]
+      if ((body) && (body.length !== 0)) {
+        ex.payload = payload
+        if (body) { ex.body = body.toString() }
+      }
+      return debug('error for OIP category ' + category, ex)
+    }
 
-            if (!util.isArray(result.elements.tiles[offset])) return
+    offset = 0
+    sizes.forEach(size => {
+      var parts
+      var count = 0
+      var frequency = util.isArray(result.elements.fcap) ? (result.elements.fcap[offset] || result.elements.fcap[0])
+                          : { intent_type: '', intent_data: '', time_frame: 0, impression_limit: 0 }
+      var pq = this.pqs[category].sizes[size]
 
-            parts = frequency.time_frame.toString().split(' ')
-            if (parts.length === 2) {
-              frequency.time_frame = parseInt(parts[0], 10) * { week: 7 * 24 * 60 * 60,
-                                                                weeks: 7 * 24 * 60 * 60,
-                                                                day: 24 * 60 * 60,
-                                                                days: 24 * 60 * 60,
-                                                                hour: 60 * 60,
-                                                                hours: 60 * 60,
-                                                                minute: 60,
-                                                                minutes: 60,
-                                                                second: 1,
-                                                                seconds: 1 }[parts[1]]
-            }
-            if (isNum(frequency.time_frame)) {
-              frequency.time_frame = parseInt(frequency.time_frame, 10)
-            } else {
-              debug('unknown time_frame in ' + JSON.stringify(frequency))
-              frequency.time_frame = 0
-            }
-            if (frequency.time_frame <= 0) frequency.time_frame = 24 * 60 * 60
+      if (!util.isArray(result.elements.tiles[offset])) return
 
-            if (isNum(frequency.impression_limit)) {
-              frequency.impression_limit = parseInt(frequency.impression_limit, 10)
-            } else {
-              debug('unknown impression_limit in ' + JSON.stringify(frequency))
-              frequency.impression_limit = 0
-            }
-            if (frequency.impression_limit <= 0) frequency.impression_limit = 1
+      parts = frequency.time_frame.toString().split(' ')
+      if (parts.length === 2) {
+        frequency.time_frame = parseInt(parts[0], 10) * { week: 7 * 24 * 60 * 60,
+                                                          weeks: 7 * 24 * 60 * 60,
+                                                          day: 24 * 60 * 60,
+                                                          days: 24 * 60 * 60,
+                                                          hour: 60 * 60,
+                                                          hours: 60 * 60,
+                                                          minute: 60,
+                                                          minutes: 60,
+                                                          second: 1,
+                                                          seconds: 1 }[parts[1]]
+      }
+      if (isNum(frequency.time_frame)) {
+        frequency.time_frame = parseInt(frequency.time_frame, 10)
+      } else {
+        debug('unknown time_frame in ' + JSON.stringify(frequency))
+        frequency.time_frame = 0
+      }
+      if (frequency.time_frame <= 0) frequency.time_frame = 24 * 60 * 60
 
-            result.elements.tiles[offset].forEach(ad => {
-              if (ad.url) {
-                pq.queue.enq(underscore.extend(ad, { expires: now + (frequency.time_frame * 1000),
-                                                     impressions: frequency.impression_limit
-                                                   }))
-                pq.impressions += frequency.impression_limit
-                count++
-              }
+      if (isNum(frequency.impression_limit)) {
+        frequency.impression_limit = parseInt(frequency.impression_limit, 10)
+      } else {
+        debug('unknown impression_limit in ' + JSON.stringify(frequency))
+        frequency.impression_limit = 0
+      }
+      if (frequency.impression_limit <= 0) frequency.impression_limit = 1
 
-              if (count === 0) {
-                this.pqs[category].sizes[size].empties++
-                this.pqs[category].sizes[size].retry = now + this.config.oip.options.emptyInterval
-              } else {
-                this.pqs[category].sizes[size].empties = 0
-              }
-            })
+      result.elements.tiles[offset].forEach(ad => {
+        if (ad.url) {
+          pq.queue.enq(underscore.extend(ad, { expires: now + (frequency.time_frame * 1000),
+                                               impressions: frequency.impression_limit
+                                             }))
+          pq.impressions += frequency.impression_limit
+          count++
+        }
 
-            offset++
-          })
-          if (!util.isArray(result.elements.fcap)) return debug('frequency caps not an array')
+        if (count === 0) {
+          this.pqs[category].sizes[size].empties++
+          this.pqs[category].sizes[size].retry = now + this.config.oip.options.emptyInterval
+        } else {
+          this.pqs[category].sizes[size].empties = 0
+        }
+      })
 
-          result.elements.fcap.forEach(frequency => {
-            if (frequency.intent_data) {
-              this.pqs[category].trie.addStrings(this.tokenizer.tokenize(frequency.intent_data))
-              this.pqs[category].intents = this.pqs[category].trie.keysWithPrefix('')
-            }
-          })
-        })
-  })
+      offset++
+    })
+    if (!util.isArray(result.elements.fcap)) return debug('frequency caps not an array')
+
+    result.elements.fcap.forEach(frequency => {
+      if (frequency.intent_data) {
+        this.pqs[category].trie.addStrings(this.tokenizer.tokenize(frequency.intent_data))
+        this.pqs[category].intents = this.pqs[category].trie.keysWithPrefix('')
+      }
+    })
+  }
 
   if (this.refills > 0) { setTimeout(this.reload.bind(this), 500) }
 }

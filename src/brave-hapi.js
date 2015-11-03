@@ -5,6 +5,7 @@
 */
 
 var underscore = require('underscore')
+var wreck = require('wreck')
 
 var exports = {}
 
@@ -81,5 +82,24 @@ var ErrorInspect = function (err) {
 }
 
 exports.error = { inspect: ErrorInspect }
+
+/**
+ * Async wrapper for wreck.post to return the response payload.
+ */
+var WreckPost = async function (server, opts) {
+  return new Promise((resolve, reject) => {
+    wreck.post(
+      server,
+      opts,
+      (err, response, body) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve(body)
+      })
+  })
+}
+
+exports.wreck = { post: WreckPost }
 
 module.exports = exports
