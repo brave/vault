@@ -41,6 +41,10 @@ v1.login =
 
 auth: 'github',
 
+description: 'Logs the user into management operations',
+notes: 'The GET /v1/login operation is used to authenticate either an admin or devops for the server. The user is asked to authenticate their GitHub identity, and are assigned permissions based on team-membership. Operations are henceforth authenticated via an encrypted session cookie.',
+tags: ['api'],
+
 validate:
   { query:
     { code: Joi.string().optional(),
@@ -67,6 +71,10 @@ v1.logout =
     reply.redirect(runtime.login.bye)
   }
 },
+
+description: 'Logs the user out',
+notes: 'Used to remove the cookie.',
+tags: ['api'],
 
 validate:
   { query: {}
