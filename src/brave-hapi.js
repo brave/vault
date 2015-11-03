@@ -5,6 +5,7 @@
 */
 
 var underscore = require('underscore')
+var wreck = require('wreck')
 
 var exports = {}
 
@@ -52,10 +53,10 @@ AsyncRoute.prototype.config = function (config) {
   if (typeof config === 'function') { config = { handler: config } }
   if (typeof config.handler === 'undefined') { throw new Error('undefined handler for ' + JSON.stringify(this.internal)) }
 
-  return function (runtime) {
+  return runtime => {
     var payload = { handler: { async: config.handler(runtime) } }
 
-    underscore.keys(config).forEach(function (key) {
+    underscore.keys(config).forEach(key => {
       if ((key !== 'handler') && (typeof config[key] !== 'undefined')) payload[key] = config[key]
     })
 
@@ -64,7 +65,7 @@ AsyncRoute.prototype.config = function (config) {
       path: this.internal.path,
       config: payload
     }
-  }.bind(this)
+  }
 }
 
 exports.routes = { async: AsyncRoute }
@@ -81,5 +82,24 @@ var ErrorInspect = function (err) {
 }
 
 exports.error = { inspect: ErrorInspect }
+
+/**
+ * Async wrapper for wreck.post to return the response payload.
+ */
+var WreckPost = async function (server, opts) {
+  return new Promise((resolve, reject) => {
+    wreck.post(
+      server,
+      opts,
+      (err, response, body) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve(body)
+      })
+  })
+}
+
+exports.wreck = { post: WreckPost }
 
 module.exports = exports
