@@ -120,7 +120,7 @@ v1.get =
     reply.redirect(url).header('x-brave', protocol + '://' + host + '/v1/ad-clicks/' + result._id)
 
     try {
-      await sessions.update({ sessionId: sessionId, userId: userId },
+      await sessions.update({ sessionId: sessionId },
                             { $currentDate: { timestamp: { $type: 'timestamp' } },
                               $set: { activity: 'ad' },
                               $inc: { statAdReplaceCount: 1 }

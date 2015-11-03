@@ -6,7 +6,7 @@ module.exports =
   bitgoAccessToken: process.env.BITGO_TOKEN,
   login:
   { organization: 'brave',
-    world: '/v1/oip/ads/statistics?format=on',
+    world: '/documentation',
     bye: 'https://brave.com',
     clientId: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
