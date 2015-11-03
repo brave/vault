@@ -2,8 +2,13 @@ process.env.NEW_RELIC_NO_CONFIG_FILE = true
 if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { require('newrelic') }
 
 var Hapi = require('hapi')
+var Inert = require('inert')
+var Vision = require('vision')
+var HapiSwagger = require('hapi-swagger')
+
 var braveHapi = require('./brave-hapi')
 var debug = new (require('./sdebug'))('server')
+var pack = require('./../package')
 var routes = require('./controllers/index')
 var underscore = require('underscore')
 
@@ -30,7 +35,20 @@ server.register(
 [ require('bell'),
   require('blipp'),
   require('hapi-async-handler'),
-  require('hapi-auth-cookie')
+  require('hapi-auth-cookie'),
+  Inert,
+  Vision,
+  {
+    register: HapiSwagger,
+    options: {
+      apiVersion: pack.version,
+      auth:
+      { strategy: 'session',
+        scope: [ 'admin', 'devops' ],
+        mode: 'required'
+      }
+    }
+  }
 ], function (err) {
   if (err) {
     debug('unable to register extensions', err)
@@ -145,6 +163,6 @@ server.start(function (err) {
     version: server.version
   })
 
-// Hook to notify start script.
+  // Hook to notify start script.
   if (process.send) { process.send('started') }
 })

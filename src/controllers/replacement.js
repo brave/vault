@@ -48,6 +48,10 @@ v0.get =
   }
 },
 
+description: '(Deprecated) Returns an ad replacement.',
+notes: 'This method is deprecated, see the v1 method.',
+tags: ['api', 'deprecated'],
+
 validate:
   { query:
     { braveUserId: Joi.string().guid().required(),
@@ -132,15 +136,38 @@ v1.get =
   }
 },
 
+description: 'Performs an ad replacement',
+notes: 'The browser uses this operation to get information on how to perform a replacement.',
+tags: ['api'],
+
 validate:
   { query:
-    { sessionId: Joi.string().guid().required(),
-      tagName: Joi.string().required(),
-      width: Joi.number().positive().required(),
+    { sessionId: Joi.string().guid().required()
+        .description('a UUID v4 value'),
+      tagName: Joi.string().required()
+        .description('at present, \'iframe\' (for the `&lt;iframe/&gt;` tag)'),
+      width: Joi.number().positive().required()
+        .description('the width in pixels of the replacement advertisement'),
       height: Joi.number().positive().required()
+        .description('the height in pixels of the replacement advertisement')
     },
     params:
     { userId: Joi.string().guid().required() }
+  },
+
+  response: {
+    schema: Joi.object({
+      response: Joi.string()
+        .description('a data URL acting as a replacement for the advertisement. The replacement parameter has the form: <br>data:text/html;charset=utf-8,&lt;html&gt;...&lt;a href="https:.../v1/ad-clicks/{adUnitId}"&gt;&lt;img src="..." /&gt;&lt;/a&gt;...&lt;/html&gt; If the user clicks on this `<a/>` tag, then in addition to (automatically) using the `POST /v1/users/{userId}/intents` operation to record the \'click\', the brower also uses the `GET /v1/ad-clicks/{adUnitId}` operation.'),
+      status: {
+        404: Joi.object({
+          boomlet: Joi.string().description('`userId` does not refer to an existing user').required()
+        }),
+        422: Joi.object({
+          boomlet: Joi.string().description('missing parameter').required()
+        })
+      }
+    })
   }
 }
 

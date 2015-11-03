@@ -129,6 +129,10 @@ auth:
     mode: 'required'
   },
 
+description: 'Get ad manifest info',
+notes: 'The administrator uses the GET /v1/ad-manifest operation to incrementally get information about sites.',
+tags: ['api'],
+
 validate:
   { payload:
     { hostname: Joi.string().hostname().required(),
