@@ -52,10 +52,10 @@ AsyncRoute.prototype.config = function (config) {
   if (typeof config === 'function') { config = { handler: config } }
   if (typeof config.handler === 'undefined') { throw new Error('undefined handler for ' + JSON.stringify(this.internal)) }
 
-  return function (runtime) {
+  return runtime => {
     var payload = { handler: { async: config.handler(runtime) } }
 
-    underscore.keys(config).forEach(function (key) {
+    underscore.keys(config).forEach(key => {
       if ((key !== 'handler') && (typeof config[key] !== 'undefined')) payload[key] = config[key]
     })
 
@@ -64,7 +64,7 @@ AsyncRoute.prototype.config = function (config) {
       path: this.internal.path,
       config: payload
     }
-  }.bind(this)
+  }
 }
 
 exports.routes = { async: AsyncRoute }
