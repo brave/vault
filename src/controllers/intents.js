@@ -104,7 +104,7 @@ v1.post =
       session = await sessions.findOne({ sessionId: sessionId }, { intents: true })
       intentions = underscore.union(session.intents || [], underscore.uniq(tokenizer.tokenize(payload.title.toLowerCase())))
 
-      await sessions.update({ sessionId: sessionId, userId: userId },
+      await sessions.update({ sessionId: sessionId },
                              { $currentDate: { timestamp: { $type: 'timestamp' } },
                                $set: { activity: 'intent', intents: intentions }
                              },
@@ -133,12 +133,30 @@ module.exports.routes =
 ]
 
 module.exports.initialize = async function (debug, runtime) {
+// NB: this block is temporary to fix a schema issue
+  try {
+    var Promise = require('monk/lib/promise')
+
+    var z = function (fn) {
+      var promise = new Promise(this, 'indexes')
+
+      if (fn) promise.complete(fn)
+
+      debug('%s indexInformation', 'intents')
+      runtime.db.get('intents').col.dropAllIndexes(promise.resolve)
+
+      return promise
+    }
+
+    await z()
+  } catch (ex) { debug(ex) }
+
   runtime.db.checkIndices(debug,
   [ { category: runtime.db.get('intents'),
       name: 'intents',
       property: 'userId',
       empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO, type: '', payload: {} },
-      others: [ { userId: 1 }, { sessionId: 1 }, { timestamp: 1 } ]
+      others: [ { userId: 0 }, { sessionId: 1 }, { timestamp: 1 } ]
     }
   ])
 }

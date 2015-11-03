@@ -92,6 +92,13 @@ server.ext('onRequest', function (request, reply) {
   return reply.continue()
 })
 
+server.ext('onPreResponse', function (request, reply) {
+  if ((!request.response.isBoom) || (request.response.output.statusCode !== 401)) return reply.continue()
+
+  request.auth.session.clear()
+  reply.redirect('/v1/login')
+})
+
 server.on('log', function (event, tags) {
   debug(event.data, { tags: tags })
 }).on('request', function (request, event, tags) {
