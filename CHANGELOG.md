@@ -1,6 +1,28 @@
 # ChangeLog for Brave Vault
 
-## [integration candidate 0.0.2]
+## [candidate 0.0.3]
+
+* added:
+    * /v1/login & /v1/logout for admin/devops using github authentication and team membership
+    * /v1/oip/ads/statistics, /v1/oip/ads/categories, and /v1/oip/ads/categories/{category}
+
+* replaced: replace previous OIP driver
+    * temporary algorithm for intent mapping
+    * /v1/oip/ads/* for devops
+    * /v1/ad-manifest/* for admin and devops
+
+* fixed:
+    * properly interpret heroku x-forwared-for: header
+    * sdebug _finally_ working properly
+
+* moved:
+    * `/ad` now `/replacement`
+    * `/v1/users/{userId}/ad` now `/v1/users/{userId}/replacement`
+
+* standardjs: now conformant
+
+
+## [candidate 0.0.2](https://github.com/brave/vault/commit/0d286b7484a168a3f0d7958a8155b3414376a1ef)
 
 * deprecated: `POST /auth` by `PUT /v1/users/{userId}`
     * `{ userId: '...' }` no longer passed as the body, now part of the path
@@ -21,7 +43,7 @@
 * deprecated: `GET /sync/{userId}` and `POST /sync` by `GET /v1/users/{userId}/appState` and `PUT /v1/users/{userId}/appState`
     * supports _advisory locking_ using "last timestamp" strategy
 
-## [integration candidate 0.0.1](https://github.com/brave/vault/commit/e462354cb52a474a1dfb8fe87ab05aee1e8b56df)
+## [candidate 0.0.1](https://github.com/brave/vault/commit/e462354cb52a474a1dfb8fe87ab05aee1e8b56df)
 
 * mtr-i-ness: modified `.eslintrc` to allow for comma-first and more horizontal space
 

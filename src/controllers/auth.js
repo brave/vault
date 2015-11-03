@@ -7,8 +7,8 @@ var Joi = require('joi')
 var v0 = {}
 
 /*
-   POST  /auth
-         { "userId": "..." }
+   POST /auth
+        { "userId": "..." }
         create (entry MUST not exist)
  */
 
@@ -55,8 +55,8 @@ validate:
 var v1 = {}
 
 /*
-   PUT  /v1/users/{userId}
-        create (entry MUST not exist)
+   PUT /v1/users/{userId}
+       create (entry MUST not exist)
  */
 
 v1.put =
@@ -121,8 +121,8 @@ v1.delete =
     count = await sessions.update({ sessionId: sessionId, userId: userId },
                                   { $currentDate: { timestamp: { $type: 'timestamp' } },
                                     $set: { activity: 'delete' }
-                                   },
-                                 { upsert: false })
+                                  },
+                                  { upsert: false })
     if (typeof count === 'object') { count = count.nMatched }
     if (count === 0) { return reply(boom.notFound('', { sessionId: sessionId, userId: userId })) }
 
@@ -150,13 +150,13 @@ module.exports.initialize = async function (debug, runtime) {
   [ { category: runtime.db.get('users'),
       name: 'users',
       property: 'userId',
-      empty: { userId: '' },
+      empty: { userId: '', intents: [] },
       unique: [ { userId: 1 } ]
     },
     { category: runtime.db.get('sessions'),
       name: 'sessions',
       property: 'sessionId',
-      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO },
+      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO, intents: [] },
       unique: [ { sessionId: 1 } ],
       others: [ { userId: 1 }, { timestamp: 1 } ]
     }

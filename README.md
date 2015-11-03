@@ -125,7 +125,7 @@ The result of the operation is:
 | 422  | `boomlet`    | missing parameter                                        |
 
 ### Replacing Advertisements
-The browser uses the `GET /v1/users/{userId}/ad?...` operation to get information on how to perform a replacement.
+The browser uses the `GET /v1/users/{userId}/replacement?...` operation to get information on how to perform a replacement.
 The parameters are:
 
 | parameter   | meaning                                                          |
@@ -209,7 +209,124 @@ if an application *must* unilaterally overwrite the shared information,
 it omits the `timestamp` parameter to the `PUT /v1/users/{userId}/appState` operation.
 
 ### Management operations
-**Q: `/ad-manifest` ?**
+The `GET /v1/login` operation is used to authenticate either an `admin` or `devops` for the server.
+The user is asked to authenticate their GitHub identity,
+and are assigned permissions based on team-membership.
+Operations are henceforth authenticated via an encrypted session cookie.
+
+The `GET /v1/logout` operation is used to remove the cookie.
+
+### Ad Manifest operations
+The Ad Manifest subsystem maintains a repository of ad placement information for different sites.
+
+The administrator uses the `GET /v1/ad-manifest` operation to incrementally get information about sites.
+The parameters are:
+
+| parameter   | meaning                                                                     |
+| -----------:|:--------------------------------------------------------------------------- |
+| `id`        | the database identifier of the first entry to return                        |
+| `since`     | string, an opaque monotonically-increasing value                            |
+| `limit`     | positive integer, the maximum number of entries to return                   |
+
+Either the `id` or `since` entry must be present, but not both.
+If the `id` parameter is present, then the `limit` parameter defaults to `1`.
+If the `id` parameter is not present, the the `since` parameter defaults to `0` and the `limit` parameter defaults to `100`.
+
+The result of the operation is a JSON array containing zero or more entries.
+Each entry is an object with these attributes:
+
+| attribute       | meaning                                                                    |
+| ---------------:|:-------------------------------------------------------------------------- |
+| `_id`           | string, a unique identifier for the entry                                  |
+| `hostname`      | string, a domain name corresponding to the entry                           |
+| `replacementAd` | an array of objects                                                        |
+| `timestamp`     | string, an opaque value uniquely identifying the entry's modification time |
+
+
+The administrator uses the `GET /v1/ad-manifest/{hostname} operation to get information on the entry corresponding to a
+particular hostname. The result of the oepration is a JSON object.
+
+The administrator uses the `POST /v1/ad-manifest` operation to create an entry.
+The parameters are:
+
+| parameter      | meaning                                                                     |
+| ---------------:|:-------------------------------------------------------------------------- |
+| `hostname`      | string, a domain name corresponding to the entry                           |
+| `replacementAd` | an array of objects                                                        |
+
+Similarly, the administrator uses the `PUT /v1/ad-manifest/{hostname}` opreation to modify an entry.
+The parameters are:
+
+| parameter      | meaning                                                                     |
+| ---------------:|:-------------------------------------------------------------------------- |
+| `replacementAd` | an array of objects                                                        |
+
+### OIP statistic operations
+The OIP subsystem attempts to do "just in time" caching of advertisements.
+These are used when performing the `/v1/users/{userId}/replacement` operation.
+Each of the statistics operations takes an optional `format` parameter that defaults to `false`.
+If set to `true` then instead of returning `application/json`, `text/html` is returned.
+
+The operator uses the `GET /v1/oip/ads/categories` operation to get information about all advertising categories known
+to the server.
+The parameters are:
+
+| parameter   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `compress`  | boolean, whether information on empty categories should be returned    |
+| `format`    | boolean, whether the results should be formatted for human-readability |
+
+The result of the operation is a JSON object containing information about each category.
+Each category is an object with these attributes:
+
+| attribute   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `name`      | string, textual name of the category                                   |
+| `errors`    | integer, the number of times a retrieval resulted in a network error   |
+| `intents`   | array of strings, the keywords associated with this category           |
+| `sizes`     | array of objects, for each ad size associated with the category        |
+
+Each size is an object with these attributes:
+
+| attribute     | meaning                                                              |
+| -------------:|:-------------------------------------------------------------------- |
+| `empties`     | integer, the number of times a retrieval resulted in an empty result |
+| `queue`       | integer, the number of ads in the queue for this size                |
+| `retryIn`     | timestamp, when the next retrieval for this size will occur          |
+| `impressions` | integer, the number of impressions remaining for this size           |
+| `earliest`    | timestamp, the earliest expiration date for this size                |
+| `latest`      | timestamp, the latest expiration date for this size                  |
+
+If `format` is `true`, then timestamps are returned in _relative_ seconds;
+otherwise, they are returned in the number of milliseconds since the UNIX epoch.
+
+The operator uses the `GET /v1/oip/ads/categories/{category}` to get information about a particular advertising category.
+The parameters are:
+
+| parameter   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `category`  | string, the desired category, e.g., "IAB1"                             |
+| `format`    | boolean, whether the results should be formatted for human-readability |
+
+The result of the operation is a JSON object containing information about the desired category.
+
+The operator uses the `/v1/oip/ads/statistics` operation to get high-level information about the categories and sizes in the
+system.
+The parameters are:
+
+| parameter   | meaning                                                                |
+| -----------:|:---------------------------------------------------------------------- |
+| `format`    | boolean, whether the results should be formatted for human-readability |
+
+The result of the operation is a JSON object containing these attributes:
+
+| attribute    | meaning                                                                |
+| ------------:|:---------------------------------------------------------------------- |
+| `uptime`     | timestamp, when the OIP subsystem started                              |
+| `categories` | an object containing `active` and `total` attributes                   |
+| `errors`     | integer, the total number of errors encountered during retrievals      |
+| `options`    | an object listing the tuning parameters for the OIP subsystem          |
+| `sizes`      | array of objects, containing `empties`, `impressions`, and `queue`     |
 
 ## Practice of Operation
 **TBD.**
@@ -219,6 +336,3 @@ it omits the `timestamp` parameter to the `PUT /v1/users/{userId}/appState` oper
 ### Bitcoin wallet provisioning
 
 ### Advertisement provisioning
-
-cf., https://github.com/brave/vault/wiki/Content-Categories
-https://docs.google.com/document/d/10_dluieRIRQpRc9sBMOuV-27rzQxLHm1_5Y-RztAx0w

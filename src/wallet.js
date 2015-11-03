@@ -1,4 +1,4 @@
-var debug = require('./sdebug')('wallet')
+var debug = new (require('./sdebug'))('wallet')
 
 var Wallet = function (config) {
   if (!(this instanceof Wallet)) { return new Wallet(config) }

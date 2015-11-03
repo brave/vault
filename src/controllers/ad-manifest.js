@@ -7,11 +7,11 @@ var underscore = require('underscore')
 var v1 = {}
 
 /*
-   GET  /ad-manfest?since={milliseconds since epoch}&limit={positive integer}
-        defaults to since=0 limit=100
+   GET /v1/ad-manfest?since={milliseconds since epoch}&limit={positive integer}
+       defaults to since=0 limit=100
 
-   GET  /ad-manifest?id={database key}&limit={positive integer}
-        no default for id, limit=1
+   GET /v1/ad-manifest?id={database key}&limit={positive integer}
+       no default for id, limit=1
 
  */
 
@@ -49,6 +49,12 @@ v1.get =
   }
 },
 
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
+
 validate:
   { query:
     { id: Joi.string().hex().optional(),
@@ -59,7 +65,7 @@ validate:
 }
 
 /*
-   GET  /ad-manifest/{hostname}
+   GET /v1/ad-manifest/{hostname}
  */
 
 v1.getHostname =
@@ -76,6 +82,12 @@ v1.getHostname =
   }
 },
 
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
+
 validate:
   { params:
     { hostname: Joi.string().hostname().required() }
@@ -83,7 +95,7 @@ validate:
 }
 
 /*
-   POST /ad-manifest
+   POST /v1/ad-manifest
         { "hostname": "...", "replacementAd": "..." }
         create (entry MUST not exist)
  */
@@ -111,6 +123,12 @@ v1.post =
   }
 },
 
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
+
 validate:
   { payload:
     { hostname: Joi.string().hostname().required(),
@@ -124,9 +142,9 @@ validate:
 }
 
 /*
-   PUT /ad-manifest/{hostname}
-        { "replacementAd": "..." }
-        update (entry MUST exist)
+   PUT /v1/ad-manifest/{hostname}
+       { "replacementAd": "..." }
+       update (entry MUST exist)
  */
 
 v1.putHostname =
@@ -150,6 +168,12 @@ v1.putHostname =
     reply(result)
   }
 },
+
+auth:
+  { strategy: 'session',
+    scope: [ 'admin', 'devops' ],
+    mode: 'required'
+  },
 
 validate:
   { params:
