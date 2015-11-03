@@ -1,6 +1,6 @@
 # ChangeLog for Brave Vault
 
-## [candidate 0.0.3]
+## [candidate 0.0.3](https://github.com/brave/vault/commit/dee106a36a80227b1ec7a49b31aa734fc85c5ee1)
 
 * added:
     * /v1/login & /v1/logout for admin/devops using github authentication and team membership
