@@ -22,10 +22,14 @@ v0.get =
   }
 },
 
-validate:
-  { params:
-    { userId: Joi.string().guid().required() }
-  }
+  description: 'Returns shared application-state (deprecated)',
+  notes: 'cf., <a href="/documentation#!/v1/v1usersuserIdappState_get_12" target="_blank">GET /v1/users/{userId}/appState</a>',
+  tags: ['api', 'deprecated'],
+
+  validate:
+    { params:
+      { userId: Joi.string().guid().required() }
+    }
 }
 
 /*
@@ -44,20 +48,24 @@ v0.post =
   }
 },
 
-validate:
-  { payload:
-    { userId: Joi.string().guid().required(),
-      payload: Joi.any().optional(),
-      frames: Joi.any().optional(),
-      sites: Joi.any().optional(),
-      closedFrames: Joi.any().optional(),
-      statAdReplaceCount: Joi.any().optional(),
-      ui: Joi.any().optional(),
-      activeFrameKey: Joi.any().optional(),
-      searchDetail: Joi.any().optional(),
-      contextMenuDetail: Joi.any().optional()
+  description: 'Records shared application-state (deprecated)',
+  notes: 'cf., <a href="/documentation#!/v1/v1usersuserIdappState_put_11" target="_blank">PUT /v1/users/{userId}/appState</a>',
+  tags: ['api', 'deprecated'],
+
+  validate:
+    { payload:
+      { userId: Joi.string().guid().required(),
+        payload: Joi.any().optional(),
+        frames: Joi.any().optional(),
+        sites: Joi.any().optional(),
+        closedFrames: Joi.any().optional(),
+        statAdReplaceCount: Joi.any().optional(),
+        ui: Joi.any().optional(),
+        activeFrameKey: Joi.any().optional(),
+        searchDetail: Joi.any().optional(),
+        contextMenuDetail: Joi.any().optional()
+      }
     }
-  }
 }
 
 var v1 = {}
@@ -76,13 +84,32 @@ v1.get =
     result = await appStates.findOne({ userId: userId })
     if (!result) { return reply(boom.notFound('', { userId: userId })) }
 
+    underscore.extend(result, { timestamp: result.timestamp.toString() })
     reply(underscore.omit(result, '_id', 'userId'))
   }
 },
 
-validate:
-  { params:
-    { userId: Joi.string().guid().required() }
+  description: 'Returns shared application-state',
+  notes: 'Applications use an advisory locking cheme in order to synchronize and persist shared information. This operation retrieves information shared between all applications for the corresponding user. The "payload" object is opaque to the vault &mdash; the applications are responsible for determining the syntax and semantics of the information. If no information has been previously stored for the correpsonding "userId", the empty object ("{}") is returned.',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { userId: Joi.string().guid().required() }
+    },
+
+  response: {
+    schema: Joi.object({
+      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      payload: Joi.any().required().description('any arbitrary JSON value, including the empty object')
+    })
+/*
+    status: {
+      404: Joi.object({
+        boomlet: Joi.string().required().description('userId does not exist')
+      })
+    }
+ */
   }
 }
 
@@ -117,17 +144,39 @@ v1.put =
     }
 
     result = await appStates.findOne({ userId: userId }, { timestamp: true })
-    reply(underscore.omit(result, '_id'))
+    underscore.extend(result, { timestamp: result.timestamp.toString() })
+    reply(underscore.omit(result, '_id', 'userId'))
   }
 },
 
-validate:
-  { params:
-    { userId: Joi.string().guid().required() },
-    payload:
-    { timestamp: Joi.string().regex(/^[0-9]+$/).min(19).optional(),
-      payload: Joi.any().required()
+  description: 'Records shared application-state',
+  notes: 'This operation updates information shared between all applications for the correpsonding user. To successfully update the shared information, the browser must:<ol><li>1. Use the "GET /v1/users/{userId}/appState" operation to retrieve the current information; then,</li><li>2. Modify the returned "payload" as appropriate; then,</li><li>3. Use the "PUT /v1/users/{userId}/appState" operation with the previously-returned "timestamp" and the modified "payload".</li><li>4. If a "422" is returned, go back to Step 1; otherwise,</li><li>5. Optionally: persist locally the newly-returned "timestamp" and the modified "payload", so as to skip Step 1 the next time a state update is desired.</li></ol>This allows multiple applications to (patiently) coordinate their actions in upgrading the shared information. However, if an application must universally overwritte the shared information, it omits the "timestamp" parameter.',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { userId: Joi.string().guid().required() },
+      payload:
+      { timestamp: Joi.string().regex(/^[0-9]+$/).min(19).optional(),
+        payload: Joi.any().required()
+      }
+    },
+
+  response: {
+    schema: Joi.object({
+      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      payload: Joi.any().required().description('any arbitrary JSON value, including the empty object')
+    })
+/*
+    status: {
+      400: Joi.object({
+        boomlet: Joi.string().required().description('invalid timestamp')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('timestamp mismatch')
+      })
     }
+ */
   }
 }
 

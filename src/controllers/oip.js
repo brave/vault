@@ -39,18 +39,22 @@ v1.getCategories =
   }
 },
 
-auth:
-  { strategy: 'session',
-    scope: 'devops',
-    mode: 'required'
-  },
+  auth:
+    { strategy: 'session',
+      scope: 'devops',
+      mode: 'required'
+    },
 
-validate:
-  { query:
-    { compress: Joi.boolean().optional(),
-      format: Joi.boolean().optional()
+  description: 'Returns detailed statistics about all OIP categories',
+  notes: 'The "compress" parameter, if true, will not report on categories without ads. The "format" parameter, if true, will return HTML rather than JSON output.',
+  tags: ['api'],
+
+  validate:
+    { query:
+      { compress: Joi.boolean().optional(),
+        format: Joi.boolean().optional()
+      }
     }
-  }
 }
 
 /*
@@ -74,16 +78,20 @@ v1.getCategory =
   }
 },
 
-auth:
-  { strategy: 'session',
-    scope: 'devops',
-    mode: 'required'
-  },
+  auth:
+    { strategy: 'session',
+      scope: 'devops',
+      mode: 'required'
+    },
 
-validate:
-  { query: { format: Joi.boolean().optional() },
-    params: { category: Joi.string() }
-  }
+  description: 'Returns detailed statistics about a particular OIP category',
+  notes: 'The "format" parameter, if true, will return HTML rather than JSON output.',
+  tags: ['api'],
+
+  validate:
+    { query: { format: Joi.boolean().optional() },
+      params: { category: Joi.string() }
+    }
 }
 
 /*
@@ -102,14 +110,18 @@ v1.getStatistics =
   }
 },
 
-auth:
-  { strategy: 'session',
-    scope: 'devops',
-    mode: 'required'
-  },
+  auth:
+    { strategy: 'session',
+      scope: 'devops',
+      mode: 'required'
+    },
 
-validate:
-  { query: { format: Joi.boolean().optional() } }
+  description: 'Returns coarse-grain statistics about the OIP subsystem',
+  notes: 'The "format" parameter, if true, will return HTML rather than JSON output.',
+  tags: ['api'],
+
+  validate:
+    { query: { format: Joi.boolean().optional() } }
 }
 
 module.exports.routes =

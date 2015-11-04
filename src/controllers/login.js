@@ -39,18 +39,18 @@ v1.login =
   }
 },
 
-auth: 'github',
+  auth: 'github',
 
-description: 'Logs the user into management operations',
-notes: 'The GET /v1/login operation is used to authenticate either an admin or devops for the server. The user is asked to authenticate their GitHub identity, and are assigned permissions based on team-membership. Operations are henceforth authenticated via an encrypted session cookie.',
-tags: ['api'],
+  description: 'Logs the user into management operations',
+  notes: 'This operation authenticates either an administrative role ("admin" or "devops") for the vault. The user is asked to authenticate their GitHub identity, and are assigned permissions based on team-membership. Operations are henceforth authenticated via an encrypted session cookie.',
+  tags: ['api'],
 
-validate:
-  { query:
-    { code: Joi.string().optional(),
-      state: Joi.string().optional()
+  validate:
+    { query:
+      { code: Joi.string().optional(),
+        state: Joi.string().optional()
+      }
     }
-  }
 }
 
 /*
@@ -72,13 +72,13 @@ v1.logout =
   }
 },
 
-description: 'Logs the user out',
-notes: 'Used to remove the cookie.',
-tags: ['api'],
+  description: 'Logs the user out',
+  notes: 'Used to remove the cookie.',
+  tags: ['api'],
 
-validate:
-  { query: {}
-  }
+  validate:
+    { query: {}
+    }
 }
 
 module.exports.routes =
