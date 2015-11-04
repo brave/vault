@@ -110,7 +110,7 @@ v1.put =
 
   validate:
     { params:
-      { userId: Joi.string().guid().required().description('a UUID v4 value') }
+      { userId: Joi.string().guid().required().description('the identity of the user entry') }
     },
 
   response: {
@@ -154,14 +154,14 @@ v1.delete =
 
   validate:
     { params:
-      { userId: Joi.string().guid().required(),
-        sessionId: Joi.string().guid().required()
+      { userId: Joi.string().guid().required().description('the identity of the user entry'),
+        sessionId: Joi.string().guid().required().description('the identity of the session')
       }
     },
 
   response: {
     schema: Joi.object().keys({
-      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this sessions')
+      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
     })
   }
 }

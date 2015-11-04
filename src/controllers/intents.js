@@ -124,27 +124,24 @@ v1.post =
   tags: ['api'],
 
   validate:
-    { params: { userId: Joi.string().guid().required().description('a UUID v4 value') },
+    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
       payload:
-      { sessionId: Joi.string().guid().required().description('a UUID v4 value'),
+      { sessionId: Joi.string().guid().required().description('the identity of the session'),
         type: Joi.string().min(6).required().description('e.g., "browser.site.visit"'),
-        timestamp: Joi.date().format('x').required().description('opaque number (usually integer) identifying a instance of time'),
+        timestamp: Joi.date().format('x').required().description('opaque number identifying a instance of time'),
         payload: Joi.object().required().description('an opaque JSON object')
       }
     },
 
   response: {
     schema: Joi.object().keys({
-      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this sessions')
+      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
     })
 
 /*
     status: {
       404: Joi.object({
-        boomlet: Joi.string().required().description('does not refer to an existing user')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('missing parameter')
+        boomlet: Joi.string().required().description('user entry does not exist')
       })
     }
  */

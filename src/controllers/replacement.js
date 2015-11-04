@@ -142,16 +142,12 @@ v1.get =
 
   validate:
     { query:
-      { sessionId: Joi.string().guid().required()
-          .description('a UUID v4 value'),
-        tagName: Joi.string().required()
-          .description('at present, always "IFRAME" (for the &lt;iframe/&gt; tag)'),
-        width: Joi.number().positive().required()
-          .description('the width in pixels of the replacement ad'),
-        height: Joi.number().positive().required()
-          .description('the height in pixels of the replacement ad')
+      { sessionId: Joi.string().guid().required().description('the identify of the session'),
+        tagName: Joi.string().required().description('at present, always "IFRAME" (for the &lt;iframe/&gt; tag)'),
+        width: Joi.number().positive().required().description('the width in pixels of the replacement ad'),
+        height: Joi.number().positive().required().description('the height in pixels of the replacement ad')
       },
-      params: { userId: Joi.string().guid().required().description('a UUID v4 value') }
+      params: { userId: Joi.string().guid().required().description('the identity of the user entry') }
     },
 
   response: {

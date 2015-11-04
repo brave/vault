@@ -95,7 +95,7 @@ v1.get =
 
   validate:
     { params:
-      { userId: Joi.string().guid().required() }
+      { userId: Joi.string().guid().required().description('the identity of the user entry') }
     },
 
   response: {
@@ -155,10 +155,10 @@ v1.put =
 
   validate:
     { params:
-      { userId: Joi.string().guid().required() },
+      { userId: Joi.string().guid().required().description('the identity of the user entry') },
       payload:
-      { timestamp: Joi.string().regex(/^[0-9]+$/).min(19).optional(),
-        payload: Joi.any().required()
+      { timestamp: Joi.string().regex(/^[0-9]+$/).min(19).optional().description('an opaque, monotonically-increasing value'),
+        payload: Joi.any().required().description('any arbitrary JSON value, including the empty object')
       }
     },
 

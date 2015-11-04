@@ -36,7 +36,7 @@ v1.get =
       modifiers = { sort: { _id: 1 } }
     } else {
       try { since = (since || 0) ? bson.Timestamp.fromString(since) : bson.Timestamp.ZERO } catch (ex) {
-        return reply(boom.badRequest('invalid value for since parameter', { since: since }))
+        return reply(boom.badRequest('invalid value for the since parameter', { since: since }))
       }
 
       limit = 100
@@ -67,7 +67,7 @@ v1.get =
 
   validate:
     { query:
-      { id: Joi.string().hex().optional().description('the database identifier of the first entry to consider'),
+      { id: Joi.string().hex().optional().description('the identity of the first ad manifest entry to consider'),
         since: Joi.string().regex(/^[0-9]+$/).min(19).optional().description('an opaque, monotonically-increasing value'),
         limit: Joi.number().positive().optional().description('the maximum number of entries to return')
       }
@@ -75,8 +75,8 @@ v1.get =
 
   response: {
     schema: Joi.array().items(Joi.object().keys({
-      id: Joi.string().required().description('a UUID v4 value'),
-      hostname: Joi.string().hostname().required().description('the site correponding to the ad manifest'),
+      id: Joi.string().hex().required().description('the identity of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
@@ -86,7 +86,7 @@ v1.get =
 /*
     status: {
       400: Joi.object({
-        boomlet: Joi.string().required().description('invalid value for since parameter')
+        boomlet: Joi.string().required().description('invalid value for the since parameter')
       }),
       422: Joi.object({
         boomlet: Joi.string().required().description('id and since parameters may not both be present')
@@ -131,8 +131,8 @@ v1.getHostname =
 
   response: {
     schema: Joi.object({
-      id: Joi.string().required().description('a UUID v4 value'),
-      hostname: Joi.string().hostname().required().description('the site correponding to the ad manifest'),
+      id: Joi.string().hex().required().description('the identity of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
@@ -201,8 +201,8 @@ v1.post =
 
   response: {
     schema: Joi.object({
-      id: Joi.string().required().description('a UUID v4 value'),
-      hostname: Joi.string().hostname().required().description('the site correponding to the ad manifest'),
+      id: Joi.string().hex().required().description('the identity of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
@@ -275,8 +275,8 @@ v1.putHostname =
 
   response: {
     schema: Joi.object({
-      id: Joi.string().required().description('a UUID v4 value'),
-      hostname: Joi.string().hostname().required().description('the site correponding to the ad manifest'),
+      id: Joi.string().hex().required().description('the identify of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
@@ -286,7 +286,7 @@ v1.putHostname =
 /*
     status: {
       404: Joi.object({
-        boomlet: Joi.string().required().description('ad-manifest does not exist')
+        boomlet: Joi.string().required().description('ad-manifest entry does not exist')
       }),
       500: Joi.object({
         boomlet: Joi.string().required().description('database update failed')

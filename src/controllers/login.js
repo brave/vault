@@ -47,8 +47,8 @@ v1.login =
 
   validate:
     { query:
-      { code: Joi.string().optional(),
-        state: Joi.string().optional()
+      { code: Joi.string().optional().description('an opaque string identifying an oauth flow'),
+        state: Joi.string().optional().description('an opaque string')
       }
     }
 }

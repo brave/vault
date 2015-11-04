@@ -51,8 +51,8 @@ v1.getCategories =
 
   validate:
     { query:
-      { compress: Joi.boolean().optional(),
-        format: Joi.boolean().optional()
+      { compress: Joi.boolean().optional().description('do not report categories without ads'),
+        format: Joi.boolean().optional().description('report in HTML, not JSON')
       }
     }
 }
@@ -89,7 +89,7 @@ v1.getCategory =
   tags: ['api'],
 
   validate:
-    { query: { format: Joi.boolean().optional() },
+    { query: { format: Joi.boolean().optional().description('report in HTML, not JSON') },
       params: { category: Joi.string() }
     }
 }
@@ -121,7 +121,7 @@ v1.getStatistics =
   tags: ['api'],
 
   validate:
-    { query: { format: Joi.boolean().optional() } }
+    { query: { format: Joi.boolean().optional().description('report in HTML, not JSON') } }
 }
 
 module.exports.routes =
