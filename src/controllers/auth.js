@@ -46,10 +46,14 @@ v0.post =
   }
 },
 
-validate:
-  { payload:
-    { userId: Joi.string().guid().required() }
-  }
+  description: 'Registers a user with the vault (deprecated)',
+  notes: 'cf., <a href="/documentation#!/v1/v1usersuserId_put_10" target="_blank">PUT /v1/users/{userId}</a>',
+  tags: ['api', 'deprecated'],
+
+  validate:
+    { payload:
+      { userId: Joi.string().guid().required() }
+    }
 }
 
 var v1 = {}
@@ -100,9 +104,22 @@ v1.put =
   }
 },
 
-validate:
-  { params:
-    { userId: Joi.string().guid().required() }
+  description: 'Registers a user with the vault',
+  notes: 'Once a user is successfully registered, the browser generates (as often as it wishes) a "sessionId" parameter for subsequent operations, in order to identify both the user and browser session.',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { userId: Joi.string().guid().required().description('the identity of the user entry') }
+    },
+
+  response: {
+    schema: Joi.any().empty()
+/*
+    status: {
+      201: Joi.any().empty()
+    }
+ */
   }
 }
 
@@ -131,11 +148,21 @@ v1.delete =
   }
 },
 
-validate:
-  { params:
-    { userId: Joi.string().guid().required(),
-      sessionId: Joi.string().guid().required()
-    }
+  description: 'Marks a session as no longer active',
+  notes: 'The corresponding session entry is considered "no longer valid". If a sessionId is not referenced in a timely-fashion, the vault may choose to invalidate it. Regardless, the sessionId may no longer be used to perform new operations.',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { userId: Joi.string().guid().required().description('the identity of the user entry'),
+        sessionId: Joi.string().guid().required().description('the identity of the session')
+      }
+    },
+
+  response: {
+    schema: Joi.object().keys({
+      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
+    })
   }
 }
 

@@ -18,14 +18,14 @@ var v1 = {}
 v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var modifiers, query, result
+    var entries, modifiers, query, result
     var id = request.query.id
     var limit = request.query.limit
     var since = request.query.since
     var siteInfo = runtime.db.get('site_info')
 
     if (id) {
-      if (since) { return reply(boom.badData('since and id parameters may not both be present', request.query)) }
+      if (since) { return reply(boom.badData('id and since parameters may not both be present', request.query)) }
 
       if (!limit || limit === 1) {
         result = await siteInfo.findOne({ _id: id })
@@ -36,7 +36,7 @@ v1.get =
       modifiers = { sort: { _id: 1 } }
     } else {
       try { since = (since || 0) ? bson.Timestamp.fromString(since) : bson.Timestamp.ZERO } catch (ex) {
-        return reply(boom.badRequest('invalid since value', { since: since }))
+        return reply(boom.badRequest('invalid value for the since parameter', { since: since }))
       }
 
       limit = 100
@@ -44,23 +44,55 @@ v1.get =
       modifiers = { sort: { timestamp: 1 } }
     }
 
-    result = await siteInfo.find(query, underscore.extend({ limit: limit }, modifiers))
+    entries = await siteInfo.find(query, underscore.extend({ limit: limit }, modifiers))
+    result = []
+    entries.forEach(entry => {
+      if (entry.hostname === '') return
+      result.push(underscore.omit(underscore.extend(entry, { id: entry._id.toString() }), '_id', 'timestamp'))
+    })
+
     reply(result)
   }
 },
 
-auth:
-  { strategy: 'session',
-    scope: [ 'admin', 'devops' ],
-    mode: 'required'
-  },
+  auth:
+    { strategy: 'session',
+      scope: [ 'admin', 'devops' ],
+      mode: 'required'
+    },
 
-validate:
-  { query:
-    { id: Joi.string().hex().optional(),
-      limit: Joi.number().positive().optional(),
-      since: Joi.string().regex(/^[0-9]+$/).min(19).optional()
+  description: 'Incrementally return ad manifests for zero or more sites',
+  notes: 'There are two ways to incrementally traverse the list of ad manifests: using either an "id" parameter corresponding to a previously retrieved ad manifest, or an "since" parameter corresponding to an opaque timestamp. Either parameter may be present, but not both. If the id" parameter is present, then the "limit" parameter defaults to "1". Otherwise, the "since" parameter defaults to "0000000000000000000" and the "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
+  tags: ['api'],
+
+  validate:
+    { query:
+      { id: Joi.string().hex().optional().description('the identity of the first ad manifest entry to consider'),
+        since: Joi.string().regex(/^[0-9]+$/).min(19).optional().description('an opaque, monotonically-increasing value'),
+        limit: Joi.number().positive().optional().description('the maximum number of entries to return')
+      }
+    },
+
+  response: {
+    schema: Joi.array().items(Joi.object().keys({
+      id: Joi.string().hex().required().description('the identity of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
+      replacementAd: Joi.array().items(Joi.object().keys({
+        width: Joi.number().positive().required().description('the ad\'s width in pixels'),
+        height: Joi.number().positive().required().description('the ad\'s height in pixels'),
+        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+      }).required())
+    }))
+/*
+    status: {
+      400: Joi.object({
+        boomlet: Joi.string().required().description('invalid value for the since parameter')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('id and since parameters may not both be present')
+      })
     }
+ */
   }
 }
 
@@ -77,20 +109,43 @@ v1.getHostname =
 
     result = await siteInfo.findOne({ hostname: hostname })
     if (!result) { return reply(boom.notFound('ad-manifest entry does not exist', { hostname: hostname })) }
+    result = underscore.omit(underscore.extend(result, { id: result._id.toString() }), '_id', 'timestamp')
 
     reply(result)
   }
 },
 
-auth:
-  { strategy: 'session',
-    scope: [ 'admin', 'devops' ],
-    mode: 'required'
-  },
+  auth:
+    { strategy: 'session',
+      scope: [ 'admin', 'devops' ],
+      mode: 'required'
+    },
 
-validate:
-  { params:
-    { hostname: Joi.string().hostname().required() }
+  description: 'Returns the ad manifest for a particular site',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { hostname: Joi.string().hostname().required().description('the domain name of the site') }
+    },
+
+  response: {
+    schema: Joi.object({
+      id: Joi.string().hex().required().description('the identity of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
+      replacementAd: Joi.array().items(Joi.object().keys({
+        width: Joi.number().positive().required().description('the ad\'s width in pixels'),
+        height: Joi.number().positive().required().description('the ad\'s height in pixels'),
+        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+      }).required())
+    })
+/*
+    status: {
+      404: Joi.object({
+        boomlet: Joi.string().required().description('ad-manifest entry does not exist')
+      })
+    }
+ */
   }
 }
 
@@ -117,31 +172,53 @@ v1.post =
     }
 
     result = await siteInfo.findOne({ hostname: hostname })
-    if (!result) { return reply(boom.badImplementation('database lookup failed', { hostname: hostname })) }
+    if (!result) { return reply(boom.badImplementation('database creation failed', { hostname: hostname })) }
+    result = underscore.omit(underscore.extend(result, { id: result._id.toString() }), '_id', 'timestamp')
 
     reply(result)
   }
 },
 
-auth:
-  { strategy: 'session',
-    scope: [ 'admin', 'devops' ],
-    mode: 'required'
-  },
+  auth:
+    { strategy: 'session',
+      scope: [ 'admin', 'devops' ],
+      mode: 'required'
+    },
 
-description: 'Get ad manifest info',
-notes: 'The administrator uses the GET /v1/ad-manifest operation to incrementally get information about sites.',
-tags: ['api'],
+  description: 'Creates the ad manifest for a particular site',
+  tags: ['api'],
 
-validate:
-  { payload:
-    { hostname: Joi.string().hostname().required(),
-      timestamp: Joi.any().forbidden(),
-      replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required(),
-                                                           height: Joi.number().positive().required(),
-                                                           replaceId: Joi.string().required()
-                                                         })).required()
+  validate:
+    { payload:
+      { hostname: Joi.string().hostname().required().description('the domain name of the site'),
+        timestamp: Joi.any().forbidden(),
+        replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required().description('the ad\'s width in pixels'),
+                                                             height: Joi.number().positive().required().description('the ad\'s height in pixels'),
+                                                             replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+                                                           })).required()
+      }
+    },
+
+  response: {
+    schema: Joi.object({
+      id: Joi.string().hex().required().description('the identity of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
+      replacementAd: Joi.array().items(Joi.object().keys({
+        width: Joi.number().positive().required().description('the ad\'s width in pixels'),
+        height: Joi.number().positive().required().description('the ad\'s height in pixels'),
+        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+      }).required())
+    })
+/*
+    status: {
+      422: Joi.object({
+        boomlet: Joi.string().required().description('ad-manifest entry already exists')
+      }),
+      500: Joi.object({
+        boomlet: Joi.string().required().description('database creation failed')
+      })
     }
+ */
   }
 }
 
@@ -167,29 +244,55 @@ v1.putHostname =
     await siteInfo.update({ hostname: hostname }, state, { upsert: true })
 
     result = await siteInfo.findOne({ hostname: hostname })
-    if (!result) { return reply(boom.badImplementation('database lookup failed', { hostname: hostname })) }
+    if (!result) { return reply(boom.badImplementation('database update failed', { hostname: hostname })) }
+    result = underscore.omit(underscore.extend(result, { id: result._id.toString() }), '_id', 'timestamp')
 
     reply(result)
   }
 },
 
-auth:
-  { strategy: 'session',
-    scope: [ 'admin', 'devops' ],
-    mode: 'required'
-  },
+  auth:
+    { strategy: 'session',
+      scope: [ 'admin', 'devops' ],
+      mode: 'required'
+    },
 
-validate:
-  { params:
-    { hostname: Joi.string().hostname().required() },
-      payload:
-    { hostname: Joi.any().forbidden(),
-      timestamp: Joi.any().forbidden(),
-      replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required(),
-                                                           height: Joi.number().positive().required(),
-                                                           replaceId: Joi.string().required()
-                                                           })).required()
+  description: 'Updates the ad manifest for a particular site',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { hostname: Joi.string().hostname().required().description('the domain name of the site') },
+        payload:
+        { hostname: Joi.any().forbidden(),
+          timestamp: Joi.any().forbidden(),
+          replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required(),
+                                                               height: Joi.number().positive().required(),
+                                                               replaceId: Joi.string().required()
+                                                             })).required()
+      }
+    },
+
+  response: {
+    schema: Joi.object({
+      id: Joi.string().hex().required().description('the identify of the ad manifest entry'),
+      hostname: Joi.string().hostname().required().description('the domain name of the site'),
+      replacementAd: Joi.array().items(Joi.object().keys({
+        width: Joi.number().positive().required().description('the ad\'s width in pixels'),
+        height: Joi.number().positive().required().description('the ad\'s height in pixels'),
+        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+      }).required())
+    })
+/*
+    status: {
+      404: Joi.object({
+        boomlet: Joi.string().required().description('ad-manifest entry does not exist')
+      }),
+      500: Joi.object({
+        boomlet: Joi.string().required().description('database update failed')
+      })
     }
+ */
   }
 }
 

@@ -48,19 +48,19 @@ v0.get =
   }
 },
 
-description: '(Deprecated) Returns an ad replacement.',
-notes: 'This method is deprecated, see the v1 method.',
-tags: ['api', 'deprecated'],
+  description: 'Performs an ad replacement (deprecated)',
+  notes: 'cf., <a href="/documentation#!/v1/v1usersuserIdreplacement_get_14" target="_blank">GET /v1/users/{userId}/replacement</a>',
+  tags: ['api', 'deprecated'],
 
-validate:
-  { query:
-    { braveUserId: Joi.string().guid().required(),
-      intentHost: Joi.string().hostname().required(),
-      tagName: Joi.string().required(),
-      width: Joi.number().positive().required(),
-      height: Joi.number().positive().required()
+  validate:
+    { query:
+      { braveUserId: Joi.string().guid().required(),
+        intentHost: Joi.string().hostname().required(),
+        tagName: Joi.string().required(),
+        width: Joi.number().positive().required(),
+        height: Joi.number().positive().required()
+      }
     }
-  }
 }
 
 var v1 = {}
@@ -136,38 +136,35 @@ v1.get =
   }
 },
 
-description: 'Performs an ad replacement',
-notes: 'The browser uses this operation to get information on how to perform a replacement.',
-tags: ['api'],
+  description: 'Retrieve an ad replacement',
+  notes: 'Returns a replacement ad, via a 301 to <pre>data:text/html;charset=utf-8,&lt;html&gt;...&lt;a href="https:.../v1/ad-clicks/{adUnitId}"&gt;&lt;img src="..." /&gt;&lt;/a&gt;...&lt;/html&gt;</pre>',
+  tags: ['api'],
 
-validate:
-  { query:
-    { sessionId: Joi.string().guid().required()
-        .description('a UUID v4 value'),
-      tagName: Joi.string().required()
-        .description('at present, \'iframe\' (for the `&lt;iframe/&gt;` tag)'),
-      width: Joi.number().positive().required()
-        .description('the width in pixels of the replacement advertisement'),
-      height: Joi.number().positive().required()
-        .description('the height in pixels of the replacement advertisement')
+  validate:
+    { query:
+      { sessionId: Joi.string().guid().required().description('the identify of the session'),
+        tagName: Joi.string().required().description('at present, always "IFRAME" (for the &lt;iframe/&gt; tag)'),
+        width: Joi.number().positive().required().description('the width in pixels of the replacement ad'),
+        height: Joi.number().positive().required().description('the height in pixels of the replacement ad')
+      },
+      params: { userId: Joi.string().guid().required().description('the identity of the user entry') }
     },
-    params:
-    { userId: Joi.string().guid().required() }
-  },
 
   response: {
-    schema: Joi.object({
-      response: Joi.string()
-        .description('a data URL acting as a replacement for the advertisement. The replacement parameter has the form: <br>data:text/html;charset=utf-8,&lt;html&gt;...&lt;a href="https:.../v1/ad-clicks/{adUnitId}"&gt;&lt;img src="..." /&gt;&lt;/a&gt;...&lt;/html&gt; If the user clicks on this `<a/>` tag, then in addition to (automatically) using the `POST /v1/users/{userId}/intents` operation to record the \'click\', the brower also uses the `GET /v1/ad-clicks/{adUnitId}` operation.'),
-      status: {
-        404: Joi.object({
-          boomlet: Joi.string().description('`userId` does not refer to an existing user').required()
-        }),
-        422: Joi.object({
-          boomlet: Joi.string().description('missing parameter').required()
-        })
-      }
-    })
+    schema: Joi.any().empty()
+/*
+    status: {
+      301: Joi.object({
+        location: Joi.string().required().description('redirection URL')
+      }),
+      404: Joi.object({
+        boomlet: Joi.string().required().description('userId does not refer to an existing user')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('missing parameter')
+      })
+    }
+*/
   }
 }
 
@@ -198,9 +195,27 @@ v1.getClicks =
   }
 },
 
-validate:
-  { params:
-    { adUnitId: Joi.string().hex().required() }
+  description: 'Performs an ad replacement click-through',
+  notes: 'Returns a 301 redirect to the site associated with the replacement ad. This endpoint is returned via 301 by the <a href="/documentation#!/v1/v1usersuserIdreplacement_get_14" target="_blank">GET /v1/users/{userId}/replacement</a> operation.',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { adUnitId: Joi.string().hex().description('ad replacement identifier').required() }
+    },
+
+  response: {
+    schema: Joi.any().empty()
+/*
+    status: {
+      301: Joi.object({
+        location: Joi.string().required().description('redirection URL')
+      }),
+      404: Joi.object({
+        boomlet: Joi.string().required().description('adUnitId does not refer to a replacement ad')
+      })
+    }
+ */
   }
 }
 
