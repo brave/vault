@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A Personal Data Store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {

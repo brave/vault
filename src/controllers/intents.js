@@ -53,18 +53,18 @@ v0.post =
   }
 },
 
-description: '(Deprecated) Records an intent for the user.',
-notes: 'This method is deprecated, see the v1 method.',
-tags: ['api', 'deprecated'],
+  description: 'Records user activity (deprecated)',
+  notes: 'cf., <a href="/documentation#!/v1/v1usersuserIdintents_post_13" target="_blank">POST /v1/users/{userId}/intents</a>',
+  tags: ['api', 'deprecated'],
 
-validate:
-  { payload:
-    { type: Joi.string().min(6).required(),
-      userId: Joi.string().guid().required(),
-      timestamp: Joi.number().positive().optional(),
-      payload: Joi.object().optional()
+  validate:
+    { payload:
+      { type: Joi.string().min(6).required(),
+        userId: Joi.string().guid().required(),
+        timestamp: Joi.number().positive().optional(),
+        payload: Joi.object().optional()
+      }
     }
-  }
 }
 
 var v1 = {}
@@ -119,36 +119,32 @@ v1.post =
   }
 },
 
-description: 'Records user activity',
-notes: 'The browser uses this to indicate user activity (https://github.com/brave/vault/wiki/Intents), such as clicking on a link.',
-tags: ['api'],
+  description: 'Records user activity',
+  notes: 'The browser uses this to indicate <a href="https://github.com/brave/vault/wiki/Intents" target="_blank">user activity</a>, such as clicking on a link.',
+  tags: ['api'],
 
-validate:
-  { params:
-    { userId: Joi.string().guid().required() },
-    payload:
-    { sessionId: Joi.string().guid().required()
-        .description('a UUID v4 value'),
-      type: Joi.string().min(6).required()
-        .description('e.g., `"browser.site.visit"`'),
-      timestamp: Joi.date().format('x').required()
-        .description('opaque number (usually integer) identifying a instance of time'),
-      payload: Joi.object().required()
-        .description('an opaque JSON object')
-    }
-  },
+  validate:
+    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
+      payload:
+      { sessionId: Joi.string().guid().required().description('the identity of the session'),
+        type: Joi.string().min(6).required().description('e.g., "browser.site.visit"'),
+        timestamp: Joi.date().format('x').required().description('opaque number identifying a instance of time'),
+        payload: Joi.object().required().description('an opaque JSON object')
+      }
+    },
 
-  response: {schema: Joi.object({
-    stats: Joi.string()
-      .description('intents recorded'),
+  response: {
+    schema: Joi.object().keys({
+      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
+    })
+
+/*
     status: {
       404: Joi.object({
-        boomlet: Joi.string().description('does not refer to an existing user').required()
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().description('missing parameter').required()
+        boomlet: Joi.string().required().description('user entry does not exist')
       })
-    }})
+    }
+ */
   }
 }
 

@@ -5,9 +5,8 @@ exports.userId2stats = async function (runtime, userId) {
   var users = runtime.db.get('users')
 
   user = await users.findOne({ userId: userId }, { statAdReplaceCount: true })
-  if (!user) { return undefined }
 
-  return { replacements: user.statAdReplaceCount }
+  return { replacements: user ? user.statAdReplaceCount : 0 }
 }
 
 exports.sessionId2stats = async function (runtime, userId, sessionId) {
@@ -15,9 +14,8 @@ exports.sessionId2stats = async function (runtime, userId, sessionId) {
   var sessions = runtime.db.get('sessions')
 
   session = await sessions.findOne({ userId: userId, sessionId: sessionId }, { statAdReplaceCount: true })
-  if (!session) { return undefined }
 
-  return { replacements: session.statAdReplaceCount }
+  return { replacements: session ? session.statAdReplaceCount : 0 }
 }
 
 module.exports = exports
