@@ -225,7 +225,6 @@ v1.post =
 /*
    PUT /v1/ad-manifest/{hostname}
        { "replacementAd": "..." }
-       update (entry MUST exist)
  */
 
 v1.putHostname =
@@ -234,9 +233,6 @@ v1.putHostname =
     var result, state
     var hostname = request.params.hostname
     var siteInfo = runtime.db.get('site_info')
-
-    result = await siteInfo.findOne({ hostname: hostname })
-    if (!result) { return reply(boom.notFound('ad-manifest entry does not exist', { hostname: hostname })) }
 
     state = { $currentDate: { timestamp: { $type: 'timestamp' } },
               $set: request.payload
@@ -257,7 +253,7 @@ v1.putHostname =
       mode: 'required'
     },
 
-  description: 'Updates the ad manifest for a particular site',
+  description: 'Creates/Updates the ad manifest for a particular site',
   tags: ['api'],
 
   validate:
