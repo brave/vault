@@ -1,3 +1,5 @@
+'use strict'
+
 var braveHapi = require('./brave-hapi')
 var debug = new (require('./sdebug'))('oip')
 var natural = require('natural')
