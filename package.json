@@ -26,7 +26,7 @@
     "cryptiles": "2.0.5",
     "debug": "^2.2.0",
     "github": "0.2.4",
-    "hapi": "11.0.0",
+    "hapi": "^11.1.0",
     "hapi-async-handler": "^1.0.3",
     "hapi-auth-cookie": "3.1.0",
     "hapi-swagger": "^2.2.2",
