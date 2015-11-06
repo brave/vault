@@ -6,7 +6,16 @@ var exports = {}
 
 exports.routes = function (debug, runtime) {
   var entries = {}
-  var routes = []
+  var routes = [
+    { method: 'GET',
+      path: '/',
+      config:
+        { handler: function (request, reply) {
+          reply('Welcome to the Vault.')
+        }
+      }
+    }
+  ]
 
   fs.readdirSync(__dirname).forEach(function (name) {
     var module = require(path.join(__dirname, name))
