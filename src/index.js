@@ -2,9 +2,6 @@ process.env.NEW_RELIC_NO_CONFIG_FILE = true
 if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { require('newrelic') }
 
 var Hapi = require('hapi')
-var Inert = require('inert')
-var Vision = require('vision')
-var HapiSwagger = require('hapi-swagger')
 
 var braveHapi = require('./brave-hapi')
 var debug = new (require('./sdebug'))('server')
@@ -12,22 +9,10 @@ var pack = require('./../package')
 var routes = require('./controllers/index')
 var underscore = require('underscore')
 
-var DB = require('./db')
-var OIP = require('./oip')
-var Wallet = require('./wallet')
-
-var profile = process.env.NODE_ENV || 'development'
-var config = require('../config/config.' + profile + '.js')
-var database = new DB(config)
-var runtime = {
-  db: database,
-  wallet: new Wallet(config),
-  oip: new OIP(config),
-  login: config.login
-}
+var runtime = require('./runtime.js')
 
 var server = new Hapi.Server()
-server.connection({ port: config.port })
+server.connection({ port: runtime.config.port })
 
 debug.initialize({ 'server': { id: server.info.id } })
 
@@ -36,10 +21,10 @@ server.register(
   require('blipp'),
   require('hapi-async-handler'),
   require('hapi-auth-cookie'),
-  Inert,
-  Vision,
+  require('inert'),
+  require('vision'),
   {
-    register: HapiSwagger,
+    register: require('hapi-swagger'),
     options: {
       apiVersion: pack.version,
       auth:
@@ -75,19 +60,7 @@ server.register(
   })
 })
 
-server.route(
-  [
-    { method: 'GET',
-      path: '/',
-      config:
-      { handler: function (request, reply) {
-        request.log([], 'Welcome to the Vault.')
-        reply('Welcome to the Vault.')
-      },
-      validate: undefined
-      }
-    }
-  ].concat(routes.routes(debug, runtime)))
+server.route(routes.routes(debug, runtime))
 
 server.ext('onRequest', function (request, reply) {
   debug('begin',
@@ -159,7 +132,7 @@ server.start(function (err) {
   debug('webserver started',
   { protocol: server.info.protocol,
     address: server.info.address,
-    port: config.port,
+    port: runtime.config.port,
     version: server.version
   })
 
