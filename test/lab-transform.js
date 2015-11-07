@@ -1,5 +1,5 @@
-var Babel = require('babel/node_modules/babel-core')
-require('babel-cli/node_modules/babel-polyfill')
+var Babel = require('babel-eslint/node_modules/babel-core')
+require('babel-polyfill')
 
 // setting "babelrc: false" has no effect below
 Babel.options.presets = { type: 'list' }
