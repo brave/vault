@@ -1,4 +1,4 @@
-var Babel = require('babel-eslint/node_modules/babel-core')
+var Babel = require('babel-core')
 require('babel-polyfill')
 
 // setting "babelrc: false" has no effect below
