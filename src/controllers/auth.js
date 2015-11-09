@@ -173,24 +173,6 @@ module.exports.routes =
 ]
 
 module.exports.initialize = async function (debug, runtime) {
-// NB: this block is temporary to fix a schema issue
-  try {
-    var Promise = require('monk/lib/promise')
-
-    var z = function (fn) {
-      var promise = new Promise(this, 'indexes')
-
-      if (fn) promise.complete(fn)
-
-      debug('%s indexInformation', 'sessions')
-      runtime.db.get('sessions').col.dropAllIndexes(promise.resolve)
-
-      return promise
-    }
-
-    await z()
-  } catch (ex) { debug(ex) }
-
   runtime.db.checkIndices(debug,
   [ { category: runtime.db.get('users'),
       name: 'users',
