@@ -2,12 +2,14 @@ var gulp = require('gulp')
 var del = require('del')
 var nodemon = require('gulp-nodemon')
 var runSequence = require('run-sequence')
+var shell = require('gulp-shell')
 var standard = require('gulp-standard')
 
 var SRC = [
   'gulpfile.js',
-  'src/**/*.js',
-  'src/controllers/**/*.js'
+  'src/**/[A-Za-z]*.js',
+  'src/controllers/**/[A-Za-z]*.js',
+  'test/**/[A-Za-z]*.js'
 ]
 
 /**
@@ -72,3 +74,12 @@ gulp.task('clean', function (cb) {
     'node_modules/'
   ], cb)
 })
+
+/**
+ * Runs the tests
+ */
+gulp.task('test', shell.task([
+  "./node_modules/.bin/lab -T test/lab-transform.js  -I '__core-js_shared__,$P,$M,$V,core,Reflect,regeneratorRuntime,$L,_babelPolyfill'"
+],
+  { verbose: true }
+))
