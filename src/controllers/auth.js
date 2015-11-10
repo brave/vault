@@ -4,58 +4,6 @@ var bson = require('bson')
 var helper = require('./helper')
 var Joi = require('joi')
 
-var v0 = {}
-
-/*
-   POST /auth
-        { "userId": "..." }
-        create (entry MUST not exist)
- */
-
-v0.post =
-{ handler: function (runtime) {
-  return async function (request, reply) {
-    var walletResult
-    var debug = braveHapi.debug(module, request)
-    var user = request.payload
-    var users = runtime.db.get('users')
-
-    try {
-      walletResult = await runtime.wallet.generate(user)
-
-      user.wallet =
-      { id: walletResult.wallet.id(),
-        label: walletResult.wallet.label(),
-        userKeychainEncryptedXprv: walletResult.userKeychain.encryptedXprv,
-        backupKeychainEncryptedXprv: walletResult.backupKeychain.encryptedXprv
-      }
-    } catch (ex) {
-      debug('wallet error', ex)
-      // return reply(boom.badImplementation('wallet creation failed', ex));
-    }
-
-    try {
-      await users.insert(user)
-    } catch (ex) {
-      debug('insert error', ex)
-      return reply(boom.badData('user entry already exists', { userId: user.userId }))
-    }
-
-    debug('user=', user)
-    reply('OK!')
-  }
-},
-
-  description: 'Registers a user with the vault (deprecated)',
-  notes: 'cf., <a href="/documentation#!/v1/v1usersuserId_put_10" target="_blank">PUT /v1/users/{userId}</a>',
-  tags: ['api', 'deprecated'],
-
-  validate:
-    { payload:
-      { userId: Joi.string().guid().required() }
-    }
-}
-
 var v1 = {}
 
 /*
@@ -167,8 +115,7 @@ v1.delete =
 }
 
 module.exports.routes =
-[ braveHapi.routes.async().post().path('/auth').config(v0.post),
-  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put),
+[ braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put),
   braveHapi.routes.async().delete().path('/v1/users/{userId}/sessions/{sessionId}').config(v1.delete)
 ]
 
