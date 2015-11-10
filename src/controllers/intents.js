@@ -106,6 +106,7 @@ v1.post =
     try {
       // NB: calculation of session.intents is temporary
       session = await sessions.findOne({ sessionId: sessionId }, { intents: true })
+      session = session || {}
       intentions = underscore.union(session.intents || [], underscore.uniq(tokenizer.tokenize(payload.title.toLowerCase())))
 
       await sessions.update({ sessionId: sessionId },
