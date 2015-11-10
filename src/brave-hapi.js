@@ -73,10 +73,10 @@ exports.routes = { async: AsyncRoute }
 var ErrorInspect = function (err) {
   var i
 
-  if (!i) { return undefined }
+  if (!err) { return undefined }
 
   i = underscore.pick(err, 'message', 'isBoom', 'isServer')
-  if (err.data) { underscore.defaults(i, err.data) }
+  if ((err.output) && (err.output.payload)) { underscore.defaults(i, { payload: err.output.payload }) }
 
   return i
 }
