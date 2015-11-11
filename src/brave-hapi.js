@@ -75,7 +75,7 @@ var ErrorInspect = function (err) {
 
   if (!err) { return undefined }
 
-  i = underscore.pick(err, 'message', 'isBoom', 'isServer')
+  i = underscore.pick(err, 'message', 'isBoom', 'isServer', 'stack')
   if ((err.output) && (err.output.payload)) { underscore.defaults(i, { payload: err.output.payload }) }
 
   return i
