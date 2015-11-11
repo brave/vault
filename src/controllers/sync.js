@@ -4,70 +4,6 @@ var bson = require('bson')
 var Joi = require('joi')
 var underscore = require('underscore')
 
-var v0 = {}
-
-/*
-   GET /sync/{userId}
- */
-
-v0.get =
-{ handler: function (runtime) {
-  return async function (request, reply) {
-    var result
-    var userId = request.params.userId
-    var userStates = runtime.db.get('user_states')
-
-    result = await userStates.findOne({ userId: userId })
-    reply(underscore.omit(result || {}, '_id'))
-  }
-},
-
-  description: 'Returns shared application-state (deprecated)',
-  notes: 'cf., <a href="/documentation#!/v1/v1usersuserIdappState_get_12" target="_blank">GET /v1/users/{userId}/appState</a>',
-  tags: ['api', 'deprecated'],
-
-  validate:
-    { params:
-      { userId: Joi.string().guid().required() }
-    }
-}
-
-/*
-   POST /sync
-        { "userId": "...", ... }
- */
-
-v0.post =
-{ handler: function (runtime) {
-  return async function (request, reply) {
-    var state = request.payload
-    var userStates = runtime.db.get('user_states')
-
-    await userStates.update({ userId: state.userId }, state, { upsert: true })
-    reply('OK!')
-  }
-},
-
-  description: 'Records shared application-state (deprecated)',
-  notes: 'cf., <a href="/documentation#!/v1/v1usersuserIdappState_put_11" target="_blank">PUT /v1/users/{userId}/appState</a>',
-  tags: ['api', 'deprecated'],
-
-  validate:
-    { payload:
-      { userId: Joi.string().guid().required(),
-        payload: Joi.any().optional(),
-        frames: Joi.any().optional(),
-        sites: Joi.any().optional(),
-        closedFrames: Joi.any().optional(),
-        statAdReplaceCount: Joi.any().optional(),
-        ui: Joi.any().optional(),
-        activeFrameKey: Joi.any().optional(),
-        searchDetail: Joi.any().optional(),
-        contextMenuDetail: Joi.any().optional()
-      }
-    }
-}
-
 var v1 = {}
 
 /*
@@ -181,8 +117,7 @@ v1.put =
 }
 
 module.exports.routes =
-[ braveHapi.routes.async().path('/sync/{userId}').config(v0.get),
-  braveHapi.routes.async().post().path('/sync').config(v0.post),
+[
   braveHapi.routes.async().path('/v1/users/{userId}/appState').config(v1.get),
   braveHapi.routes.async().put().path('/v1/users/{userId}/appState').config(v1.put)
 ]
