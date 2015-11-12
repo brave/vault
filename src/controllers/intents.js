@@ -34,7 +34,7 @@ v1.post =
 
     intent = { userId: userId,
                sessionID: sessionId,
-               timestamp: bson.Timestamp.ZERO,
+               timestamp: bson.Timestamp(),
                type: type,
                payload: underscore.extend(payload, { timestamp: timestamp })
              }
