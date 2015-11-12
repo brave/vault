@@ -124,13 +124,7 @@ module.exports.routes =
 
 module.exports.initialize = async function (debug, runtime) {
   runtime.db.checkIndices(debug,
-  [ { category: runtime.db.get('user_states'),
-      name: 'user_states',
-      property: 'userId',
-      empty: { userId: '' },
-      unique: [ { userId: 1 } ]
-    },
-    { category: runtime.db.get('app_states'),
+  [ { category: runtime.db.get('app_states'),
       name: 'app_states',
       property: 'userId',
       empty: { userId: '', timestamp: bson.Timestamp.ZERO },

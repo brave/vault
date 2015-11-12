@@ -55,12 +55,6 @@ v1.get =
   }
 },
 
-  auth:
-    { strategy: 'session',
-      scope: [ 'admin', 'devops' ],
-      mode: 'required'
-    },
-
   description: 'Incrementally return ad manifests for zero or more sites',
   notes: 'There are two ways to incrementally traverse the list of ad manifests: using either an "id" parameter corresponding to a previously retrieved ad manifest, or an "since" parameter corresponding to an opaque timestamp. Either parameter may be present, but not both. If the id" parameter is present, then the "limit" parameter defaults to "1". Otherwise, the "since" parameter defaults to "0000000000000000000" and the "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
   tags: ['api'],
@@ -115,12 +109,6 @@ v1.getHostname =
   }
 },
 
-  auth:
-    { strategy: 'session',
-      scope: [ 'admin', 'devops' ],
-      mode: 'required'
-    },
-
   description: 'Returns the ad manifest for a particular site',
   tags: ['api'],
 
@@ -165,7 +153,7 @@ v1.post =
     var siteInfo = runtime.db.get('site_info')
 
     try {
-      await siteInfo.insert(underscore.extend(payload, { timestamp: bson.Timestamp.ZERO }))
+      await siteInfo.insert(underscore.extend(payload, { timestamp: bson.Timestamp() }))
     } catch (ex) {
       debug('insert error', ex)
       return reply(boom.badData('ad-manifest entry already exists', { hostname: hostname }))
@@ -181,7 +169,7 @@ v1.post =
 
   auth:
     { strategy: 'session',
-      scope: [ 'admin', 'devops' ],
+      scope: [ 'devops' ],
       mode: 'required'
     },
 
@@ -249,7 +237,7 @@ v1.putHostname =
 
   auth:
     { strategy: 'session',
-      scope: [ 'admin', 'devops' ],
+      scope: [ 'devops' ],
       mode: 'required'
     },
 

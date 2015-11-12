@@ -3,49 +3,63 @@ var braveHapi = require('../brave-hapi')
 var bson = require('bson')
 var helper = require('./helper')
 var Joi = require('joi')
+var underscore = require('underscore')
 
 var v1 = {}
 
 /*
    PUT /v1/users/{userId}
-       create (entry MUST not exist)
  */
 
 v1.put =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var walletResult
+    var count, update, user, wallet
     var debug = braveHapi.debug(module, request)
     var userId = request.params.userId
-    var user = { userId: userId, statAdReplaceCount: 0 }
     var appStates = runtime.db.get('app_states')
     var users = runtime.db.get('users')
 
     try {
-      walletResult = await runtime.wallet.generate(user)
+      update = { $setOnInsert: { statAdReplaceCount: 0 } }
+      if (underscore.keys(request.payload).length > 0) underscore.extend(update, request.payload)
 
-      user.wallet =
-      { id: walletResult.wallet.id(),
-        label: walletResult.wallet.label(),
-        userKeychainEncryptedXprv: walletResult.userKeychain.encryptedXprv,
-        backupKeychainEncryptedXprv: walletResult.backupKeychain.encryptedXprv
+      await users.update({ userId: userId }, update, { upsert: true })
+    } catch (ex) {
+      debug('update error', ex)
+      return reply(boom.badImplementation('update failed', ex))
+    }
+
+    user = await users.findOne({ userId: userId })
+    if (!user) { return reply(boom.badImplementation('insert failed')) }
+
+    if (!user.wallet) {
+      try {
+        wallet = await runtime.wallet.generate(user)
+
+        user.wallet =
+        { id: wallet.wallet.id(),
+          label: wallet.wallet.label(),
+          userKeychainEncryptedXprv: wallet.userKeychain.encryptedXprv,
+          backupKeychainEncryptedXprv: wallet.backupKeychain.encryptedXprv
+        }
+      } catch (ex) {
+        debug('wallet error', ex)
+//      return reply(boom.badImplementation('wallet creation failed', ex))
+        wallet = {}
+        user.wallet = {}
       }
-    } catch (ex) {
-      debug('wallet error', ex)
-      // return reply(boom.badImplementation('wallet creation failed', ex));
+
+      count = await users.update({ userId: userId }, { $set: { wallet: user.wallet } }, { upsert: true })
+      if (typeof count === 'object') { count = count.nMatched }
+      if (count === 0) { return reply(boom.badImplementation('update failed', { userId: userId })) }
     }
 
-    try {
-      await users.insert(user)
-    } catch (ex) {
-      debug('insert error', ex)
-      return reply(boom.badData('user entry already exists', { userId: userId }))
-    }
-
+    if (!wallet) return reply().code(204)
     reply().created()
 
     try {
-      await appStates.insert({ userId: userId, timestamp: bson.Timestamp.ZERO, payload: {} })
+      await appStates.insert({ userId: userId, timestamp: bson.Timestamp(), payload: {} })
     } catch (ex) {
       debug('insert error', ex)
     }
