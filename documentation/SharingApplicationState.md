@@ -62,7 +62,7 @@ and a "strong plaintext" `passphrase`, that is persisted in the client.
         }
 
 * Upon success,
-the client performs the `PUT /users/{userId}/appState`
+the client performs the `PUT /v1/users/{userId}/appState`
 [operation](https://vault.brave.com/documentation#!/v1/v1usersuserIdappState_put_11) with this payload:
 
         { payload             :
@@ -95,7 +95,7 @@ Whenever shared application state is uploaded to the Vault:
 
 * The client generates a symmetric encryption key (`SEK`) and a monotonically-increasing nonce.
 
-* The client performs the `PUT /users/{userId}/appState`
+* The client performs the `PUT /v1/users/{userId}/appState`
 [operation](https://vault.brave.com/documentation#!/v1/v1usersuserIdappState_put_11) with this payload:
 
         { timestamp           : '...' /* optional, cf., the documentation for the PUT appState operation */
@@ -115,9 +115,9 @@ Whenever shared application state is uploaded to the Vault:
           }
         }
 
-* After performing the mandatory checks for the `PUT /users/{userId}/appState` operation,
-the Vault verifies that `nonce` is larger than the previous value seen for this user,
-then verifies the `signature` value
+* After performing the mandatory checks for the `PUT /v1/users/{userId}/appState` operation,
+the Vault verifies the `signature` value
+then verifies that `nonce` is larger than the previous value seen for this user,
 (by using the `publicKey` previously uploaded via the `PUT /v1/users/{userId}` operation).
 On failure, HTTP code 422 is returned.
 Otherwise,
@@ -168,7 +168,7 @@ simply start a client and show it the printed QR encoding of:
 
 ### Update of Secrets
 With the exception of `passphrase`,
-a client may update the secrets associated with a persona-identifier by performing the `PUT /users/{userId}/appState`
+a client may update the secrets associated with a persona-identifier by performing the `PUT /v1/users/{userId}/appState`
 operation and updating the `header`.
 In this case,
 it is essential for all clients to follow the synchronization
@@ -192,6 +192,14 @@ When a client intent is upload to the Vault:
           , intent            : '...'
           }
         }
+
+* After performing the mandatory checks for the `POST /v1/users/{userId}/intents` operation,
+the Vault verifies the `signature` value
+then verifies that `nonce` is larger than the previous value seen for this user,
+(by using the `publicKey` previously uploaded via the `PUT /v1/users/{userId}` operation).
+On failure, HTTP code 422 is returned.
+Otherwise,
+the operation proceeds.
 
 Note that since the content of `intent` must be interpreted by the Vault,
 and this operation occurs over HTTPS,
