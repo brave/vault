@@ -1,1 +1,1 @@
-web: npm start
+web: bin/proximo npm start
