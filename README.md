@@ -31,6 +31,11 @@ For local development you can copy config/config.development.js.tpl to config/co
 Use `gulp` to run the server in development. This also sets up watchers and will restart the server on a file change.
 
 
+## Proximo
+
+Proximo is currently used as a proxy so we can make outbound vault requests using a static IP. Poximo leverages the following files: bin/proximo vendor/dante. A command to start the stacklet exists in the Procfile.
+
+
 ## Theory of Operation
 All operations are available via only HTTPS on public-facing systems.
 At a minimum,
