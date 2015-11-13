@@ -82,11 +82,11 @@ the client displays:
 
 along with the QR encoding for:
 
-        brave://vault/uuid/{userId}?p={passphrase}
+        brave://vault/persona/{userId}?p={passphrase}
 
-For example, `brave://vault/uuid/160395dd-bb88-4170-93ff-4698c7c1f097?p=RGCXHmk9LQnigidA2QrHJgsyckzjMj` encodes as:
+For example, `brave://vault/persona/160395dd-bb88-4170-93ff-4698c7c1f097?p=RGCXHmk9LQnigidA2QrHJgsyckzjMj` encodes as:
 
-<img src='data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAcIAAAHCAQMAAABG1lsGAAAABlBMVEX///8AAABVwtN+AAACdklEQVQIme2ay62DQAxFLVEAJdE6JaWASH7g3xiGRNm/cxcoMD5eWba5RAQhhBBCCIlo6H38Xt+i+3rcjEscZNQOCTmTfuPQEbW9LNsZL4vGZX1fgiEhr6RXWp0Zfjw6Lme2JC0bJORXMs6yjR11uKgX4w4J+RNpUTnxKocFQUJ+JcfZUW5xMVmin+Yn5P8mQ6N5PV0yChJyJpu246jfr59DISGHoqqsvmx10tHL5LpTLQoJ+UD2xzkKPeVeye3XvTYhIUvrcAAiUQxFsWLU2KS2+zYOCenKeGmugIhkL/PbbGOQkE+kTbyYgtLJ8xINzV0BhYR8JHfH5eosqbexsVgNawAS8kZG37JhF/Xlz2KnGiU41S0kpMm/g0ic5dPsW6O1hVkJCXknxxQcZDSv1zVOp7qFhHSt9fb2ikTjVzcEWm1CQnZtVlU14nx18uobrkCfkZCQT/uQlp90/Ubb+5sskJBPpFea+4/pCrQ6rBWrHUBC3jtYhb5uz6LcAp8ECWkKU0nDk/T4U/H1rV71fFpCQk6kQz2qHO6agpZoFiSkadjXbWFSr7Q0Jrfas3ZIyAdSK/5VBlJ9o7UQSxkFCgk5kRH1zl6mqtnVRHIRz2LcISEfSOkDMFwBt5LidoYgIa9kWgP+HjecyGxjo6vdqw8S8iLHa5MKKD+VfIAgISWLKwovGpq/1p1qxuTscENCSlXVWtZA+6Vtf/owBSEhs+bSRRLrYHvtVFs6Szq7ApCQd/J8bCF+svkAXHSsWJCQ38mxkhve/r22hkkACflI5lm4k/7hrbZxTd+pBUNCXshQdrDyAjxb5C2nABJyIhFCCCGE/q/+AAz4nwRJw2S4AAAAAElFTkSuQmCC' />
+<img src='data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAcIAAAHCAQMAAABG1lsGAAAABlBMVEX///8AAABVwtN+AAACh0lEQVQIme2awa3jMAxECbgAl+TWXZILMKCFNCQlWU5295w3B38n4tO/DEiKihlCCCGEEDIrrltvdtRHWzh70B5RJyTkSurDftfnpnUPvTZtVE6tzrtBQia5x9qh0PbWV2/tK4NCQn4lq+ciW91asOpISMj/IZW3mqoZI6FBQn4j258pg8Vu7r6/10/I3yZdtyreh0dEQUKu5LjHla2T+vLbvsVDQmZ85Kjag7dILZwW3vyUwSAhpdYmXW633k65dLarm1u0WJCQM3hEvNyXfXmsb36sO5oPISEXUk23J69wn74r9/gfmkshIV/IErVP5FFiApBpLM57a/2EhKxKk3k3bp7GVACPirbvysOMkJCu1iHJZLobieQVaawteCf1nElBQlYpKt8yl/lQKeL7sQ4ScgaL176S/tqKjyOHG/90JCTkO9nj9Z3MeIXxtMdlsyAhBzKKXfTlGlaW2KiE8T74FvK3yaFXcpPFla1rOuBBQr6R6sHvcY90Xx9WvrkPEtLMT3SmGfblFa9kNx7zpLxDgYRcySofX8esW2Z09YS2duOQkI1sQ0hdstVdYooUp7zYqOU3g4RcyF72PFEN7VTxvHW0x0snBQlppmLnFyS9nerGsy0nBY9fjUBCOtmnk1K/X1MpjBbr3MvDfZCQIscP6bQ8wuVAQGnMICHfyHG47T9c232yNE0sV/dBQk7qh//o0Lc46lme/CAhF7K4ouJJmknmYHL3QdOzfkJCWlbB3Q9uvSWX3Xw6abbekkBCBjn7S/HFS2Gvh5CQ/0guKStbrLfJEiTkRPYMFvHbuPDFfZC/TrY/s/uKMtg0p+xvkJAfuvEeMNa+iO8PSMiZRAghhBD6Xf0Be5m/Wsy01pcAAAAASUVORK5CYII=' />
 
 and asks the user to either print out the QR code, or save the `Persona-ID` and `Passphrase` to a password manager.
 
@@ -126,10 +126,10 @@ the operation proceeds.
 ### Allowing other clients to share application data
 Each client allows the user to cause it to generate and display the QR encoding of
 
-        brave://vault/uuid/{userId}?p={passphrase}
+        brave://vault/persona/{userId}?p={passphrase}
 
 Each client allows the user to cause it to scan an image containing a QR encoding,
-determine if it contains a URL with prefix `brave://vault/uuid/`,
+determine if it contains a URL with prefix `brave://vault/persona/`,
 and if so,
 to extract the `userId` and `passphrase`,
 and use the `GET /v1/users/{userId}/appState`
@@ -164,7 +164,7 @@ in case QR coding is unavailable.
 To recover the shared application state,
 simply start a client and show it the printed QR encoding of:
 
-        brave://vault/uuid/{userId}?p={passphrase}
+        brave://vault/persona/{userId}?p={passphrase}
 
 ### Update of Secrets
 With the exception of `passphrase`,
