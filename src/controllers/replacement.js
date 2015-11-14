@@ -96,7 +96,7 @@ v1.get =
       })
     }
     debug('intents: ' + JSON.stringify(intents))
-    ad = (intents) && runtime.oip.adUnitForIntents(intents, width, height)
+    ad = runtime.oip.adUnitForIntents(intents || [], width, height)
 
     if (ad) {
       debug('serving ' + ad.category + ': ' + ad.name + ' for ' + JSON.stringify(intents))
