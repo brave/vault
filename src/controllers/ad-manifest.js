@@ -40,12 +40,12 @@ v1.get =
 },
 
   description: 'Incrementally return ad manifests for zero or more sites',
-  notes: 'The "timestamp" parameter corresponding to an opaque value, defaulting to "0000000000000000000". The "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
+  notes: 'The "timestamp" parameter corresponding to an opaque value, defaulting to "0". The "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
   tags: ['api'],
 
   validate:
     { query:
-      { timestamp: Joi.string().regex(/^[0-9]+$/).min(19).optional().description('an opaque, monotonically-increasing value'),
+      { timestamp: Joi.string().regex(/^[0-9]+$/).optional().description('an opaque, monotonically-increasing value'),
         limit: Joi.number().positive().optional().description('the maximum number of entries to return')
       }
     },
@@ -53,7 +53,7 @@ v1.get =
   response: {
     schema: Joi.array().items(Joi.object().keys({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
@@ -100,7 +100,7 @@ v1.getHostname =
   response: {
     schema: Joi.object({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
@@ -170,7 +170,7 @@ v1.post =
   response: {
     schema: Joi.object({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
@@ -240,7 +240,7 @@ v1.putHostname =
   response: {
     schema: Joi.object({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),

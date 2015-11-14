@@ -18,7 +18,7 @@ DB.prototype.checkIndices = async function (debug, entries) {
     var category = entry.category
 
     try { indices = await category.indexes() } catch (ex) { indices = [] }
-    doneP = underscore.keys(indices).indexOf(entry.property + '_1') !== -1
+    doneP = underscore.intersection(underscore.keys(indices), [entry.property + '_0', entry.property + '_1']).length !== 0
 
     debug(entry.name + ' indices ' + (doneP ? 'already' : 'being') + ' created')
     if (doneP) { return }

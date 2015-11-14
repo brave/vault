@@ -36,7 +36,7 @@ v1.get =
 
   response: {
     schema: Joi.object({
-      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
       payload: Joi.any().required().description('any arbitrary JSON value, including the empty object')
     })
 /*
@@ -100,7 +100,7 @@ v1.put =
 
   response: {
     schema: Joi.object({
-      timestamp: Joi.string().hostname().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
       payload: Joi.any().required().description('any arbitrary JSON value, including the empty object')
     })
 /*

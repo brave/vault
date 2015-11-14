@@ -44,10 +44,49 @@ v1.post =
       debug('insert error', ex)
     }
 
+    if (type !== 'brave.site.visit') return
+
     try {
       // NB: calculation of session.intents is temporary
       session = await sessions.findOne({ sessionId: sessionId }, { intents: true })
       session = session || {}
+      if (!payload.title) {
+        payload.title = [ 'Arts',
+                          'Entertainment',
+                          'Automotive',
+                          'Business',
+                          'Careers',
+                          'Education',
+                          'Family',
+                          'Parenting',
+                          'Health',
+                          'Fitness',
+                          'Food',
+                          'Drink',
+                          'Hobbies',
+                          'Interests',
+                          'Home',
+                          'Garden',
+                          'Law',
+                          'Government',
+                          'Politics',
+                          'News',
+                          'Personal Finance',
+                          'Society',
+                          'Science',
+                          'Pets',
+                          'Sports',
+                          'Style',
+                          'Fashion',
+                          'Technology',
+                          'Computing',
+                          'Travel',
+                          'Real Estate',
+                          'Shopping',
+                          'Religion',
+                          'Spirituality'
+                        ].join(', ')
+      }
       intentions = underscore.union(session.intents || [], underscore.uniq(tokenizer.tokenize(payload.title.toLowerCase())))
 
       await sessions.update({ sessionId: sessionId },
