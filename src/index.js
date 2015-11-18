@@ -114,11 +114,13 @@ server.on('log', function (event, tags) {
         { sdebug:
           { request:
             { id: request.id,
-            statusCode: request.response.statusCode,
-            duration: (duration) && (duration / 1000)
+              method: request.method.toUpperCase(),
+              pathname: request.url.pathname,
+              statusCode: request.response.statusCode,
+              duration: (duration) && (duration / 1000)
             },
-          headers: request.response.headers,
-          error: braveHapi.error.inspect(request.response._error)
+            headers: request.response.headers,
+            error: braveHapi.error.inspect(request.response._error)
           }
         })
 })
