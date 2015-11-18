@@ -32,7 +32,7 @@
     "hapi-auth-cookie": "3.1.0",
     "hapi-swagger": "^2.2.3",
     "inert": "^3.2.0",
-    "joi": "7.0.0",
+    "joi": "https://github.com/mrose17/joi.git#a8597b9ef6d63f0ceeff7122a0e45cb1f99ba248",
     "mongodb": "1.4.39",
     "monk": "^1.0.1",
     "natural": "0.2.1",

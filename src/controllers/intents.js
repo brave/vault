@@ -29,7 +29,7 @@ v1.post =
     var sessions = runtime.db.get('sessions')
 
     result = await helper.userId2stats(runtime, userId)
-    if (!result) { return reply(boom.notFound('user entry does not exist', { userId: userId })) }
+    if (!result) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
     reply(result)
 
     intent = { userId: userId,

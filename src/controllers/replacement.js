@@ -21,7 +21,7 @@ v0.get =
 
     count = await users.update({ userId: userId }, { $inc: { statAdReplaceCount: 1 } }, { upsert: true })
     if (typeof count === 'object') { count = count.nMatched }
-    if (count === 0) { return reply(boom.notFound('user entry does not exist', { braveUserId: userId })) }
+    if (count === 0) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
 
     user = await users.findOne({ userId: userId }, { intents: true })
     if (user) intents = user.intents
@@ -86,7 +86,7 @@ v1.get =
 
     count = await users.update({ userId: userId }, { $inc: { statAdReplaceCount: 1 } }, { upsert: true })
     if (typeof count === 'object') { count = count.nMatched }
-    if (count === 0) { return reply(boom.notFound('user entry does not exist', { userId: userId })) }
+    if (count === 0) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
 
     session = await sessions.findOne({ sessionId: sessionId }, { intents: true })
     if (session) intents = session.intents
@@ -178,7 +178,7 @@ v1.getClicks =
     var adUnits = runtime.db.get('ad_units')
 
     result = await adUnits.findOne({ _id: adUnitId })
-    if (!result) { return reply(boom.notFound('adUnitId does not refer to a replacement ad', { adUnitId: adUnitId })) }
+    if (!result) { return reply(boom.notFound('adUnitId does not refer to a replacement ad: ' + adUnitId)) }
 
     reply.redirect(result.href)
 

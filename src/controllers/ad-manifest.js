@@ -21,7 +21,7 @@ v1.get =
     var siteInfo = runtime.db.get('site_info')
 
     try { timestamp = (timestamp || 0) ? bson.Timestamp.fromString(timestamp) : bson.Timestamp.ZERO } catch (ex) {
-      return reply(boom.badRequest('invalid value for the timestamp parameter', { timestamp: timestamp }))
+      return reply(boom.badRequest('invalid value for the timestamp parameter: ' + timestamp))
     }
 
     limit = 100
@@ -82,7 +82,7 @@ v1.getHostname =
     var siteInfo = runtime.db.get('site_info')
 
     result = await siteInfo.findOne({ hostname: hostname })
-    if (!result) { return reply(boom.notFound('ad-manifest entry does not exist', { hostname: hostname })) }
+    if (!result) { return reply(boom.notFound('ad-manifest entry does not exist: ' + hostname)) }
     result = underscore.extend(underscore.omit(result, '_id', 'timestamp'), { timestamp: result.timestamp.toString() })
 
     reply(result)
@@ -136,11 +136,11 @@ v1.post =
       await siteInfo.insert(underscore.extend(payload, { timestamp: bson.Timestamp() }))
     } catch (ex) {
       debug('insert error', ex)
-      return reply(boom.badData('ad-manifest entry already exists', { hostname: hostname }))
+      return reply(boom.badData('ad-manifest entry already exists: ' + hostname))
     }
 
     result = await siteInfo.findOne({ hostname: hostname })
-    if (!result) { return reply(boom.badImplementation('database creation failed', { hostname: hostname })) }
+    if (!result) { return reply(boom.badImplementation('database creation failed: ' + hostname)) }
     result = underscore.extend(underscore.omit(result, '_id', 'timestamp'), { timestamp: result.timestamp.toString() })
 
     reply(result)
@@ -208,7 +208,7 @@ v1.putHostname =
     await siteInfo.update({ hostname: hostname }, state, { upsert: true })
 
     result = await siteInfo.findOne({ hostname: hostname })
-    if (!result) { return reply(boom.badImplementation('database update failed', { hostname: hostname })) }
+    if (!result) { return reply(boom.badImplementation('database update failed: ' + hostname)) }
     result = underscore.extend(underscore.omit(result, '_id', 'timestamp'), { timestamp: result.timestamp.toString() })
 
     reply(result)

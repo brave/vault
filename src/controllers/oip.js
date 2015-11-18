@@ -71,7 +71,7 @@ v1.getCategory =
     var categories = runtime.oip.categories(formatP)
 
     result = categories[category]
-    if (!result) { return reply(boom.notFound('oip entry does not exist', { category: category })) }
+    if (!result) { return reply(boom.notFound('oip entry does not exist: ' + category)) }
 
     if (!formatP) return reply(result)
     reply('<pre>' + JSON.stringify(result, null, 2) + '</pre>')

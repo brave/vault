@@ -18,7 +18,7 @@ v1.get =
     var appStates = runtime.db.get('app_states')
 
     result = await appStates.findOne({ userId: userId })
-    if (!result) { return reply(boom.notFound('user entry does not exist', { userId: userId })) }
+    if (!result) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
 
     underscore.extend(result, { timestamp: result.timestamp.toString() })
     reply(underscore.omit(result, '_id', 'userId'))
@@ -69,12 +69,12 @@ v1.put =
             }
     if (timestamp) {
       try { timestamp = bson.Timestamp.fromString(timestamp) } catch (ex) {
-        return reply(boom.badRequest('invalid timestamp', { timestamp: timestamp }))
+        return reply(boom.badRequest('invalid timestamp: ' + timestamp))
       }
 
       count = await appStates.update({ userId: userId, timestamp: timestamp }, state, { upsert: false })
       if (typeof count === 'object') { count = count.nMatched }
-      if (count === 0) { return reply(boom.badData('timestamp mismatch', { timestamp: timestamp })) }
+      if (count === 0) { return reply(boom.badData('timestamp mismatch: ' + timestamp)) }
     } else {
       await appStates.update({ userId: userId }, state, { upsert: true })
     }

@@ -27,11 +27,11 @@ v1.put =
       await users.update({ userId: userId }, update, { upsert: true })
     } catch (ex) {
       debug('update error', ex)
-      return reply(boom.badImplementation('update failed', ex))
+      return reply(boom.badImplementation('update failed: ' + userId, ex))
     }
 
     user = await users.findOne({ userId: userId })
-    if (!user) { return reply(boom.badImplementation('insert failed')) }
+    if (!user) { return reply(boom.badImplementation('insert failed: ' + userId)) }
 
     if (!user.wallet) {
 /*
@@ -56,7 +56,7 @@ v1.put =
 
       count = await users.update({ userId: userId }, { $set: { wallet: user.wallet } }, { upsert: true })
       if (typeof count === 'object') { count = count.nMatched }
-      if (count === 0) { return reply(boom.badImplementation('update failed', { userId: userId })) }
+      if (count === 0) { return reply(boom.badImplementation('update failed: ' + userId)) }
     }
 
     if (!wallet) return reply().code(204)
@@ -107,7 +107,9 @@ v1.delete =
                                   },
                                   { upsert: true })
     if (typeof count === 'object') { count = count.nMatched }
-    if (count === 0) { return reply(boom.notFound('', { sessionId: sessionId, userId: userId })) }
+    if (count === 0) {
+      return reply(boom.notFound('session entry does not exist: ' + sessionId + ' for user entry: ' + userId))
+    }
 
     result = await helper.sessionId2stats(runtime, userId, sessionId)
     reply(result || {})
