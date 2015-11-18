@@ -34,6 +34,7 @@ v1.put =
     if (!user) { return reply(boom.badImplementation('insert failed')) }
 
     if (!user.wallet) {
+/*
       try {
         wallet = await runtime.wallet.generate(user)
 
@@ -49,6 +50,9 @@ v1.put =
         wallet = {}
         user.wallet = {}
       }
+ */
+      wallet = {}
+      user.wallet = {}
 
       count = await users.update({ userId: userId }, { $set: { wallet: user.wallet } }, { upsert: true })
       if (typeof count === 'object') { count = count.nMatched }
