@@ -158,10 +158,7 @@ v1.get =
         location: Joi.string().required().description('redirection URL')
       }),
       404: Joi.object({
-        boomlet: Joi.string().required().description('userId does not refer to an existing user')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('missing parameter')
+        boomlet: Joi.string().required().description('user entry does not exist')
       })
     }
 */
@@ -181,7 +178,7 @@ v1.getClicks =
     var adUnits = runtime.db.get('ad_units')
 
     result = await adUnits.findOne({ _id: adUnitId })
-    if (!result) { return reply(boom.notFound('', { adUnitId: adUnitId })) }
+    if (!result) { return reply(boom.notFound('adUnitId does not refer to a replacement ad', { adUnitId: adUnitId })) }
 
     reply.redirect(result.href)
 

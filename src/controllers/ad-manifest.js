@@ -249,9 +249,6 @@ v1.putHostname =
     })
 /*
     status: {
-      404: Joi.object({
-        boomlet: Joi.string().required().description('ad-manifest entry does not exist')
-      }),
       500: Joi.object({
         boomlet: Joi.string().required().description('database update failed')
       })

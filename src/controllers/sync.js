@@ -18,7 +18,7 @@ v1.get =
     var appStates = runtime.db.get('app_states')
 
     result = await appStates.findOne({ userId: userId })
-    if (!result) { return reply(boom.notFound('', { userId: userId })) }
+    if (!result) { return reply(boom.notFound('user entry does not exist', { userId: userId })) }
 
     underscore.extend(result, { timestamp: result.timestamp.toString() })
     reply(underscore.omit(result, '_id', 'userId'))
@@ -42,7 +42,7 @@ v1.get =
 /*
     status: {
       404: Joi.object({
-        boomlet: Joi.string().required().description('userId does not exist')
+        boomlet: Joi.string().required().description('user entry does not exist')
       })
     }
  */
