@@ -9,6 +9,7 @@ var v1 = {}
 
 /*
    PUT /v1/users/{userId}
+        create/update (entry MAY already exist)
  */
 
 v1.put =

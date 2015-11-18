@@ -13,6 +13,7 @@ var v1 = {}
 /*
    POST /v1/users/{userId}/intents
         { "sessionID": "...", "type": "...", "timestamp": "...", "payload": "..." }
+        always creates
  */
 
 v1.post =

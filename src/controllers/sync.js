@@ -52,6 +52,7 @@ v1.get =
 /*
    PUT /v1/users/{userId}/appState
         { "timestamp": "...", "payload": {} }
+        create/update (entry MAY already exist)
  */
 
 v1.put =

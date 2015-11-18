@@ -7,7 +7,7 @@ var underscore = require('underscore')
 var v1 = {}
 
 /*
-   GET /v1/ad-manfest?since={milliseconds since epoch}&limit={positive integer}
+   GET /v1/ad-manfest[? [since={milliseconds since epoch}&] [limit={positive integer}] ]
        defaults to since=0 limit=100
 
  */
@@ -193,6 +193,7 @@ v1.post =
 /*
    PUT /v1/ad-manifest/{hostname}
        { "replacementAd": "..." }
+        create/update (entry MAY already exist)
  */
 
 v1.putHostname =
