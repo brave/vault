@@ -1,19 +1,6 @@
 // request/response should use compression
 {
-
-  "version": "2.0", // protcol version
-
-  // request identifiers
-  "view_id": "uuid", // a unique identifier for this page view
-  // a unique identifier for this request 
-  // there may be multiple requests per page view
-  // because we may send new requests as new ad placements come into view
-  "request_id": "uuid", 
-  // these ids may be cryptographically generated for fraud prevention purposes
-  // and they may or may not be passed on to the content server so for their
-  // purposes these fields should be optional and they should return them 
-  // in the response if they are present
-
+  "version": "2.0", // protocol version
 
   // geo-targeting information
   "loc": {
@@ -25,6 +12,7 @@
     "postcode": "32792"
   },
 
+  "rtb": false, // enable or disable real-time bidding
 
   // intent signals
   "categories": {
@@ -84,10 +72,6 @@
 
 // response
 {
-  // this may be useful in conjunction with the ad token
-  // for fraud prevention - injected by Brave
-  "response_id": "uuid", 
-
 
   // ad information by placement
   "placements": [
@@ -110,20 +94,13 @@
             // We want to provide some information to the 
             // browser to allow users to minimize the number of intent
             // signals they expose for privacy reasons, but
-            // Brave may want to bucket this information 
-            // before sending it to the browser for fraud prevention purposes
-            // For example: we might replace the 
-            // actual dollar amount with
-            // "cpm": "high" where the options are high, medium and low
-            // or something similar to prevent someone from fishing for
-            // the highest CPM intent signals
+            // we want to bucket this information to prevent 
+            // fradulent signals meant to maximize CPMs
             // We may also just want to collect and possibly remove this to 
             // from the response and provide a generic map of intent 
             // signal => cpm bucket for all browsers to use
-            "cpm": {
-              "amount": "5.00",
-              "currency": "USD"
-            },
+            // available values are high, med and low
+            "cpm": "med",
             "id": "my_awesome_campaign", // advertiser campaign id
             "fcap": { // per-user immpression limits
               "limit": 3, // maximum number of times this ad should be displayed during the period
@@ -133,20 +110,7 @@
 
           // how long can we cache the ad in seconds
           "expiration": 86400,
-
-          // ad content fields
-          // will include either content OR url
-          // we may want to replace these with a Brave url that will
-          // return the actual ad information for accounting and fraud prevention
-          "url": "http://go.sonobi.com/images/logo_300x250.jpg",
-          "content": "<img src=\"http://go.sonobi.com/images/logo_300x250.jpg\"\\>",
-          "click_url": "http://bmw.com/my_awesome_campaign", // click through url for url or content (optional if content is specified)
-
-          // some kind of token that we can use for fraud prevention
-          // and/or fcaps. This will be injected into the response by Brave and 
-          // would be sent to the Brave url mentioned in ad content information
-          // and possibly also including the response_id
-          "token": "??"
+          "content": "<img src=\"http://go.sonobi.com/images/logo_300x250.jpg\"\\>"
         }
         //...
       ]
