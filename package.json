@@ -26,6 +26,7 @@
     "bson": "0.4.19",
     "cryptiles": "3.0.0",
     "debug": "^2.2.0",
+    "eccrypto": "1.0.3",
     "github": "0.2.4",
     "hapi": "^11.1.0",
     "hapi-async-handler": "^1.0.3",

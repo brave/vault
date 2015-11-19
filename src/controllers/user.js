@@ -8,6 +8,39 @@ var underscore = require('underscore')
 var v1 = {}
 
 /*
+   GET /v1/users/{userId}
+ */
+
+v1.get =
+{ handler: function (runtime) {
+  return async function (request, reply) {
+    var result
+    var userId = request.params.userId
+    var users = runtime.db.get('users')
+
+    result = await users.findOne({ userId: userId })
+    if (!result) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
+    result = underscore.omit(result, '_id', 'wallet')
+
+    reply(result)
+  }
+},
+
+  description: 'Return user entry information',
+  notes: 'The most common use is to retrieve cryptographic information stored during the creation of a user entry.',
+  tags: ['api'],
+
+  validate:
+    { params:
+      { userId: Joi.string().guid().required().description('the identity of the user entry') }
+    },
+
+  response: {
+    schema: Joi.any()
+  }
+}
+
+/*
    PUT /v1/users/{userId}
         create/update (entry MAY already exist)
  */
@@ -15,15 +48,32 @@ var v1 = {}
 v1.put =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var count, update, user, wallet
+    var count, createP, result, update, user, wallet
     var debug = braveHapi.debug(module, request)
+    var envelope = request.payload.envelope
     var userId = request.params.userId
     var appStates = runtime.db.get('app_states')
     var users = runtime.db.get('users')
 
+    if (envelope) {
+      if (envelope.version !== 1) return reply(boom.badRequest('invalid envelope.version: ' + envelope.version))
+      if ((!envelope.privateKey) || (underscore.keys(envelope.privateKey).length === 0)) {
+        return reply(boom.badRequest('invalid or missing envelope.privateKey: ' + JSON.stringify(envelope.privateKey)))
+      }
+      if ((!envelope.publicKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length !== 130)) {
+        return reply(boom.badRequest('invalid or missing envelope.publicKey: ' + JSON.stringify(envelope.publicKey)))
+      }
+    }
+
     try {
-      update = { $setOnInsert: { statAdReplaceCount: 0 } }
-      if (underscore.keys(request.payload).length > 0) underscore.extend(update, request.payload)
+      update = { $setOnInsert: { statAdReplaceCount: 0 }, $set: {}, $unset: {} }
+      underscore.keys(request.payload).forEach(function (key) {
+        var value = request.payload[key]
+
+        update[(key === 'envelope') ? '$setOnInsert' : (value !== null) ? '$set' : '$unset'][key] = value
+      })
+      if (underscore.keys(update.$set).length === 0) delete update.$set
+      if (underscore.keys(update.$unset).length === 0) delete update.$unset
 
       await users.update({ userId: userId }, update, { upsert: true })
     } catch (ex) {
@@ -34,7 +84,8 @@ v1.put =
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.badImplementation('insert failed: ' + userId)) }
 
-    if (!user.wallet) {
+    createP = !user.wallet
+    if (createP) {
 /*
       try {
         wallet = await runtime.wallet.generate(user)
@@ -60,8 +111,9 @@ v1.put =
       if (count === 0) { return reply(boom.badImplementation('update failed: ' + userId)) }
     }
 
-    if (!wallet) return reply().code(204)
-    reply().created()
+    result = underscore.omit(user, '_id', 'wallet')
+    if (!wallet) return reply(result)
+    reply(result).created()
 
     try {
       await appStates.insert({ userId: userId, timestamp: bson.Timestamp(), payload: {} })
@@ -136,7 +188,8 @@ v1.delete =
 }
 
 module.exports.routes =
-[ braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put),
+[ braveHapi.routes.async().get().path('/v1/users/{userId}').config(v1.get),
+  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put),
   braveHapi.routes.async().delete().path('/v1/users/{userId}/sessions/{sessionId}').config(v1.delete)
 ]
 
