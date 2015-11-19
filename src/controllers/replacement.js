@@ -3,66 +3,6 @@ var braveHapi = require('../brave-hapi')
 var Joi = require('joi')
 var underscore = require('underscore')
 
-var v0 = {}
-
-/*
-   GET /replacement?braveUserId={userId}
- */
-
-v0.get =
-{ handler: function (runtime) {
-  return async function (request, reply) {
-    var ad, count, image, intents, tag, url, user
-    var debug = braveHapi.debug(module, request)
-    var height = request.query.height
-    var userId = request.query.braveUserId
-    var width = request.query.width
-    var users = runtime.db.get('users')
-
-    count = await users.update({ userId: userId }, { $inc: { statAdReplaceCount: 1 } }, { upsert: true })
-    if (typeof count === 'object') { count = count.nMatched }
-    if (count === 0) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
-
-    user = await users.findOne({ userId: userId }, { intents: true })
-    if (user) intents = user.intents
-    debug('user intents: ' + JSON.stringify(user.intents))
-
-    ad = (intents) && runtime.oip.adUnitForIntents(intents, width, height)
-    if (ad) {
-      image = '<a href="' + ad.lp + '" target="_blank"><img src="' + ad.url + '"/></a>'
-      tag = ad.name
-    } else {
-      image = '<img src="https://placeimg.com/' + width + '/' + height + '"/>'
-      tag = 'Use Brave'
-      debug('default ad returned')
-    }
-
-    url = 'data:text/html,<html><body style="width: ' + width +
-          'px; height: ' + height +
-          'px; padding: 0; margin: 0;">' +
-          image +
-          '<div style="background-color:blue; color: white; font-weight: bold; position: absolute; top: 0;">' + tag + '</div></body></html>'
-
-    debug('serving ad for query ', request.query, ' with url: ', url)
-    reply.redirect(url)
-  }
-},
-
-  description: 'Performs an ad replacement (deprecated)',
-  notes: 'cf., <a href="/documentation#!/v1/v1usersuserIdreplacement_get_14" target="_blank">GET /v1/users/{userId}/replacement</a>',
-  tags: ['api', 'deprecated'],
-
-  validate:
-    { query:
-      { braveUserId: Joi.string().guid().required(),
-        intentHost: Joi.string().hostname().required(),
-        tagName: Joi.string().required(),
-        width: Joi.number().positive().required(),
-        height: Joi.number().positive().required()
-      }
-    }
-}
-
 var v1 = {}
 
 /*
@@ -218,7 +158,6 @@ v1.getClicks =
 
 module.exports.routes =
 [
-  braveHapi.routes.async().path('/replacement').config(v0.get),
   braveHapi.routes.async().path('/v1/users/{userId}/replacement').config(v1.get),
   braveHapi.routes.async().path('/v1/ad-clicks/{adUnitId}').config(v1.getClicks)
 ]
