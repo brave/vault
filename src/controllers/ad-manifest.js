@@ -39,7 +39,7 @@ v1.get =
   }
 },
 
-  description: 'Incrementally return ad manifests for zero or more sites',
+  description: 'Incrementally returns ad manifests for zero or more sites',
   notes: 'The "timestamp" parameter corresponding to an opaque value, defaulting to "0". The "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
   tags: ['api'],
 
@@ -226,15 +226,14 @@ v1.putHostname =
   tags: ['api'],
 
   validate:
-    { params:
-      { hostname: Joi.string().hostname().required().description('the domain name of the site') },
-        payload:
-        { hostname: Joi.any().forbidden(),
-          timestamp: Joi.any().forbidden(),
-          replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required(),
-                                                               height: Joi.number().positive().required(),
-                                                               replaceId: Joi.string().required()
-                                                             })).required()
+    { params: { hostname: Joi.string().hostname().required().description('the domain name of the site') },
+      payload:
+      { hostname: Joi.any().forbidden(),
+        timestamp: Joi.any().forbidden(),
+        replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required(),
+                                                             height: Joi.number().positive().required(),
+                                                             replaceId: Joi.string().required()
+                                                           })).required()
       }
     },
 

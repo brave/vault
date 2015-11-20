@@ -76,7 +76,7 @@ v1.get =
   }
 },
 
-  description: 'Retrieve an ad replacement',
+  description: 'Retrieves an ad replacement',
   notes: 'Returns a replacement ad, via a 301 to <pre>data:text/html;charset=utf-8,&lt;html&gt;...&lt;a href="https:.../v1/ad-clicks/{adUnitId}"&gt;&lt;img src="..." /&gt;&lt;/a&gt;...&lt;/html&gt;</pre>',
   tags: ['api'],
 
@@ -91,7 +91,6 @@ v1.get =
     },
 
   response: {
-    schema: Joi.any().empty()
 /*
     status: {
       301: Joi.object({
@@ -142,7 +141,6 @@ v1.getClicks =
     },
 
   response: {
-    schema: Joi.any().empty()
 /*
     status: {
       301: Joi.object({

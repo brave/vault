@@ -16,22 +16,35 @@ var v1 = {}
         always creates
  */
 
+var intentSchema = Joi.object().keys({
+  sessionId: Joi.string().guid().required().description('the identity of the session'),
+  type: Joi.string().min(6).required().description('e.g., "browser.site.visit"'),
+  timestamp: Joi.number().positive().required().description('opaque number identifying a instance of time'),
+  payload: Joi.object().required().description('an opaque JSON object')
+})
+
 v1.post =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var intent, intentions, result, session
+    var intent, intentions, result, session, user
     var debug = braveHapi.debug(module, request)
     var userId = request.params.userId
-    var sessionId = request.payload.sessionId
-    var type = request.payload.type
-    var timestamp = request.payload.timestamp
-    var payload = request.payload.payload
+    var container = request.payload.intent ? request.payload.intent : request.payload
+    var sessionId = container.sessionId
+    var type = container.type
+    var timestamp = container.timestamp
+    var payload = container.payload
+    var users = runtime.db.get('users')
     var intents = runtime.db.get('intents')
     var sessions = runtime.db.get('sessions')
 
-    result = await helper.userId2stats(runtime, userId)
-    if (!result) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
-    reply(result)
+    user = await users.findOne({ userId: userId })
+    if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
+
+    result = await helper.verify(debug, user, request.payload)
+    if (result) return reply(result)
+
+    reply(helper.sessionId2stats(runtime, userId, sessionId))
 
     intent = { userId: userId,
                sessionID: sessionId,
@@ -107,12 +120,8 @@ v1.post =
 
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
-      payload:
-      { sessionId: Joi.string().guid().required().description('the identity of the session'),
-        type: Joi.string().min(6).required().description('e.g., "browser.site.visit"'),
-        timestamp: Joi.date().format('x').required().description('opaque number identifying a instance of time'),
-        payload: Joi.object().required().description('an opaque JSON object')
-      }
+      payload: Joi.alternatives(intentSchema,
+                                Joi.object().keys({ envelope: Joi.any().required(), intent: intentSchema }))
     },
 
   response: {
@@ -122,8 +131,23 @@ v1.post =
 
 /*
     status: {
+      400: Joi.object({
+        boomlet: Joi.string().required().description('payload is not cryptographically-signed')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('unknown user entry cryptography version')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('envelope.nonce is invalid')
+      }),
       404: Joi.object({
         boomlet: Joi.string().required().description('user entry does not exist')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('user entry is not cryptographically-enabled')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('signature error')
       })
     }
  */

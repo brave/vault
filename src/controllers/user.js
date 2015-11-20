@@ -14,29 +14,36 @@ var v1 = {}
 v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var result
+    var result, user
     var userId = request.params.userId
     var users = runtime.db.get('users')
 
-    result = await users.findOne({ userId: userId })
-    if (!result) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
-    result = underscore.omit(result, '_id', 'wallet')
+    user = await users.findOne({ userId: userId })
+    if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
+    result = underscore.omit(user, '_id', 'wallet')
 
     reply(result)
   }
 },
 
-  description: 'Return user entry information',
+  description: 'Returns user entry information',
   notes: 'The most common use is to retrieve cryptographic information stored during the creation of a user entry.',
   tags: ['api'],
 
   validate:
-    { params:
-      { userId: Joi.string().guid().required().description('the identity of the user entry') }
+    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') }
     },
 
   response: {
     schema: Joi.any()
+
+/*
+    status: {
+      404: Joi.object({
+        boomlet: Joi.string().required().description('user entry does not exist')
+      })
+    }
+ */
   }
 }
 
@@ -56,14 +63,19 @@ v1.put =
     var users = runtime.db.get('users')
 
     if (envelope) {
-      if (envelope.version !== 1) return reply(boom.badRequest('invalid envelope.version: ' + envelope.version))
-      if ((!envelope.privateKey) || (underscore.keys(envelope.privateKey).length === 0)) {
+      if (envelope.version !== 1) {
+        return reply(boom.badRequest('invalid or missing envelope.version: ' + JSON.stringify(envelope.version)))
+      }
+      if ((!envelope.privateKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length <= 96)) {
         return reply(boom.badRequest('invalid or missing envelope.privateKey: ' + JSON.stringify(envelope.privateKey)))
       }
       if ((!envelope.publicKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length !== 130)) {
         return reply(boom.badRequest('invalid or missing envelope.publicKey: ' + JSON.stringify(envelope.publicKey)))
       }
     }
+    /* not going to argue with Joi about the payload... */
+    if (request.payload.userId) return reply(boom.badRequest('"userId" is not allowed'))
+    if (request.payload.wallet) return reply(boom.badRequest('"wallet" is not allowed'))
 
     try {
       update = { $setOnInsert: { statAdReplaceCount: 0 }, $set: {}, $unset: {} }
@@ -124,19 +136,34 @@ v1.put =
 },
 
   description: 'Registers a user with the vault',
-  notes: 'Once a user is successfully registered, the browser generates (as often as it wishes) a "sessionId" parameter for subsequent operations, in order to identify both the user and browser session.',
+  notes: 'Once a user is successfully registered, the browser generates (as often as it wishes) a "sessionId" parameter for subsequent operations, in order to identify both the user and browser session.  The "envelope" parameter is valid only if the user entry is created; otherwise, it is ignored.',
   tags: ['api'],
 
   validate:
-    { params:
-      { userId: Joi.string().guid().required().description('the identity of the user entry') }
+    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') }
     },
 
   response: {
-    schema: Joi.any().empty()
+    schema: Joi.any()
 /*
     status: {
-      201: Joi.any().empty()
+      200: Joi.any(),
+      201: Joi.any(),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('invalid or missing envelope.version')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('invalid or missing envelope.privateKey')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('invalid or missing envelope.publicKey')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('userId is not allowed')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('wallet is not allowed')
+      })
     }
  */
   }
@@ -184,6 +211,14 @@ v1.delete =
     schema: Joi.object().keys({
       replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
     })
+
+/*
+    status: {
+      404: Joi.object({
+        boomlet: Joi.string().required().description('session entry does not exist')
+      })
+    }
+ */
   }
 }
 
