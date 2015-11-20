@@ -43,9 +43,15 @@
     },
     "Orlando Trip": { "period": [ "day" ] }
   },
-  // urls were removed because they don't provide intent information 
-  // that wouldn't be better conveyed by keywords
-  
+
+  // URLs for retargeting campaigns
+  // we don't want the browser to expose more history than necessary
+  // so Brave should make a list of retargeting domains available to the browser
+  // Most retargeting is "dumb" and continues to display ads even after the purchase
+  // We want to make sure we are being more intelligent about it before sending these
+  "urls": [
+    { "domain": "honda.com", "period": [ "day" ] }
+  ],
 
   // publisher ad placements for the page
   "placements": {
