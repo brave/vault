@@ -7,7 +7,7 @@ var underscore = require('underscore')
 var v1 = {}
 
 /*
-   GET /v1/ad-manfest[? [since={milliseconds since epoch}&] [limit={positive integer}] ]
+   GET /v1/ad-manifest[? [since={milliseconds since epoch}&] [limit={positive integer}] ]
        defaults to since=0 limit=100
 
  */
@@ -16,7 +16,7 @@ v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
-    var limit = request.query.limit
+    var limit = parseInt(request.query.limit, 10)
     var timestamp = request.query.timestamp
     var siteInfo = runtime.db.get('site_info')
 
@@ -24,7 +24,7 @@ v1.get =
       return reply(boom.badRequest('invalid value for the timestamp parameter: ' + timestamp))
     }
 
-    limit = 100
+    if (isNaN(limit) || (limit > 100)) limit = 100
     query = { timestamp: { $gte: timestamp } }
     modifiers = { sort: { timestamp: 1 } }
 
@@ -32,7 +32,8 @@ v1.get =
     result = []
     entries.forEach(entry => {
       if (entry.hostname === '') return
-      result.push(underscore.extend(underscore.omit(entry, '_id', 'timestamp'), { timestamp: entry.timestamp.toString() }))
+      result.push(underscore.extend(underscore.omit(entry, '_id', 'timestamp'),
+                                    { timestamp: entry.timestamp.toString() }))
     })
 
     reply(result)
@@ -222,7 +223,7 @@ v1.putHostname =
       mode: 'required'
     },
 
-  description: 'Creates/Updates the ad manifest for a particular site',
+  description: 'Sets the ad manifest for a particular site',
   tags: ['api'],
 
   validate:

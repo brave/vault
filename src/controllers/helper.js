@@ -47,7 +47,7 @@ var from_hex = function (s) {
 
 exports.verify = async function (debug, user, data) {
   var envelope = data.envelope
-  var payload = data.payload || JSON.stringify(data.intent)
+  var payload = JSON.stringify(data.payload || data.intent)
 
   if (user.envelope) {
     if (!envelope) return boom.badRequest('payload is not cryptographically-signed')

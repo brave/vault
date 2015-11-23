@@ -102,10 +102,9 @@ encodes as:
 and asks the user to either print out the QR code, or save the `Persona-ID` and `passKey` to a password manager.
 
 ### Saving Shared Application State
-There are two operations that clients may use to upload shared application state to the Vault:
+There is one operation that clients may use to upload shared application state to the Vault:
 
-        PUT  /v1/users/{personalID}/global
-        PUT  /v1/users/{personalID}/devices/{deviceName}
+        PUT  /v1/users/{personalID}/sessions/{sessionId}/types/{type}
 
 For each operation:
 
@@ -198,10 +197,9 @@ and use the `GET /v1/users/{personaID}`
 which returns the current payload along with the `envelope` originally uploaded by the initial client.
 
 Knowledge of the `passKey` (along with the original `envelope.iv`) allows the client to decipher the `privateKey`,
-and thereafter to decrypt the `cipherKey` used in any of these operations:
+and thereafter to decrypt the `cipherKey` used in this operation:
 
-        PUT  /v1/users/{personalID}/global
-        PUT  /v1/users/{personalID}/devices/{deviceName}
+        PUT  /v1/users/{personalID}/sessions/{sessionID}/types/{type}
 
 Of course,
 a client may also have a preference panel allowing direct display and entry of the `personaID` and `passKey`,

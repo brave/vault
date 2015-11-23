@@ -1,7 +1,6 @@
 var boom = require('boom')
 var braveHapi = require('../brave-hapi')
 var bson = require('bson')
-var helper = require('./helper')
 var Joi = require('joi')
 var underscore = require('underscore')
 
@@ -55,6 +54,8 @@ v1.get =
 v1.put =
 { handler: function (runtime) {
   return async function (request, reply) {
+    if (!request.payload) request.payload = {}
+
     var count, createP, result, update, user, wallet
     var debug = braveHapi.debug(module, request)
     var envelope = request.payload.envelope
@@ -169,63 +170,9 @@ v1.put =
   }
 }
 
-/*
-   DELETE  /v1/users/{userId}/sessions/{sessionId}
- */
-
-v1.delete =
-{ handler: function (runtime) {
-  return async function (request, reply) {
-    var count, result
-    var userId = request.params.userId
-    var sessionId = request.params.sessionId
-    var sessions = runtime.db.get('sessions')
-
-    count = await sessions.update({ sessionId: sessionId },
-                                  { $currentDate: { timestamp: { $type: 'timestamp' } },
-                                    $set: { activity: 'delete' }
-                                  },
-                                  { upsert: true })
-    if (typeof count === 'object') { count = count.nMatched }
-    if (count === 0) {
-      return reply(boom.notFound('session entry does not exist: ' + sessionId + ' for user entry: ' + userId))
-    }
-
-    result = await helper.sessionId2stats(runtime, userId, sessionId)
-    reply(result || {})
-  }
-},
-
-  description: 'Marks a session as no longer active',
-  notes: 'The corresponding session entry is considered "no longer valid". If a sessionId is not referenced in a timely-fashion, the vault may choose to invalidate it. Regardless, the sessionId may no longer be used to perform new operations.',
-  tags: ['api'],
-
-  validate:
-    { params:
-      { userId: Joi.string().guid().required().description('the identity of the user entry'),
-        sessionId: Joi.string().guid().required().description('the identity of the session')
-      }
-    },
-
-  response: {
-    schema: Joi.object().keys({
-      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
-    })
-
-/*
-    status: {
-      404: Joi.object({
-        boomlet: Joi.string().required().description('session entry does not exist')
-      })
-    }
- */
-  }
-}
-
 module.exports.routes =
 [ braveHapi.routes.async().get().path('/v1/users/{userId}').config(v1.get),
-  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put),
-  braveHapi.routes.async().delete().path('/v1/users/{userId}/sessions/{sessionId}').config(v1.delete)
+  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put)
 ]
 
 module.exports.initialize = async function (debug, runtime) {
@@ -235,13 +182,6 @@ module.exports.initialize = async function (debug, runtime) {
       property: 'userId',
       empty: { userId: '', intents: [] },
       unique: [ { userId: 1 } ]
-    },
-    { category: runtime.db.get('sessions'),
-      name: 'sessions',
-      property: 'sessionId',
-      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO, intents: [] },
-      unique: [ { sessionId: 1 } ],
-      others: [ { userId: 0 }, { timestamp: 1 } ]
     }
   ])
 }

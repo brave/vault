@@ -1,5 +1,6 @@
 var boom = require('boom')
 var braveHapi = require('../brave-hapi')
+var bson = require('bson')
 var Joi = require('joi')
 var underscore = require('underscore')
 
@@ -12,7 +13,7 @@ var v1 = {}
 v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var ad, tag, count, href, img, intents, result, session, url
+    var ad, tag, count, href, img, result, url
     var debug = braveHapi.debug(module, request)
     var host = request.headers.host
     var protocol = request.url.protocol || 'http'
@@ -28,18 +29,10 @@ v1.get =
     if (typeof count === 'object') { count = count.nMatched }
     if (count === 0) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
 
-    session = await sessions.findOne({ sessionId: sessionId }, { intents: true })
-    if (session) intents = session.intents
-    if (!intents) {
-      (await sessions.find({ userId: userId }, { intents: true })).forEach(function (s) {
-        if (s.intents) intents = underscore.union(intents, s.intents)
-      })
-    }
-    debug('intents: ' + JSON.stringify(intents))
-    ad = runtime.oip.adUnitForIntents(intents || [], width, height)
+    ad = runtime.oip.adUnitForIntents([], width, height)
 
     if (ad) {
-      debug('serving ' + ad.category + ': ' + ad.name + ' for ' + JSON.stringify(intents))
+      debug('serving ' + ad.category + ': ' + ad.name)
       href = ad.lp
       img = '<img src="' + ad.url + '" />'
       tag = ad.name
@@ -167,6 +160,13 @@ module.exports.initialize = async function (debug, runtime) {
       property: 'sessionId',
       empty: { sessionId: '' },
       others: [ { sessionId: 1 } ]
+    },
+    { category: runtime.db.get('sessions'),
+      name: 'sessions',
+      property: 'sessionId',
+      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO, intents: [] },
+      unique: [ { sessionId: 1 } ],
+      others: [ { userId: 0 }, { timestamp: 1 } ]
     }
   ])
 }

@@ -3,10 +3,7 @@ var braveHapi = require('../brave-hapi')
 var bson = require('bson')
 var helper = require('./helper')
 var Joi = require('joi')
-var natural = require('natural')
 var underscore = require('underscore')
-
-var tokenizer = new natural.WordTokenizer()
 
 var v1 = {}
 
@@ -26,7 +23,7 @@ var intentSchema = Joi.object().keys({
 v1.post =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var intent, intentions, result, session, user
+    var intent, result, user
     var debug = braveHapi.debug(module, request)
     var userId = request.params.userId
     var container = request.payload.intent ? request.payload.intent : request.payload
@@ -36,7 +33,6 @@ v1.post =
     var payload = container.payload
     var users = runtime.db.get('users')
     var intents = runtime.db.get('intents')
-    var sessions = runtime.db.get('sessions')
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
@@ -56,60 +52,6 @@ v1.post =
       await intents.insert(intent)
     } catch (ex) {
       debug('insert error', ex)
-    }
-
-    if (type !== 'brave.site.visit') return
-
-    try {
-      // NB: calculation of session.intents is temporary
-      session = await sessions.findOne({ sessionId: sessionId }, { intents: true })
-      session = session || {}
-      if (!payload.title) {
-        payload.title = [ 'Arts',
-                          'Entertainment',
-                          'Automotive',
-                          'Business',
-                          'Careers',
-                          'Education',
-                          'Family',
-                          'Parenting',
-                          'Health',
-                          'Fitness',
-                          'Food',
-                          'Drink',
-                          'Hobbies',
-                          'Interests',
-                          'Home',
-                          'Garden',
-                          'Law',
-                          'Government',
-                          'Politics',
-                          'News',
-                          'Personal Finance',
-                          'Society',
-                          'Science',
-                          'Pets',
-                          'Sports',
-                          'Style',
-                          'Fashion',
-                          'Technology',
-                          'Computing',
-                          'Travel',
-                          'Real Estate',
-                          'Shopping',
-                          'Religion',
-                          'Spirituality'
-                        ].join(', ')
-      }
-      intentions = underscore.union(session.intents || [], underscore.uniq(tokenizer.tokenize(payload.title.toLowerCase())))
-
-      await sessions.update({ sessionId: sessionId },
-                             { $currentDate: { timestamp: { $type: 'timestamp' } },
-                               $set: { activity: 'intent', intents: intentions }
-                             },
-                             { upsert: true })
-    } catch (ex) {
-      debug('update failed', ex)
     }
   }
 },
