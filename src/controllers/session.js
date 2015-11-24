@@ -41,7 +41,7 @@ v1.getSessions =
   }
 },
 
-  description: 'Incrementally returns session information for a user',
+  description: 'Incrementally returns session information for a user entry',
   notes: 'The "timestamp" parameter corresponding to an opaque value, defaulting to "0". The "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
   tags: ['api'],
 
@@ -162,7 +162,7 @@ v1.getSessionType =
   }
 },
 
-  description: 'Returns session information for a particular user',
+  description: 'Returns session information for a particular user entry',
   tags: ['api'],
 
   validate:
@@ -229,7 +229,7 @@ v1.putSessionType =
       mode: 'required'
     },
 
-  description: 'Sets session information for a particular user',
+  description: 'Records session information for a particular user entry',
   tags: ['api'],
 
   validate:
