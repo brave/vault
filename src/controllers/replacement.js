@@ -125,7 +125,7 @@ v1.getClicks =
 },
 
   description: 'Performs an ad replacement click-through',
-  notes: 'Returns a 301 redirect to the site associated with the replacement ad. This endpoint is returned via 301 by the <a href="/documentation#!/v1/v1usersuserIdreplacement_get_14" target="_blank">GET /v1/users/{userId}/replacement</a> operation.',
+  notes: 'Returns a 301 redirect to the site associated with the replacement ad. This endpoint is returned via 301 by the <a href="/documentation#!/v1/v1usersuserIdreplacement_get_15" target="_blank">GET /v1/users/{userId}/replacement</a> operation.',
   tags: ['api'],
 
   validate:
