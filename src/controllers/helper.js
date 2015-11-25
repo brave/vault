@@ -64,6 +64,12 @@ exports.verify = async function (debug, user, data) {
     return null    // no user entry credentials, no data signature
   }
 
+/* expecting
+
+    crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, k.privateKey,new TextEncoder('utf-8').encode(...).then(signature =>
+        console.log(to_hex(ab2b(signature)))
+    )
+ */
   try {
     await ecdsa.verify(from_hex(user.envelope.publicKey),
                        crypto.createHash('sha256').update(user.userId + ':' + envelope.nonce + ':' + payload).digest(),

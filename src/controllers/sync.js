@@ -25,7 +25,7 @@ v1.get =
   }
 },
 
-  description: 'Returns shared application-state',
+  description: 'Returns shared application-state (soon to be deprecated)',
   notes: 'Applications use an advisory locking cheme in order to synchronize and persist shared information. This operation retrieves information shared between all applications for the corresponding user. The "payload" object is opaque to the vault &mdash; the applications are responsible for determining the syntax and semantics of the information. If no information has been previously stored for the correpsonding "userId", the empty object ("{}") is returned.',
   tags: ['api'],
 
@@ -86,8 +86,8 @@ v1.put =
   }
 },
 
-  description: 'Records shared application-state',
-  notes: 'This operation updates information shared between all applications for the correpsonding user. To successfully update the shared information, the browser must:<ol><li>1. Use the "GET /v1/users/{userId}/appState" operation to retrieve the current information; then,</li><li>2. Modify the returned "payload" as appropriate; then,</li><li>3. Use the "PUT /v1/users/{userId}/appState" operation with the previously-returned "timestamp" and the modified "payload".</li><li>4. If a "422" is returned, go back to Step 1; otherwise,</li><li>5. Optionally: persist locally the newly-returned "timestamp" and the modified "payload", so as to skip Step 1 the next time a state update is desired.</li></ol>This allows multiple applications to (patiently) coordinate their actions in upgrading the shared information. However, if an application must universally overwritte the shared information, it omits the "timestamp" parameter.',
+  description: 'Records shared application-state (soon to be deprecated)',
+  notes: 'This operation updates information shared between all applications for the correpsonding user. To successfully update the shared information, the browser must:<ol><li>1. Use the "GET /v1/users/{userId}/appState" operation to retrieve the current information; then,</li><li>2. Modify the returned "payload" as appropriate; then,</li><li>3. Use the "PUT /v1/users/{userId}/appState" operation with the previously-returned "timestamp" and the modified "payload".</li><li>4. If a "422" is returned, go back to Step 1; otherwise,</li><li>5. Optionally: persist locally the newly-returned "timestamp" and the modified "payload", so as to skip Step 1 the next time a state update is desired.</li></ol>This allows multiple applications to (patiently) coordinate their actions in upgrading the shared information. However, if an application must universally overwrite the shared information, it omits the "timestamp" parameter.',
   tags: ['api'],
 
   validate:
