@@ -223,12 +223,6 @@ v1.putSessionType =
   }
 },
 
-  auth:
-    { strategy: 'session',
-      scope: [ 'devops' ],
-      mode: 'required'
-    },
-
   description: 'Records session information for a particular user entry',
   tags: ['api'],
 
@@ -240,7 +234,7 @@ v1.putSessionType =
       },
       payload: Joi.object().keys({
         envelope: Joi.any().required(),
-        payload: Joi.object().required().description('an opaque JSON object')
+        payload: Joi.string().required().description('the encrypted payload')
       })
     },
 
