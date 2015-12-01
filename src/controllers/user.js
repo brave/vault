@@ -19,14 +19,18 @@ v1.get =
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
-    result = underscore.omit(user, '_id', 'wallet')
+    // NB: temporary
+    if (!user.timestamp) {
+      user = await users.update({ userId: userId }, { $currentDate: { timestamp: { $type: 'timestamp' } } }, { upsert: true })
+    }
+    result = underscore.extend(underscore.omit(user, '_id', 'wallet'), { timestamp: user.timestamp.toString() })
 
     reply(result)
   }
 },
 
   description: 'Returns user entry information',
-  notes: 'The most common use is to retrieve cryptographic information stored during the creation of a user entry.',
+  notes: 'The most common use is to retrieve cryptographic information stored during the creation of a user entry.<p></p>Applications use an advisory locking cheme in order to synchronize and persist shared information. This operation retrieves information shared between all applications for the corresponding user entry. These properties are present in the user entry:<ul><li><strong>userId:</strong> identifier for the user entry</li><li><strong>timestamp:</strong> monotonically-increasing value for coordinating multiple clients updating the same user entry</li><li><strong>envelope.version:</strong> always 1 (at least for now!)</li><li><strong>envelope.privateKey:</strong> ...</li><li><strong>envelope.iv:</strong> ...</li><li><strong>envelope.publicKey:</strong> ...</li></ul>',
   tags: ['api'],
 
   validate:
@@ -60,6 +64,7 @@ v1.put =
     var debug = braveHapi.debug(module, request)
     var envelope = request.payload.envelope
     var userId = request.params.userId
+    var timestamp = request.payload.timestamp
     var appStates = runtime.db.get('app_states')
     var users = runtime.db.get('users')
 
@@ -70,6 +75,34 @@ v1.put =
       if ((!envelope.privateKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length <= 96)) {
         return reply(boom.badRequest('invalid or missing envelope.privateKey: ' + JSON.stringify(envelope.privateKey)))
       }
+/* expecting
+
+var to_hex = function (bs) {
+    var encoded = []
+
+    for (var i = 0; i < bs.length; i++) {
+        encoded.push("0123456789abcdef"[(bs[i] >> 4) & 15])
+        encoded.push("0123456789abcdef"[bs[i] & 15])
+    }
+    return encoded.join('')
+}
+
+var ab2b = function(ab) {
+    var buffer = []
+
+    var view = new Uint8Array(ab)
+    for (var i = 0; i < ab.byteLength; ++i) buffer[i] = view[i]
+
+    return buffer
+}
+
+    crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, [ 'sign' ]).then(k => {
+        crypto.subtle.exportKey('raw', k.publicKey).then(p =>
+            console.log(to_hex(ab2b(publicKey)));
+        )
+    })
+
+ */
       if ((!envelope.publicKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length !== 130)) {
         return reply(boom.badRequest('invalid or missing envelope.publicKey: ' + JSON.stringify(envelope.publicKey)))
       }
@@ -79,16 +112,34 @@ v1.put =
     if (request.payload.wallet) return reply(boom.badRequest('"wallet" is not allowed'))
 
     try {
-      update = { $setOnInsert: { statAdReplaceCount: 0 }, $set: {}, $unset: {} }
+      update = { $currentDate: { timestamp: { $type: 'timestamp' } },
+                 $setOnInsert: { statAdReplaceCount: 0 },
+                 $set: {},
+                 $unset: {} }
       underscore.keys(request.payload).forEach(function (key) {
         var value = request.payload[key]
 
+        if (key === 'timestamp') return
         update[(key === 'envelope') ? '$setOnInsert' : (value !== null) ? '$set' : '$unset'][key] = value
       })
       if (underscore.keys(update.$set).length === 0) delete update.$set
       if (underscore.keys(update.$unset).length === 0) delete update.$unset
 
-      await users.update({ userId: userId }, update, { upsert: true })
+      if (timestamp) {
+        try { timestamp = bson.Timestamp.fromString(timestamp) } catch (ex) {
+          return reply(boom.badRequest('invalid timestamp: ' + timestamp))
+        }
+
+        try {
+          count = await users.update({ userId: userId, timestamp: timestamp }, update, { upsert: true })
+        } catch (ex) {
+          return reply(boom.badData('timestamp mismatch: ' + timestamp))
+        }
+        if (typeof count === 'object') { count = count.nMatched }
+        if (count === 0) { return reply(boom.badData('timestamp mismatch: ' + timestamp)) }
+      } else {
+        await users.update({ userId: userId }, update, { upsert: true })
+      }
     } catch (ex) {
       debug('update error', ex)
       return reply(boom.badImplementation('update failed: ' + userId, ex))
@@ -136,8 +187,8 @@ v1.put =
   }
 },
 
-  description: 'Registers a user with the vault',
-  notes: 'Once a user is successfully registered, the browser generates (as often as it wishes) a "sessionId" parameter for subsequent operations, in order to identify both the user and browser session.  The "envelope" parameter is valid only if the user entry is created; otherwise, it is ignored.',
+  description: 'Creates or updates a user entry with the vault',
+  notes: 'Once a user entry is successfully registered, the browser generates (as often as it wishes) a "sessionId" parameter for subsequent operations, in order to identify both the user entry and session.  The "envelope" parameter is valid only if the user entry is created; otherwise, it is ignored.<p></p>This operation updates information shared between all applications for the correpsonding user entry. To successfully update the shared information, the browser must:<ol><li>1. Use the "GET /v1/users/{userId}" operation to retrieve the current information; then,</li><li>2. Modify the returned "payload" as appropriate; then,</li><li>3. Use the "PUT /v1/users/{userId}" operation with the previously-returned "timestamp" and the modified "payload".</li><li>4. If a "422" is returned, go back to Step 1; otherwise,</li><li>5. Optionally: locally persist the newly-returned "timestamp" and the modified "payload", so as to skip Step 1 the next time a state update is desired.</li></ol>This allows multiple applications to (patiently) coordinate their actions in upgrading the shared information. However, if an application must universally overwrite the shared information, it omits the "timestamp" parameter.',
   tags: ['api'],
 
   validate:
@@ -180,8 +231,9 @@ module.exports.initialize = async function (debug, runtime) {
   [ { category: runtime.db.get('users'),
       name: 'users',
       property: 'userId',
-      empty: { userId: '', intents: [] },
-      unique: [ { userId: 1 } ]
+      empty: { userId: '', timestamp: bson.Timestamp.ZERO },
+      unique: [ { userId: 1 } ],
+      others: [ { timestamp: 1 } ]
     }
   ])
 }
