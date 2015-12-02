@@ -40,7 +40,7 @@ v1.post =
     result = await helper.verify(debug, user, request.payload)
     if (result) return reply(result)
 
-    reply(helper.sessionId2stats(runtime, userId, sessionId))
+    reply(helper.add_nonce(helper.sessionId2stats(runtime, userId, sessionId)))
 
     intent = { userId: userId,
                sessionID: sessionId,
@@ -67,6 +67,7 @@ v1.post =
     },
 
   response: {
+// FIXME
     schema: Joi.object().keys({
       replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
     })
@@ -82,14 +83,14 @@ v1.post =
       400: Joi.object({
         boomlet: Joi.string().required().description('envelope.nonce is invalid')
       }),
-      402: Joi.object({
-        boomlet: Joi.string().required().description('envelope.nonce is untimely')
-      }),
       404: Joi.object({
         boomlet: Joi.string().required().description('user entry does not exist')
       }),
       422: Joi.object({
         boomlet: Joi.string().required().description('user entry is not cryptographically-enabled')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('envelope.nonce is untimely')
       }),
       422: Joi.object({
         boomlet: Joi.string().required().description('signature error')

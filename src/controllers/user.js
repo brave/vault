@@ -1,6 +1,7 @@
 var boom = require('boom')
 var braveHapi = require('../brave-hapi')
 var bson = require('bson')
+var helper = require('./helper')
 var Joi = require('joi')
 var underscore = require('underscore')
 
@@ -25,12 +26,12 @@ v1.get =
     }
     result = underscore.extend(underscore.omit(user, '_id', 'wallet'), { timestamp: user.timestamp.toString() })
 
-    reply(result)
+    reply(helper.add_nonce(result))
   }
 },
 
   description: 'Returns user entry information',
-  notes: 'The most common use is to retrieve cryptographic information stored during the creation of a user entry.<p></p>Applications use an advisory locking cheme in order to synchronize and persist shared information. This operation retrieves information shared between all applications for the corresponding user entry. These properties are present in the user entry:<ul><li><strong>userId:</strong> identifier for the user entry</li><li><strong>timestamp:</strong> monotonically-increasing value for coordinating multiple clients updating the same user entry</li><li><strong>envelope.version:</strong> always 1 (at least for now!)</li><li><strong>envelope.publicKey:</strong> ...</li></ul>',
+  notes: 'Consult <a href="https://github.com/brave/vault/wiki/Principles#globalstate">Global State Principles</a>.',
   tags: ['api'],
 
   validate:
@@ -58,6 +59,7 @@ v1.get =
 v1.put =
 { handler: function (runtime) {
   return async function (request, reply) {
+// FIXME
     if (!request.payload) request.payload = {}
 
     var count, createP, result, update, user, wallet
@@ -72,37 +74,6 @@ v1.put =
       if (envelope.version !== 1) {
         return reply(boom.badRequest('invalid or missing envelope.version: ' + JSON.stringify(envelope.version)))
       }
-      if ((typeof envelope.publicKey !== 'string') || (envelope.publicKey.length <= 96)) {
-        return reply(boom.badRequest('invalid or missing envelope.publicKey: ' + JSON.stringify(envelope.publicKey)))
-      }
-/* expecting
-
-var to_hex = function (bs) {
-    var encoded = []
-
-    for (var i = 0; i < bs.length; i++) {
-        encoded.push("0123456789abcdef"[(bs[i] >> 4) & 15])
-        encoded.push("0123456789abcdef"[bs[i] & 15])
-    }
-    return encoded.join('')
-}
-
-var ab2b = function(ab) {
-    var buffer = []
-
-    var view = new Uint8Array(ab)
-    for (var i = 0; i < ab.byteLength; ++i) buffer[i] = view[i]
-
-    return buffer
-}
-
-    crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, [ 'sign' ]).then(k => {
-        crypto.subtle.exportKey('raw', k.publicKey).then(p =>
-            console.log(to_hex(ab2b(publicKey)));
-        )
-    })
-
- */
       if ((!envelope.publicKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length !== 130)) {
         return reply(boom.badRequest('invalid or missing envelope.publicKey: ' + JSON.stringify(envelope.publicKey)))
       }
@@ -175,7 +146,7 @@ var ab2b = function(ab) {
       if (count === 0) { return reply(boom.badImplementation('update failed: ' + userId)) }
     }
 
-    result = underscore.omit(user, '_id', 'wallet')
+    result = helper.add_nonce(underscore.omit(user, '_id', 'wallet'))
     if (!wallet) return reply(result)
     reply(result).created()
 
@@ -188,7 +159,7 @@ var ab2b = function(ab) {
 },
 
   description: 'Creates or updates a user entry with the vault',
-  notes: 'Once a user entry is successfully registered, the browser generates (as often as it wishes) a "sessionId" parameter for subsequent operations, in order to identify both the user entry and session.  The "envelope" parameter is valid only if the user entry is created; otherwise, it is ignored.<p></p>This operation updates information shared between all applications for the correpsonding user entry. To successfully update the shared information, the browser must:<ol><li>1. Use the "GET /v1/users/{userId}" operation to retrieve the current information; then,</li><li>2. Modify the returned "payload" as appropriate; then,</li><li>3. Use the "PUT /v1/users/{userId}" operation with the previously-returned "timestamp" and the modified "payload".</li><li>4. If a "422" is returned, go back to Step 1; otherwise,</li><li>5. Optionally: locally persist the newly-returned "timestamp" and the modified "payload", so as to skip Step 1 the next time a state update is desired.</li></ol>This allows multiple applications to (patiently) coordinate their actions in upgrading the shared information. However, if an application must universally overwrite the shared information, it omits the "timestamp" parameter.',
+  notes: 'Consult <a href="https://github.com/brave/vault/wiki/Principles#globalstate">Global State Principles</a>.',
   tags: ['api'],
 
   validate:
@@ -212,6 +183,27 @@ var ab2b = function(ab) {
       }),
       400: Joi.object({
         boomlet: Joi.string().required().description('wallet is not allowed')
+      })
+      400: Joi.object({
+        boomlet: Joi.string().required().description('invalid timestamp')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('timestamp mismatch')
+      }),
+      500: Joi.object({
+        boomlet: Joi.string().required().description('update failed')
+      }),
+      500: Joi.object({
+        boomlet: Joi.string().required().description('insert failed')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('envelope.nonce is invalid')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('envelope.nonce is untimely')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('signature error')
       })
     }
  */

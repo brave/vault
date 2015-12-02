@@ -1,6 +1,7 @@
 var boom = require('boom')
 var crypto = require('crypto')
 var ecdsa = require('eccrypto')
+// var timestamp = require('monolithic-timestamp')
 
 var exports = {}
 
@@ -60,20 +61,14 @@ exports.verify = async function (debug, user, data) {
     nonce = envelope.nonce
     if (typeof nonce === 'string') nonce = parseFloat(nonce)
     if (isNaN(nonce)) return boom.badRequest('envelope.nonce is invalid: ' + JSON.stringify(envelope.nonce))
-    diff = Math.abs(new Date().getTime() - nonce)
-    if (diff > 15) return boom.badRequest('envelope.nonce is untimely: ' + JSON.stringify(envelope.nonce))
+    diff = Math.abs(new Date().getTime() - (nonce * 1000.0))
+    if (diff > 15) return boom.badData('envelope.nonce is untimely: ' + JSON.stringify(envelope.nonce))
   } else {
     if (envelope) return boom.badData('user entry is not cryptographically-enabled')
 
     return null    // no user entry credentials, no data signature
   }
 
-/* expecting
-
-    crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, k.privateKey,new TextEncoder('utf-8').encode(...).then(signature =>
-        console.log(to_hex(ab2b(signature)))
-    )
- */
   try {
     await ecdsa.verify(from_hex(user.envelope.publicKey),
                        crypto.createHash('sha256').update(user.userId + ':' + envelope.nonce + ':' + payload).digest(),
@@ -84,6 +79,10 @@ exports.verify = async function (debug, user, data) {
     debug('signature error', ex)
     return boom.badData('signature error', ex)
   }
+}
+
+exports.add_nonce = function (payload) {
+  return { envelope: { nonce: (new Date().getTime() / 1000.0).toString() }, payload: payload }
 }
 
 module.exports = exports

@@ -37,7 +37,7 @@ v1.getSessions =
                                     { timestamp: entry.timestamp.toString() }))
     })
 
-    reply(result)
+    reply(helper.add_nonce(result))
   }
 },
 
@@ -54,6 +54,7 @@ v1.getSessions =
     },
 
   response: {
+// FIXME
     schema: Joi.array().items(Joi.object().keys({
       sessionId: Joi.string().guid().required().description('the identity of the session'),
       type: Joi.string().min(1).required().description('the name of the type'),
@@ -103,7 +104,7 @@ v1.getTypes =
                                     { timestamp: entry.timestamp.toString() }))
     })
 
-    reply(result)
+    reply(helper.add_nonce(result))
   }
 },
 
@@ -123,6 +124,7 @@ v1.getTypes =
     },
 
   response: {
+// FIXME
     schema: Joi.array().items(Joi.object().keys({
       sessionId: Joi.string().guid().required().description('the identity of the session'),
       type: Joi.string().min(1).required().description('the name of the type'),
@@ -158,7 +160,7 @@ v1.getSessionType =
     if (!result) { return reply(boom.notFound('session/type entry does not exist: ' + sessionId + '/' + type)) }
     result = underscore.extend(underscore.omit(result, '_id', 'timestamp'), { timestamp: result.timestamp.toString() })
 
-    reply(result)
+    reply(helper.add_nonce(result))
   }
 },
 
@@ -174,6 +176,7 @@ v1.getSessionType =
     },
 
   response: {
+// FIXME
     schema: Joi.object({
       sessionId: Joi.string().guid().required().description('the identity of the session'),
       type: Joi.string().min(1).required().description('the name of the type'),
@@ -219,7 +222,7 @@ v1.putSessionType =
             }
     await sessionState.update({ userId: userId, sessionId: sessionId, type }, state, { upsert: true })
 
-    reply().code(204)
+    reply(helper.add_nonce({}))
   }
 },
 
@@ -239,9 +242,31 @@ v1.putSessionType =
     },
 
   response: {
+// FIXME
     schema: Joi.any()
 /*
     status: {
+      400: Joi.object({
+        boomlet: Joi.string().required().description('payload is not cryptographically-signed')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('unknown user entry cryptography version')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('envelope.nonce is invalid')
+      }),
+      404: Joi.object({
+        boomlet: Joi.string().required().description('user entry does not exist')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('user entry is not cryptographically-enabled')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('envelope.nonce is untimely')
+      }),
+      422: Joi.object({
+        boomlet: Joi.string().required().description('signature error')
+      })
       500: Joi.object({
         boomlet: Joi.string().required().description('database update failed')
       })
