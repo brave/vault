@@ -39,11 +39,11 @@ gives a browser-based example:
 In addition to generating the `userId`,
 the browser generates a `masterKey` and a `signingPair`:
 
-    window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true
-                                    , ["encrypt", "decrypt"]).then(function (masterKey) { ... })
+    window.crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true
+                                    , ['encrypt', 'decrypt']).then(function (masterKey) { ... })
 
-    window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true
-                                    , [ "sign", "verify" ]).then(function (signingPair) { ... })
+    window.crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true
+                                    , [ 'sign', 'verify' ]).then(function (signingPair) { ... })
 
 Both the `masterKey` and `signingPair.privateKey` must be securely persisted in the browser.
 
@@ -71,8 +71,8 @@ The `signature` and `nonce` properties are used to ensure that the client actual
         var encoded = []
         
         for (var i = 0; i < bs.length; i++) {
-            encoded.push("0123456789abcdef"[(bs[i] >> 4) & 15])
-            encoded.push("0123456789abcdef"[bs[i] & 15])
+            encoded.push('0123456789abcdef'[(bs[i] >> 4) & 15])
+            encoded.push('0123456789abcdef'[bs[i] & 15])
         }
         return encoded.join('')
     }
@@ -95,7 +95,7 @@ The `signature` and `nonce` properties are used to ensure that the client actual
                       }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
-        window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
+        window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                                   pair.privateKey, b2ab(combo)).then(function(signature) {
             message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
@@ -174,7 +174,7 @@ For example:
         url += '?m=' + ab2b(exportKey)
 
         window.crypto.subtle.exportKey('jwk', signingPair.privateKey).then(function (exportKey) {
-            url += '?p=' + encodeURIComponent(JSON.stringify(exportKey))
+            url += '&p=' + encodeURIComponent(JSON.stringify(exportKey))
 
             console.log('QR code: ' + url)
         })
@@ -186,9 +186,37 @@ Once the QR code is generated,
 the "new" browser can use its camera and a QR decoder to derive the three elements pertaining to the persona.
 
 If the "new" browser does not have a camera,
-then the "old" browser can save the image to a USB stick,
-which is then moved to the desktop with the "new" browser and then imported.
-(Be sure to wipe the USB stick afterwards!)
+then the "old" browser should save a file to a USB stick on its platform,
+which is subsequently moved to the platform with the "new" browser,
+imported in to the "new" browser,
+and then wiped:
+
+    window.crypto.subtle.exportKey('raw', masterKey).then(function (m) {
+        window.crypto.subtle.exportKey('jwk', pair.privateKey).then(function (p) {
+            var format = { version    : 1
+                         , personaURL : 'brave://vault/persona/' + userId
+                         , masterKey  : to_hex(ab2b(m))
+                         , privateKey : p
+                         }
+            console.log(JSON.stringify(format, null, 2))
+        })
+    })
+
+For example:
+
+    { version    : 1
+    , personaId  : 'brave://vault/persona/D7AE8B62-7D59-4417-B335-209B766D09D1'
+    , masterKey  : '3f9bf659d1e469025006bc20885dd0ef445229a585a65d3d5d2d4a1514fc1d36'
+    , privateKey :
+      { crv      : 'P-256'
+      , d        : 'm5_ZKjR64DK-t4WzIrsKcRQhcKZwJf1BGjv9P0MAiS0'
+      , ext      : true,
+      , key_ops  : [ 'sign' ]
+      , kty      : 'EC'
+      , x        : 'VY2NyRpYRPQ2onuDFdzmfZ8fACyYTWsjZTO_gb5eN_0'
+      , y        : 'Yrex6N1BEflazfIP3OEy7_2J2v7ZCTParAFelMF_WqA'
+      }
+    }
 
 ## Managing State
 The vault manages two kinds of state:
@@ -254,7 +282,7 @@ For example:
     var history = { ... }
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
-    window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
+    window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
                                  masterKey, b2ab(JSON.stringify(history))).then(function(encryptedData) {
     var message = { envelope        : {}
                   , payload         :
@@ -264,7 +292,7 @@ For example:
                   }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
-        window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
+        window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                                   signingPair.privateKey, b2ab(combo)).then(function(signature) {
             message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
@@ -279,14 +307,14 @@ the browser may want the vault to be able to see the contents:
     var message = { envelope    : {}
                   , payload     : 
                     { sessionId : sessionId
-                    , type      : "browser.app.launch"
+                    , type      : 'browser.app.launch'
                     , timestamp : new Date().getTime()
                     , data      : {}
                     }
                   }
     var nonce = (new Date().getTime() / 1000).toString()
     var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
-    window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
+    window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                               signingPair.privateKey, b2ab(combo)).then(function(signature) {
         message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
@@ -352,11 +380,11 @@ so as to skip Step 1 the next time a state update is desired.
 This allows multiple applications to (patiently) coordinate their actions in upgrading the shared information.
 However, if an application must universally overwrite the shared information, it omits the "timestamp" parameter.
 
-    var publicGlobal = { ... }
-    var privateGlobal = { ... }
+    var publicGlobal   = { ... }
+      ,  privateGlobal = { ... }
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
-    window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
+    window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
                                  masterKey, b2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
         var message = { timestamp    : '...'
                       , envelope     : {}
@@ -368,7 +396,7 @@ However, if an application must universally overwrite the shared information, it
                       }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
-        window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
+        window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                                   signingPair.privateKey, b2ab(combo)).then(function(signature) {
             message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
