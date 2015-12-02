@@ -30,7 +30,7 @@ v1.get =
 },
 
   description: 'Returns user entry information',
-  notes: 'The most common use is to retrieve cryptographic information stored during the creation of a user entry.<p></p>Applications use an advisory locking cheme in order to synchronize and persist shared information. This operation retrieves information shared between all applications for the corresponding user entry. These properties are present in the user entry:<ul><li><strong>userId:</strong> identifier for the user entry</li><li><strong>timestamp:</strong> monotonically-increasing value for coordinating multiple clients updating the same user entry</li><li><strong>envelope.version:</strong> always 1 (at least for now!)</li><li><strong>envelope.privateKey:</strong> ...</li><li><strong>envelope.iv:</strong> ...</li><li><strong>envelope.publicKey:</strong> ...</li></ul>',
+  notes: 'The most common use is to retrieve cryptographic information stored during the creation of a user entry.<p></p>Applications use an advisory locking cheme in order to synchronize and persist shared information. This operation retrieves information shared between all applications for the corresponding user entry. These properties are present in the user entry:<ul><li><strong>userId:</strong> identifier for the user entry</li><li><strong>timestamp:</strong> monotonically-increasing value for coordinating multiple clients updating the same user entry</li><li><strong>envelope.version:</strong> always 1 (at least for now!)</li><li><strong>envelope.publicKey:</strong> ...</li></ul>',
   tags: ['api'],
 
   validate:
@@ -72,8 +72,8 @@ v1.put =
       if (envelope.version !== 1) {
         return reply(boom.badRequest('invalid or missing envelope.version: ' + JSON.stringify(envelope.version)))
       }
-      if ((!envelope.privateKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length <= 96)) {
-        return reply(boom.badRequest('invalid or missing envelope.privateKey: ' + JSON.stringify(envelope.privateKey)))
+      if ((typeof envelope.publicKey !== 'string') || (envelope.publicKey.length <= 96)) {
+        return reply(boom.badRequest('invalid or missing envelope.publicKey: ' + JSON.stringify(envelope.publicKey)))
       }
 /* expecting
 
@@ -203,9 +203,6 @@ var ab2b = function(ab) {
       201: Joi.any(),
       400: Joi.object({
         boomlet: Joi.string().required().description('invalid or missing envelope.version')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid or missing envelope.privateKey')
       }),
       400: Joi.object({
         boomlet: Joi.string().required().description('invalid or missing envelope.publicKey')

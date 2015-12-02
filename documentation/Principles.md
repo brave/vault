@@ -1,6 +1,9 @@
 # Principles of using the Brave Vault
-The _Brave vault_ is a mediation server for your browsing activities as they relate to advertisements.
-It is carefully designed so as to "know" as little as possible about you and your browsing habits.
+The Brave _vault_ is a mediation server for your browsing activities as they relate to advertisements.
+Because you may use multiple browsers,
+the vault allows browsers to sync data.
+
+The vault is carefully designed so as to "know" as little as possible about you and your browsing habits.
 In order to understand the limitations of this design,
 we need to examine the basic principles of the vault.
 
@@ -34,7 +37,7 @@ gives a browser-based example:
     })
 
 In addition to generating the `userId`,
-the browser generates a `masterKey` and a `signingPair`, perhaps using something like:
+the browser generates a `masterKey` and a `signingPair`:
 
     window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true
                                     , ["encrypt", "decrypt"]).then(function (masterKey) { ... })
@@ -42,25 +45,25 @@ the browser generates a `masterKey` and a `signingPair`, perhaps using something
     window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true
                                     , [ "sign", "verify" ]).then(function (signingPair) { ... })
 
-Both the `masterKey` and `signingPair.private` must be securely persisted in the browser.
+Both the `masterKey` and `signingPair.privateKey` must be securely persisted in the browser.
 
 When creating a persona,
-the body of the operation is:
+the HTTP body is:
 
-    { envelope     :
-      { version    : 1
-      , privateKey : '...'
-      , iv         : '...'
-      , publicKey  : '...'
+    { envelope    :
+      { version   : 1
+      , publicKey : '...'
+      , signature : '...'
+      , nonce     : '...'
       }
     }
 
 The `version` property is self-explanatory.
 
-The `privateKey` and `iv` properties are used to describe an encrypted `cipherKey`,
-that is used to encrypt the symmetric key associated with a given "blob".
 The `publicKey` property is the hexadecimal string representation of the public key used to verify digital signatures.
 The vault verifies the signature as the authorization check for an operation.
+
+The `signature` and `nonce` properties are used to ensure that the client actually knows the `signing.privateKey`:
 
     var to_hex = function (bs) {
         var encoded = []
@@ -82,38 +85,38 @@ The vault verifies the signature as the authorization check for an operation.
         
         
     window.crypto.subtle.exportKey('raw', pair.publicKey).then(function (publicKey) {
+        var envelope = { version: 1, publicKey: to_hex(ab2b(publicKey)) }
+        var nonce = (new Date().getTime() / 1000).toString()
+        var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(envelope))
 
-        window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 },
-                                         true, ["encrypt", "decrypt"]).then(function (cipherKey) {
-
-            window.crypto.subtle.exportKey('raw', cipherKey).then(function (exportKey) {
-                exportKey = ab2b(exportKey)
-        
-                // cipherKey is now encrypted using the masterKey that is stored on the browser
-                var iv = window.crypto.getRandomValues(new Uint8Array(12))
-                window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                             masterKey, new Uint8Array(exportKey)).then(function (privateKey) {
-                    console.log('PUT /users/' + personaID)
-                    console.log(JSON.stringify({
-                        envelope       :
-                          { version    : 1
-                          , privateKey : to_hex(ab2b(privateKey))
-                          , iv         : to_hex(iv)
-                          , publicKey  : to_hex(ab2b(publicKey))
-                          }
-                      }, null, 2))
-                })
-            })
+        window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
+                                  pair.privateKey, b2ab(combo)).then(function(signature) {
+            envelope.signature = to_hex(ab2b(signature))
+            envelope.nonce= nonce
+            console.log('PUT /users/' + userId)
+            console.log(JSON.stringify({ envelope : envelope }, null, 2))
         })
     })
 
-To summarize,
+In order for the `nonce` to be considered valid,
+it must be "close" to the vault's notion of the current time.
+In order to avoid time synchronization issues,
+the vault will include its own `nonce` property in the results of many operations.
+The browser is responsible for correlating this value to its own notion of the current time,
+e.g.,
+
+    var offset = result.nonce - new Date().getTime()
+    ...
+    message.envelope.nonce = new Date().getTime() + offset
+
+To summarize:
 
 * Whenever the browser stores something encrypted in the vault,
-it uses the `cipherKey` for this purpose.
-By storing the encrypted `cipherKey` in the vault,
-other browsers -- that you configure to be authorized -- are able to retrieve the encrypted value and then derive the actual
-value of the key.
+it uses the `masterKey` and an initialization vector to encrypt a one-time symmetric key.
+The `masterKey` is never stored in the vault:
+only the browser that created the persona --
+along with any other browsers that you configure to be authorized --
+are able to decrypt the symmetric key and then decrypt the actual value.
 
 * Whenever the browser stores something in the vault,
 it uses the `signingPair.privateKey` to generate a signature over a hashed value to allow the vault to determine if
@@ -125,16 +128,17 @@ a browser must also create a _session_.
 As with the `userId`,
 a `sessionId` is a UUID v4 string that is generated by the browser.
 
-Although the browser determines the lifetime of the session -- the common practice is to generate just once.
-The reason is that the `sessionId` may be used as a key to store browser-specific information such as history.
+Although the browser determines the lifetime of the session -- the common practice is for each client to to generate
+a lifetime `sessionId`.
+The reason is that the `sessionId` is used as a key to store browser-specific information such as history.
 
-Sessions are implicitly created when the browser uses 
 The `PUT /v1/users/{userId}/sessions/{sessionId}/types/{type}` operation
 creates or updates that `type` of information for that particular session of the persona.
 
 
 ### Joining a Persona
-When the user wishes to configure an additional browser (the "new" browser) to use the same persona,
+When the user wishes to configure an additional browser (the "new" browser)
+to use the same persona in use by an existing browser (the "old" browser),
 the "new" browser needs to be told:
 
 * the persona-identifier (`userId`)
@@ -143,48 +147,45 @@ the "new" browser needs to be told:
 
 * the `signingPair.privateKey`
 
-The easiest way to do this is to have a browser that already knows about the persona (the "old" browser)
-generate a [QR code](https://en.wikipedia.org/wiki/QR_code) of the form:
+The easiest way to do this is to have the "old" browser generate a [QR code](https://en.wikipedia.org/wiki/QR_code)
+of the form:
 
     brave://vault/persona/{userId}?m={masterkey}&p={signingPair.privateKey}
 
-perhaps by using code that looks like this:
+For example:
 
-    var url = 'brave://vault/persona/' + personaID
+    var url = 'brave://vault/persona/' + userId
     window.crypto.subtle.exportKey('raw', masterKey).then(function (exportKey) {
         url += '?m=' + ab2b(exportKey)
 
-        // @yan - this always throws an error in FF -- NotSupportedError: Operation is not supported
-        // any ideas?
-        window.crypto.subtle.exportKey('raw', pair.privateKey).then(function (privateKey) {
-            url += '?p=' + ab2b(privateKey)
+        window.crypto.subtle.exportKey('jwk', signingPair.privateKey).then(function (exportKey) {
+            url += '?p=' + encodeURIComponent(JSON.stringify(exportKey))
 
             console.log('QR code: ' + url)
         })
     })
 
+<img src='data:image/jpeg;base64,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' width='405' height='405' />
+
 Once the QR code is generated,
 the "new" browser can use its camera and a QR decoder to derive the three elements pertaining to the persona.
-The "new" browser uses the `GET /v1/users/{userId}` operation to retrieve the `envelope.privateKey` value,
-which allows it to decipher the `masterKey` for the persona.
 
-(Of course,
-instead of using a QR code,
-the "old" browser could display the three values,
-and the "new" browser could allow the user to enter this information manually.
-Just kidding -- that's far too much error-prone typing for a person!)
+If the "new" browser does not have a camera,
+then the "old" browser can save the image to a USB stick,
+which is then moved to the desktop with the "new" browser and then imported.
+(Be sure to wipe the USB stick afterwards!)
 
 ## Managing State
 The vault manages two kinds of state:
 
-* local state, that is session-specific
+* session state, that is session-specific; and,
 
-* global state, that is session-independent
+* global state, that is session-independent.
 
 It is up to the browser to determine which kind of state to associated with browser-specific data.
 
-### Local State
-The `GET /v1/users/{userId}/sessions` operation returns an array of all local state for the persona.
+### Session State
+The `GET /v1/users/{userId}/sessions` operation returns an array of all state for all of the sessions for the persona.
 Because there may be many results,
 the operation has two optional `GET query` parameters,
 `limit` and `timestamp`.
@@ -200,29 +201,29 @@ Eventually,
 the results array will be zero-length,
 and all entries have been returned.
 
-The `GET /v1/users/{userId}/sessions/{sessionId}/types` operation returns an array of all local state for a particular
+The `GET /v1/users/{userId}/sessions/{sessionId}/types` operation returns an array of all state for a particular
 session of the persona.
 The operation has two optional `GET query` parameters,
 `limit` and `timestamp`,
 with the usual semantics.
 
-The `GET /v1/users/{userId}/sessions/{sessionId}/types/{type}` operation returns the local state of for a particular
+The `GET /v1/users/{userId}/sessions/{sessionId}/types/{type}` operation returns the state of for a particular
 `type` of information for that particular session of the persona.
 
 The `PUT /v1/users/{userId}/sessions/{sessionId}/types/{type}` operation creates or updates that `type` of information for
 that particular session of the persona.
 
 When upserting state information,
-the body of the operation is:
+the HTTP body is:
 
-    { envelope      :
-      { signature   : '...'
-      , nonce       : '...'
+    { envelope        :
+      { signature     : '...'
+      , nonce         : '...'
       },
-    , payload       :
-      { privateKey  : '...'
-      , iv          : '...'
-      , privateData : '...'
+    , payload         :
+      { privateKey    : '...'
+      , iv            : '...'
+      , encryptedData : '...'
       }
     }
 
@@ -245,9 +246,8 @@ For example:
             exportKey = ab2b(exportKey)
 
             var iv = window.crypto.getRandomValues(new Uint8Array(12))
-            // that blob-specific key is now encrypted using the cipherKey
             window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                         cipherKey, new Uint8Array(exportKey)).then(function(privateKey) {
+                                         masterKey, new Uint8Array(exportKey)).then(function(privateKey) {
                 var message = { envelope     : {}
                               , payload      :
                                 { privateKey : to_hex(ab2b(privateKey))
@@ -255,19 +255,16 @@ For example:
                                 }
                               }
                 window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                             symmetricKey, b2ab(JSON.stringify(history))).then(function(privateData) {
-                    message.payload.privateData = to_hex(ab2b(privateData))
+                                             symmetricKey, b2ab(JSON.stringify(history))).then(function(encryptedData) {
+                    message.payload.encryptedData = to_hex(ab2b(encryptedData))
 
-                    var nonce = window.crypto.getRandomValues(new Uint8Array(12))
-                    var combo = JSON.stringify(personaID + ':' + to_hex(nonce) + ':' + JSON.stringify(message.payload))
+                    var nonce = (new Date().getTime() / 1000).toString()
+                    var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
                     window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
-                                              pair.privateKey, b2ab(combo)).then(function(signature) {
-                        message.envelope = { signature: to_hex(ab2b(signature))
-                                           , nonce: to_hex(nonce)
-                                           }
+                                              signingPair.privateKey, b2ab(combo)).then(function(signature) {
+                        message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-                        console.log('PUT /users/' + personaID + '/sessions/' + sessionID
-                                    + '/types/history')
+                        console.log('PUT /users/' + userId + '/sessions/' + sessionId + '/types/history')
                         console.log(JSON.stringify(message, null, 2))
                     })
                 })
@@ -280,26 +277,35 @@ the browser may want the vault to be able to see the contents:
 
     var message = { envelope    : {}
                   , payload     : 
-                    { sessionId : sessionID
+                    { sessionId : sessionId
                     , type      : "browser.app.launch"
                     , timestamp : new Date().getTime()
                     , data      : {}
                     }
                   }
-    var nonce = window.crypto.getRandomValues(new Uint8Array(12))
-    var combo = JSON.stringify(personaID + ':' + to_hex(nonce) + ':' + JSON.stringify(message.payload))
+    var nonce = (new Date().getTime() / 1000).toString()
+    var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
     window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
-                              pair.privateKey, b2ab(combo)).then(function(signature) {
-        message.envelope = { signature: to_hex(ab2b(signature))
-                           , nonce: to_hex(nonce)
-                           }
+                              signingPair.privateKey, b2ab(combo)).then(function(signature) {
+        message.envelope = { signature: to_hex(ab2b(signature)), nonce: to_hex(nonce) }
 
-        console.log('POST /users/' + personaID + '/intents')
+        console.log('POST /users/' + userId + '/intents')
         console.log(JSON.stringify(message, null, 2))
     })
 
 Note that in both cases,
 the vault verifies the digital signature in order to ensure that the operation is authorized.
+The `nonce` property is a timestamp indicating the number of seconds since the UNIX epoch.
+In order for the `nonce` to be considered valid,
+it must be "close" to the vault's notion of the current time.
+In order to avoid time synchronization issues,
+the vault will include its own `nonce` property in the results of many operations.
+The browser is responsible for correlating this value to its own notion of the current time,
+e.g.,
+
+    var offset = result.nonce - new Date().getTime()
+    ...
+    message.envelope.nonce = new Date().getTime() + offset
 
 ### Global State
 The `PUT /v1/users/{userId}` operation,
@@ -307,27 +313,29 @@ in addition to creating an entry for a persona,
 also updates the information in that entry.
 
 When updating information,
-the body of the operation is:
+the HTTP body is:
 
-    { timestamp     : '...'
-    , envelope      :
-      { signature   : '...'
-      , nonce       : '...'
+    { timestamp       : '...'
+    , envelope        :
+      { signature     : '...'
+      , nonce         : '...'
       },
-    , payload       :
-      { privateKey  : '...'
-      , iv          : '...'
-      , privateData : '...'
-      , publicData  : { ... }
+    , payload         :
+      { privateKey    : '...'
+      , iv            : '...'
+      , encryptedData : '...'
+      , plaintextData : { ... }
       }
     }
 
 The procedure for generating the `envelope` and `payload` properties are the same,
-with one exception: there is both a `payload.privateData` property and a `payload.publicData` property.
+with one exception: there is both a `payload.encryptedData` property and a `payload.plaintextData` property.
 The latter is an arbitrary JSON object with plaintext information.
 
-The `timestamp` property is used to implement an advisory locking scheme.
-This operation updates information shared between all applications for the correpsonding user entry. To successfully update the shared information, the browser must:
+This operation updates information shared between all applications for the correpsonding user entry,
+using an advisory locking scheme.
+To successfully update the shared information,
+the browser must:
 
 1. Use the `GET /v1/users/{userId}` operation to retrieve the current information; then,
 
@@ -338,7 +346,7 @@ This operation updates information shared between all applications for the corre
 4. If HTTP code 422 is returned, go back to Step 1; otherwise,
 
 5. Optionally:
-locally persist the newly-returned `timsetamp`
+locally-persist the newly-returned `timestamp`
 so as to skip Step 1 the next time a state update is desired.
 
 This allows multiple applications to (patiently) coordinate their actions in upgrading the shared information.
@@ -353,7 +361,7 @@ However, if an application must universally overwrite the shared information, it
 
             var iv = window.crypto.getRandomValues(new Uint8Array(12))
             window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                         cipherKey, new Uint8Array(exportKey)).then(function(privateKey) {
+                                         masterKey, new Uint8Array(exportKey)).then(function(privateKey) {
                 var message = { timestamp    : '...'
                               , envelope     : {}
                               , payload      :
@@ -363,19 +371,17 @@ However, if an application must universally overwrite the shared information, it
                               }
                 window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
                                              symmetricKey,
-                                             b2ab(JSON.stringify(privateGlobal))).then(function(privateData) {
-                    message.payload.privateData = to_hex(ab2b(privateData))
-                    message.payload.publicData = publicGlobal
+                                             b2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
+                    message.payload.encryptedData = to_hex(ab2b(encryptedData))
+                    message.payload.plaintextData = publicGlobal
 
-                    var nonce = window.crypto.getRandomValues(new Uint8Array(12))
-                    var combo = JSON.stringify(personaID + ':' + to_hex(nonce) + ':' + JSON.stringify(message.payload))
+                    var nonce = (new Date().getTime() / 1000).toString()
+                    var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
                     window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
-                                              pair.privateKey, b2ab(combo)).then(function(signature) {
-                        message.envelope = { signature: to_hex(ab2b(signature))
-                                           , nonce: to_hex(nonce)
-                                           }
+                                              signingPair.privateKey, b2ab(combo)).then(function(signature) {
+                        message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-                        console.log('PUT /users/' + personaID)
+                        console.log('PUT /users/' + userId)
                         console.log(JSON.stringify(message, null, 2))
                     })
                 })

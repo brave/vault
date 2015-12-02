@@ -46,6 +46,7 @@ var from_hex = function (s) {
 }
 
 exports.verify = async function (debug, user, data) {
+  var diff, nonce
   var envelope = data.envelope
   var payload = JSON.stringify(data.payload || data.intent)
 
@@ -55,9 +56,12 @@ exports.verify = async function (debug, user, data) {
     if (user.envelope.version !== 1) {
       return boom.badRequest('unknown user entry cryptography version: ' + JSON.stringify(user.envelope.version))
     }
-    if (typeof envelope.nonce !== 'string') {
-      return boom.badRequest('envelope.nonce is invalid: ' + JSON.stringify(envelope.nonce))
-    }
+
+    nonce = envelope.nonce
+    if (typeof nonce === 'string') nonce = parseFloat(nonce)
+    if (isNaN(nonce)) return boom.badRequest('envelope.nonce is invalid: ' + JSON.stringify(envelope.nonce))
+    diff = Math.abs(new Date().getTime() - nonce)
+    if (diff > 15) return boom.badRequest('envelope.nonce is untimely: ' + JSON.stringify(envelope.nonce))
   } else {
     if (envelope) return boom.badData('user entry is not cryptographically-enabled')
 

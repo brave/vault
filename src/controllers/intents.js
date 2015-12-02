@@ -82,6 +82,9 @@ v1.post =
       400: Joi.object({
         boomlet: Joi.string().required().description('envelope.nonce is invalid')
       }),
+      402: Joi.object({
+        boomlet: Joi.string().required().description('envelope.nonce is untimely')
+      }),
       404: Joi.object({
         boomlet: Joi.string().required().description('user entry does not exist')
       }),
