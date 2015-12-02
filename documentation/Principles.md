@@ -127,11 +127,11 @@ e.g.,
 To summarize:
 
 * Whenever the browser stores something encrypted in the vault,
-it uses the `masterKey` and an initialization vector to encrypt a one-time symmetric key.
+it encrypts data data using the `masterKey` and a one-time initialization vector.
 The `masterKey` is never stored in the vault:
-only the browser that created the persona --
-along with any other browsers that you configure to be authorized --
-are able to decrypt the symmetric key and then decrypt the actual value.
+only the browser that created the persona
+-- along with any other browsers that you configure to be authorized --
+are able to decrypt the actual value.
 
 * Whenever the browser stores something in the vault,
 it uses the `signingPair.privateKey` to generate a signature over a hashed value to allow the vault to determine if
@@ -236,8 +236,7 @@ the HTTP body is:
       , nonce         : '...'
       },
     , payload         :
-      { privateKey    : '...'
-      , iv            : '...'
+      { iv            : '...'
       , encryptedData : '...'
       }
     }
@@ -253,36 +252,24 @@ For example:
     }
 
     var history = { ... }
-    window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 },
-                                     true, ["encrypt", "decrypt"]).then(function (symmetricKey) {
-        // each "blob" of state is encrypted using a new key
 
-        window.crypto.subtle.exportKey('raw', symmetricKey).then(function (exportKey) {
-            exportKey = ab2b(exportKey)
+    var iv = window.crypto.getRandomValues(new Uint8Array(12))
+    window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
+                                 masterKey, b2ab(JSON.stringify(history))).then(function(encryptedData) {
+    var message = { envelope        : {}
+                  , payload         :
+                    { iv            : to_hex(iv)
+                    , encryptedData : to_hex(ab2b(encryptedData))
+                    }
+                  }
+        var nonce = (new Date().getTime() / 1000).toString()
+        var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
+        window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
+                                  signingPair.privateKey, b2ab(combo)).then(function(signature) {
+            message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-            var iv = window.crypto.getRandomValues(new Uint8Array(12))
-            window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                         masterKey, new Uint8Array(exportKey)).then(function(privateKey) {
-                window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                             symmetricKey, b2ab(JSON.stringify(history))).then(function(encryptedData) {
-                var message = { envelope        : {}
-                              , payload         :
-                                { privateKey    : to_hex(ab2b(privateKey))
-                                , iv            : to_hex(iv)
-                                , encryptedData : to_hex(ab2b(encryptedData))
-                                }
-                              }
-                    var nonce = (new Date().getTime() / 1000).toString()
-                    var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
-                    window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
-                                              signingPair.privateKey, b2ab(combo)).then(function(signature) {
-                        message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
-
-                        console.log('PUT /users/' + userId + '/sessions/' + sessionId + '/types/history')
-                        console.log(JSON.stringify(message, null, 2))
-                    })
-                })
-            })
+            console.log('PUT /users/' + userId + '/sessions/' + sessionId + '/types/history')
+            console.log(JSON.stringify(message, null, 2))
         })
     })
 
@@ -317,7 +304,7 @@ the vault will include its own `nonce` property in the results of many operation
 The browser is responsible for correlating this value to its own notion of the current time,
 e.g.,
 
-    var offset = result.nonce - new Date().getTime()
+    var offset = results.envelope.nonce - new Date().getTime()
     ...
     message.envelope.nonce = new Date().getTime() + offset
 
@@ -335,8 +322,7 @@ the HTTP body is:
       , nonce         : '...'
       },
     , payload         :
-      { privateKey    : '...'
-      , iv            : '...'
+      { iv            : '...'
       , encryptedData : '...'
       , plaintextData : { ... }
       }
@@ -368,37 +354,26 @@ However, if an application must universally overwrite the shared information, it
 
     var publicGlobal = { ... }
     var privateGlobal = { ... }
-    window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 },
-                                     true, ["encrypt", "decrypt"]).then(function (symmetricKey) {
-        window.crypto.subtle.exportKey('raw', symmetricKey).then(function (exportKey) {
-            exportKey = ab2b(exportKey)
 
-            var iv = window.crypto.getRandomValues(new Uint8Array(12))
-            window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                         masterKey, new Uint8Array(exportKey)).then(function(privateKey) {
-                window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
-                                             symmetricKey,
-                                             b2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
-                    var message = { timestamp    : '...'
-                                  , envelope     : {}
-                                  , payload      :
-                                    { privateKey : to_hex(ab2b(privateKey))
-                                    , iv         : to_hex(iv)
-                                    , encryptedData : to_hex(ab2b(encryptedData))
-                                    , plaintextData : publicGlobal
-                                    }
-                                  }
-                    var nonce = (new Date().getTime() / 1000).toString()
-                    var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
-                    window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
-                                              signingPair.privateKey, b2ab(combo)).then(function(signature) {
-                        message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
+    var iv = window.crypto.getRandomValues(new Uint8Array(12))
+    window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv },
+                                 masterKey, b2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
+        var message = { timestamp    : '...'
+                      , envelope     : {}
+                      , payload      :
+                        { iv         : to_hex(iv)
+                        , encryptedData : to_hex(ab2b(encryptedData))
+                        , plaintextData : publicGlobal
+                        }
+                      }
+        var nonce = (new Date().getTime() / 1000).toString()
+        var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
+        window.crypto.subtle.sign({ name: "ECDSA", hash: { name: "SHA-256" } },
+                                  signingPair.privateKey, b2ab(combo)).then(function(signature) {
+            message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-                        console.log('PUT /users/' + userId)
-                        console.log(JSON.stringify(message, null, 2))
-                    })
-                })
-            })
+            console.log('PUT /users/' + userId)
+            console.log(JSON.stringify(message, null, 2))
         })
     })
 
