@@ -11,7 +11,13 @@ var v1 = {}
 v1.ping =
 { handler: function (runtime) {
   return async function (request, reply) {
-    reply(helper.add_nonce_data({}))
+    // reply(helper.add_nonce_data(Joi.any()))
+    reply(Joi.object({
+      header: Joi.object({
+        nonce: Joi.string().required().description('a time-based, monotonically-increasing value')
+      }).required(),
+      payload: Joi.any().required()
+    }))
   }
 },
 
