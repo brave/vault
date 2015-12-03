@@ -50,7 +50,7 @@ Both the `masterKey` and `signingPair.privateKey` must be securely persisted in 
 When creating a persona,
 the HTTP body is:
 
-    { envelope    :
+    { header    :
       { signature : '...'
       , nonce     : '...'
       }
@@ -87,17 +87,17 @@ The `signature` and `nonce` properties are used to ensure that the client actual
         
         
     window.crypto.subtle.exportKey('raw', pair.publicKey).then(function (publicKey) {
-        var message = { envelope    : {}
+        var message = { header    : {}
                       , payload     : 
                         { version   : 1
                         , publicKey : to_hex(ab2b(publicKey))
                         }
                       }
         var nonce = (new Date().getTime() / 1000).toString()
-        var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
+        var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
         window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                                   pair.privateKey, b2ab(combo)).then(function(signature) {
-            message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
+            message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
             console.log('PUT /users/' + userId)
             console.log(JSON.stringify(message, null, 2))
@@ -108,6 +108,8 @@ In order for the `nonce` to be considered valid,
 it must be "close" to the vault's notion of the current time.
 In order to avoid time synchronization issues,
 the vault will include its own `nonce` property in the results of these operations:
+
+    GET /v1/ping
 
     GET /v1/users/{userId}
     PUT /v1/users/{userId}
@@ -120,7 +122,7 @@ the vault will include its own `nonce` property in the results of these operatio
 The browser is responsible for correlating this value to its own notion of the current time,
 e.g.,
 
-    var offset = result.envelope.nonce - new Date().getTime()
+    var offset = result.header.nonce - new Date().getTime()
     ...
     var nonce = new Date().getTime() + offset
 
@@ -259,7 +261,7 @@ that particular session of the persona.
 When upserting state information,
 the HTTP body is:
 
-    { envelope        :
+    { header        :
       { signature     : '...'
       , nonce         : '...'
       },
@@ -284,17 +286,17 @@ For example:
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
                                  masterKey, b2ab(JSON.stringify(history))).then(function(encryptedData) {
-    var message = { envelope        : {}
+    var message = { header        : {}
                   , payload         :
                     { iv            : to_hex(iv)
                     , encryptedData : to_hex(ab2b(encryptedData))
                     }
                   }
         var nonce = (new Date().getTime() / 1000).toString()
-        var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
+        var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
         window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                                   signingPair.privateKey, b2ab(combo)).then(function(signature) {
-            message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
+            message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
             console.log('PUT /users/' + userId + '/sessions/' + sessionId + '/types/history')
             console.log(JSON.stringify(message, null, 2))
@@ -304,7 +306,7 @@ For example:
 In some cases,
 the browser may want the vault to be able to see the contents:
 
-    var message = { envelope    : {}
+    var message = { header    : {}
                   , payload     : 
                     { sessionId : sessionId
                     , type      : 'browser.app.launch'
@@ -313,10 +315,10 @@ the browser may want the vault to be able to see the contents:
                     }
                   }
     var nonce = (new Date().getTime() / 1000).toString()
-    var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
+    var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
     window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                               signingPair.privateKey, b2ab(combo)).then(function(signature) {
-        message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
+        message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
         console.log('POST /users/' + userId + '/intents')
         console.log(JSON.stringify(message, null, 2))
@@ -332,9 +334,9 @@ the vault will include its own `nonce` property in the results of many operation
 The browser is responsible for correlating this value to its own notion of the current time,
 e.g.,
 
-    var offset = results.envelope.nonce - new Date().getTime()
+    var offset = results.header.nonce - new Date().getTime()
     ...
-    message.envelope.nonce = new Date().getTime() + offset
+    message.header.nonce = new Date().getTime() + offset
 
 ### Global State
 The `PUT /v1/users/{userId}` operation,
@@ -345,7 +347,7 @@ When updating information,
 the HTTP body is:
 
     { timestamp       : '...'
-    , envelope        :
+    , header        :
       { signature     : '...'
       , nonce         : '...'
       },
@@ -356,7 +358,7 @@ the HTTP body is:
       }
     }
 
-The procedure for generating the `envelope` and `payload` properties are the same,
+The procedure for generating the `header` and `payload` properties are the same,
 with one exception: there is both a `payload.encryptedData` property and a `payload.plaintextData` property.
 The latter is an arbitrary JSON object with plaintext information.
 
@@ -387,7 +389,7 @@ However, if an application must universally overwrite the shared information, it
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
                                  masterKey, b2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
         var message = { timestamp    : '...'
-                      , envelope     : {}
+                      , header     : {}
                       , payload      :
                         { iv         : to_hex(iv)
                         , encryptedData : to_hex(ab2b(encryptedData))
@@ -395,10 +397,10 @@ However, if an application must universally overwrite the shared information, it
                         }
                       }
         var nonce = (new Date().getTime() / 1000).toString()
-        var combo = JSON.stringify(userId + ':' + nonce + ':' + JSON.stringify(message.payload))
+        var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
         window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
                                   signingPair.privateKey, b2ab(combo)).then(function(signature) {
-            message.envelope = { signature: to_hex(ab2b(signature)), nonce: nonce }
+            message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
             console.log('PUT /users/' + userId)
             console.log(JSON.stringify(message, null, 2))
