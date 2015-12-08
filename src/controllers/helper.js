@@ -1,6 +1,7 @@
 var boom = require('boom')
 var crypto = require('crypto')
 var ecdsa = require('eccrypto')
+var Joi = require('joi')
 // var timestamp = require('monolithic-timestamp')
 
 var exports = {}
@@ -83,6 +84,29 @@ exports.verify = async function (debug, user, data) {
 
 exports.add_nonce = function (payload) {
   return { envelope: { nonce: (new Date().getTime() / 1000.0).toString() }, payload: payload }
+}
+
+exports.add_header_schema = function (payload) {
+  return Joi.object({
+    header: Joi.object({
+      signature: Joi.string().required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
+      nonce: Joi.string().required().description('a time-based, monotonically-increasing value')
+    }).required(),
+    payload: payload.required()
+  })
+}
+
+exports.add_nonce_data = function (payload) {
+  return { payload: payload, trailer: { nonce: (new Date().getTime() / 1000.0).toString() } }
+}
+
+exports.add_nonce_schema = function (payload) {
+  return Joi.object({
+    payload: payload.required(),
+    trailer: Joi.object({
+      nonce: Joi.string().required().description('a time-based, monotonically-increasing value')
+    }).required()
+  })
 }
 
 module.exports = exports

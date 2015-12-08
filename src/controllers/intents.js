@@ -20,6 +20,10 @@ var intentSchema = Joi.object().keys({
   payload: Joi.object().required().description('an opaque JSON object')
 })
 
+var resultSchema = Joi.object().keys({
+  replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
+})
+
 v1.post =
 { handler: function (runtime) {
   return async function (request, reply) {
@@ -40,7 +44,9 @@ v1.post =
     result = await helper.verify(debug, user, request.payload)
     if (result) return reply(result)
 
-    reply(helper.add_nonce(helper.sessionId2stats(runtime, userId, sessionId)))
+    result = await helper.sessionId2stats(runtime, userId, sessionId)
+    // NB: alternatives is temporary
+    reply(user.version ? helper.add_nonce_data(result) : result)
 
     intent = { userId: userId,
                sessionID: sessionId,
@@ -67,10 +73,7 @@ v1.post =
     },
 
   response: {
-// FIXME
-    schema: Joi.object().keys({
-      replacements: Joi.number().min(0).optional().description('the number of ad replacements for this session')
-    })
+    schema: Joi.alternatives(resultSchema, helper.add_nonce_schema(resultSchema))       // NB: alternatives is temporary
 
 /*
     status: {
