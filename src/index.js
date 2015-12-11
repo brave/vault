@@ -1,5 +1,5 @@
 process.env.NEW_RELIC_NO_CONFIG_FILE = true
-if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { require('newrelic') }
+if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { var newrelic = require('newrelic') }
 
 var Hapi = require('hapi')
 
@@ -103,26 +103,38 @@ server.on('log', function (event, tags) {
           }
         })
 }).on('response', function (request) {
-  var duration
+  var duration, flattened
   var logger = request._logger || []
+  var params = { request:
+                 { id: request.id,
+                   method: request.method.toUpperCase(),
+                   pathname: request.url.pathname,
+                   statusCode: request.response.statusCode,
+                   duration: (duration) && (duration / 1000)
+                 },
+                 headers: request.response.headers,
+                 error: braveHapi.error.inspect(request.response._error)
+               }
 
   logger.forEach(function (entry) {
     if ((entry.data) && (typeof entry.data.msec === 'number')) { duration = entry.data.msec }
   })
 
-  debug('end',
-        { sdebug:
-          { request:
-            { id: request.id,
-              method: request.method.toUpperCase(),
-              pathname: request.url.pathname,
-              statusCode: request.response.statusCode,
-              duration: (duration) && (duration / 1000)
-            },
-            headers: request.response.headers,
-            error: braveHapi.error.inspect(request.response._error)
-          }
-        })
+  if (request.response._error) {
+    flattened = {}
+    underscore.keys(params).forEach(param => {
+      underscore.keys(params[param]).forEach(key => {
+        if ((param === 'error') && ((key === 'message') || (key === 'payload') || (key === 'stack'))) return
+
+        flattened[param + '.' + key] = params[param][key]
+      })
+    })
+    flattened.url = flattened['request.pathname']
+    delete flattened['request.pathname']
+    newrelic.noticeError(request.response._error, flattened)
+  }
+
+  debug('end', { sdebug: params })
 })
 
 server.start(function (err) {
