@@ -20,10 +20,10 @@ v1.getCategories =
     categories = runtime.oip.categories(formatP)
     if (compressP) {
       result = {}
-      underscore.keys(categories).forEach(function (category) {
+      underscore.keys(categories).forEach(category => {
         var sizes = categories[category].sizes
 
-        underscore.keys(sizes).forEach(function (size) {
+        underscore.keys(sizes).forEach(size => {
           if (sizes[size].impressions === 0) return
 
           if (!result[category]) { result[category] = underscore.extend({}, categories[category], { sizes: {} }) }

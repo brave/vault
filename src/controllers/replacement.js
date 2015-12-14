@@ -17,19 +17,21 @@ v1.get =
     var debug = braveHapi.debug(module, request)
     var host = request.headers.host
     var protocol = request.url.protocol || 'http'
-    var sessionId = request.query.sessionId
+    var sessionId = request.query.sessionId.toUpperCase()
     var height = request.query.height
     var width = request.query.width
-    var userId = request.params.userId
+    var categories = request.query.categories || []
+    var keywords = request.query.keywords || []
+    var userId = request.params.userId.toUpperCase()
     var adUnits = runtime.db.get('ad_units')
-    var sessions = runtime.db.get('sessions')
+    var replacements = runtime.db.get('replacements')
     var users = runtime.db.get('users')
 
-    count = await users.update({ userId: userId }, { $inc: { statAdReplaceCount: 1 } }, { upsert: true })
+    count = await users.update({ userId: userId }, { $inc: { replacements: 1 } }, { upsert: true })
     if (typeof count === 'object') { count = count.nMatched }
     if (count === 0) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
 
-    ad = runtime.oip.adUnitForIntents([], width, height)
+    ad = runtime.oip.adUnitForKeywords(keywords, width, height, categories)
 
     if (ad) {
       debug('serving ' + ad.category + ': ' + ad.name)
@@ -57,14 +59,14 @@ v1.get =
     reply.redirect(url).header('x-brave', protocol + '://' + host + '/v1/ad-clicks/' + result._id)
 
     try {
-      await sessions.update({ sessionId: sessionId },
-                            { $currentDate: { timestamp: { $type: 'timestamp' } },
-                              $set: { activity: 'ad' },
-                              $inc: { statAdReplaceCount: 1 }
-                             },
-                           { upsert: true })
+      await replacements.update({ sessionId: sessionId },
+                               { $currentDate: { timestamp: { $type: 'timestamp' } },
+                                 $set: { activity: 'ad' },
+                                 $inc: { replacements: 1 }
+                                },
+                               { upsert: true })
     } catch (ex) {
-      debug('update failed', ex)
+      debug('update failed for replacements', ex)
     }
   }
 },
@@ -78,7 +80,9 @@ v1.get =
       { sessionId: Joi.string().guid().required().description('the identify of the session'),
         tagName: Joi.string().required().description('at present, always "IFRAME" (for the &lt;iframe/&gt; tag)'),
         width: Joi.number().positive().required().description('the width in pixels of the replacement ad'),
-        height: Joi.number().positive().required().description('the height in pixels of the replacement ad')
+        height: Joi.number().positive().required().description('the height in pixels of the replacement ad'),
+        categories: Joi.array().items(Joi.string()).optional().description('IAB categories for the ad'),
+        keywords: Joi.array().items(Joi.string()).optional().description('keywords for the ad')
       },
       params: { userId: Joi.string().guid().required().description('the identity of the user entry') }
     },
@@ -119,7 +123,7 @@ v1.getClicks =
                            , { $currentDate: { timestamp: { $type: 'timestamp' } } }
                            , { upsert: true })
     } catch (ex) {
-      debug('update failed', ex)
+      debug('update failed for adUnits', ex)
     }
   }
 },
@@ -158,15 +162,15 @@ module.exports.initialize = async function (debug, runtime) {
   [ { category: runtime.db.get('ad_units'),
       name: 'ad_units',
       property: 'sessionId',
-      empty: { sessionId: '' },
-      others: [ { sessionId: 1 } ]
+      empty: { userId: '', sessionId: '' },
+      others: [ { userId: 1 }, { sessionId: 1 } ]
     },
-    { category: runtime.db.get('sessions'),
-      name: 'sessions',
+    { category: runtime.db.get('replacements'),
+      name: 'replacements',
       property: 'sessionId',
-      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO, intents: [] },
+      empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO },
       unique: [ { sessionId: 1 } ],
-      others: [ { userId: 0 }, { timestamp: 1 } ]
+      others: [ { userId: 1 }, { timestamp: 1 } ]
     }
   ])
 }

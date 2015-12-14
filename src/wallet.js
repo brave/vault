@@ -4,30 +4,42 @@ var Wallet = function (config) {
   if (!(this instanceof Wallet)) { return new Wallet(config) }
 
   this.config = config
-  this.bitgo = new (require('bitgo')).BitGo({accessToken: config.bitgoAccessToken})
-
-  this.bitgo.authenticate({username: config.bitgoUser, password: config.bitgoPassword}, function (err) {
-    if (err) { debug('authentication', err) }
-  })
+  this.bitgo = new (require('bitgo')).BitGo({ accessToken: config.bitgoAccessToken, env: 'prod' })
 }
 
 Wallet.prototype =
-{ generate: async function (user) {
-  var walletLabel = 'Brave Wallet - ' + user.userId
-
-  return new Promise(function (resolve) {
-    // Create the wallet
-    this.bitgo.wallets().createWalletWithKeychains({'passphrase': this.config.bitgoPassword, 'label': walletLabel},
-      function (err, result) {
+{ generate:
+  async function (user, xpub) {
+    return new Promise(function (resolve) {
+      this.bitgo.wallets().createWalletWithKeychains({ passphrase: this.config.bitgoPassword,
+                                                       label: 'brave://vault/persona/' + user.userId,
+                                                       backupXpub: xpub
+                                                     }, function (err, result) {
         if (err) {
-          // TODO: We should queue of retry failed API requests.
-          debug('error creating wallet. BitGo api key may be invalid, you can safely ignore wallet errors for now.', err)
-          resolve()
-          return
+          debug('error creating wallet', err)
+          result = null
         }
         resolve(result)
       })
-  }.bind(this))
-}}
+    }.bind(this))
+  },
+
+  balance:
+  async function (id) {
+    return new Promise(function (resolve) {
+      this.bitgo.wallets().get({ type: 'bitcoin', id: id }, function (err, wallet) {
+        var result
+
+        if (err) {
+          debug('error creating wallet', err)
+          result = null
+        } else {
+          result = (wallet.balance() / 1e8).toFixed(4)
+        }
+        resolve(result)
+      })
+    }.bind(this))
+  }
+}
 
 module.exports = Wallet

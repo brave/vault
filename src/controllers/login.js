@@ -23,7 +23,7 @@ v1.login =
       if (err) return reply('Oops!')
 
       credentials.scope = []
-      data.forEach(function (team) {
+      data.forEach(team => {
         if (team.organization.login === runtime.login.organization) credentials.scope.push(team.name)
       })
       if (credentials.scope.length === 0) {
@@ -42,7 +42,7 @@ v1.login =
   auth: 'github',
 
   description: 'Logs the user into management operations',
-  notes: 'This operation authenticates either an administrative role ("devops") for the vault. The user is asked to authenticate their GitHub identity, and are assigned permissions based on team-membership. Operations are henceforth authenticated via an encrypted session cookie.',
+  notes: 'This operation authenticates an administrative role ("devops") for the vault. The user is asked to authenticate their GitHub identity, and are assigned permissions based on team-membership. Operations are henceforth authenticated via an encrypted session cookie.',
   tags: ['api'],
 
   validate:
@@ -73,7 +73,7 @@ v1.logout =
 },
 
   description: 'Logs the user out',
-  notes: 'Used to remove the cookie.',
+  notes: 'Used to remove the authenticating session cookie.',
   tags: ['api'],
 
   validate:

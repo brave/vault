@@ -50,7 +50,7 @@ Both the `masterKey` and `signingPair.privateKey` must be securely persisted in 
 When creating a persona,
 the HTTP body is:
 
-    { header    :
+    { header      :
       { signature : '...'
       , nonce     : '...'
       }
@@ -87,7 +87,7 @@ The `signature` and `nonce` properties are used to ensure that the client actual
         
         
     window.crypto.subtle.exportKey('raw', pair.publicKey).then(function (publicKey) {
-        var message = { header    : {}
+        var message = { header      : {}
                       , payload     : 
                         { version   : 1
                         , publicKey : to_hex(ab2b(publicKey))
@@ -95,11 +95,11 @@ The `signature` and `nonce` properties are used to ensure that the client actual
                       }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-        window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
-                                  pair.privateKey, b2ab(combo)).then(function(signature) {
+        window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                                  pair.privateKey, s2ab(combo)).then(function(signature) {
             message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-            console.log('PUT /users/' + userId)
+            console.log('PUT /v1/users/' + userId)
             console.log(JSON.stringify(message, null, 2))
         })
     })
@@ -273,7 +273,7 @@ that particular session of the persona.
 When upserting state information,
 the HTTP body is:
 
-    { header        :
+    { header          :
       { signature     : '...'
       , nonce         : '...'
       },
@@ -285,20 +285,19 @@ the HTTP body is:
 
 For example:
 
-    var b2ab = function (b) {
-        var array = new ArrayBuffer(b.length)
-        var buffer = new Uint8Array(array)
+    var s2ab = function (s) {
+        var buffer = new Uint8Array(s.length)
 
-        for (var i = 0; i < b.length; i++) buffer[i] =b.charCodeAt(i)
-        return array
+        for (var i = 0; i < s.length; i++) buffer[i] = s.charCodeAt(i)
+        return buffer
     }
 
     var history = { ... }
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
-                                 masterKey, b2ab(JSON.stringify(history))).then(function(encryptedData) {
-    var message = { header        : {}
+                                 masterKey, s2ab(JSON.stringify(history))).then(function(encryptedData) {
+    var message = { header          : {}
                   , payload         :
                     { iv            : to_hex(iv)
                     , encryptedData : to_hex(ab2b(encryptedData))
@@ -306,11 +305,11 @@ For example:
                   }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-        window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
-                                  signingPair.privateKey, b2ab(combo)).then(function(signature) {
+        window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                                  signingPair.privateKey, s2ab(combo)).then(function(signature) {
             message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-            console.log('PUT /users/' + userId + '/sessions/' + sessionId + '/types/history')
+            console.log('PUT /v1/users/' + userId + '/sessions/' + sessionId + '/types/history')
             console.log(JSON.stringify(message, null, 2))
         })
     })
@@ -318,7 +317,7 @@ For example:
 In some cases,
 the browser may want the vault to be able to see the contents:
 
-    var message = { header    : {}
+    var message = { header      : {}
                   , payload     : 
                     { sessionId : sessionId
                     , type      : 'browser.app.launch'
@@ -328,11 +327,11 @@ the browser may want the vault to be able to see the contents:
                   }
     var nonce = (new Date().getTime() / 1000).toString()
     var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-    window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
-                              signingPair.privateKey, b2ab(combo)).then(function(signature) {
+    window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                              signingPair.privateKey, s2ab(combo)).then(function(signature) {
         message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-        console.log('POST /users/' + userId + '/intents')
+        console.log('POST /v1/users/' + userId + '/intents')
         console.log(JSON.stringify(message, null, 2))
     })
 
@@ -359,7 +358,7 @@ When updating information,
 the HTTP body is:
 
     { timestamp       : '...'
-    , header        :
+    , header          :
       { signature     : '...'
       , nonce         : '...'
       },
@@ -399,9 +398,9 @@ However, if an application must universally overwrite the shared information, it
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
-                                 masterKey, b2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
+                                 masterKey, s2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
         var message = { timestamp    : '...'
-                      , header     : {}
+                      , header       : {}
                       , payload      :
                         { iv         : to_hex(iv)
                         , encryptedData : to_hex(ab2b(encryptedData))
@@ -410,11 +409,11 @@ However, if an application must universally overwrite the shared information, it
                       }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-        window.crypto.subtle.sign({ name: 'ECDSA', hash: { name: 'SHA-256' } },
-                                  signingPair.privateKey, b2ab(combo)).then(function(signature) {
+        window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                                  signingPair.privateKey, s2ab(combo)).then(function(signature) {
             message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
 
-            console.log('PUT /users/' + userId)
+            console.log('PUT /v1/users/' + userId)
             console.log(JSON.stringify(message, null, 2))
         })
     })

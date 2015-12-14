@@ -38,14 +38,21 @@ var OIP = function (config) {
     var trie = new Trie()
 
     trie.addStrings(this.tokenizer.tokenize(this.config.oip.categories[category]))
-    this.pqs[category] = { category: category, errors: 0, sizes: {}, trie: trie, intents: trie.keysWithPrefix('') }
+    this.pqs[category] = { category: category,
+                           errors: 0,
+                           sizes: {},
+                           trie: trie,
+                           intents: trie.keysWithPrefix(''),
+                           query: { cat: {} }
+                         }
+    this.pqs[category].query.cat[category] = 24 * 60 * 60
     underscore.keys(this.config.oip.sizes).forEach(size => {
       this.pqs[category].sizes[size] = { queue: new PriorityQ(pqComparator),
-                                        lowWater: this.config.oip.options.lowWater,
-                                        highWater: this.config.oip.options.highWater,
-                                        empties: 0,
-                                        impressions: 0,
-                                        retry: 0
+                                         lowWater: this.config.oip.options.lowWater,
+                                         highWater: this.config.oip.options.highWater,
+                                         empties: 0,
+                                         impressions: 0,
+                                         retry: 0
                                        }
     })
   })
@@ -73,14 +80,13 @@ OIP.prototype.refill = function () {
 }
 
 OIP.prototype.reload = async function () {
-  for (let category of underscore.keys(this.config.oip.categories)) {
+  for (let category of underscore.keys(this.pqs)) {
     var payload =
         { elements:
           { 'content_types': [ 'image/gif', 'image/png', 'image/jpeg' ],
             tiles: []
           },
-            cat: {},
-            lir: { ip: 0, intent: 1, loc: 0, uid: 0 }
+          lir: { ip: 0, intent: 1, loc: 0, uid: 0 }
         }
     var sizes = []
 
@@ -101,7 +107,7 @@ OIP.prototype.reload = async function () {
     }
     if (payload.elements.tiles.length === 0) { return }
 
-    payload.cat[category] = 24 * 60 * 60
+    underscore.extend(payload, this.pqs[category].query)
 
     this.refills++
     var body
@@ -213,13 +219,44 @@ OIP.prototype.trim = function (pq) {
   }
 }
 
-OIP.prototype.adUnitForIntents = function (intents, width, height) {
-  var ad, pq, result, suffix
+OIP.prototype.adUnitForKeywords = function (keywords, width, height, categories) {
+  var ad, pq, pqs, result, suffix, trie
   var score = -1
   var size = width + 'x' + height
 
-  underscore.shuffle(underscore.keys(this.config.oip.categories)).forEach(category => {
+  keywords = this.tokenizer.tokenize(keywords.join(','))
+  suffix = keywords.sort().join(',')
+  pqs = this.pqs['k.' + suffix]
+  if ((suffix !== '') && (!pqs)) {
+    trie = new Trie()
+
+    trie.addStrings(keywords)
+    pqs = { category: suffix,
+            errors: 0,
+            sizes: {},
+            trie: trie,
+            intents: trie.keysWithPrefix(''),
+            query: { keywords: {} }
+          }
+    keywords.forEach(keyword => {
+      pqs.query.keywords[keyword] = 24 * 60 * 60
+    })
+    underscore.keys(this.config.oip.sizes).forEach(size => {
+      pqs.sizes[size] = { queue: new PriorityQ(pqComparator),
+                          lowWater: this.config.oip.options.lowWater,
+                          highWater: this.config.oip.options.highWater,
+                          empties: 0,
+                          impressions: 0,
+                          retry: 0
+                        }
+    })
+    this.pqs['k.' + suffix] = pqs
+  }
+
+  underscore.shuffle(underscore.keys(this.pqs)).forEach(category => {
     var ilength, pqs
+
+    if ((keywords.length === 0) && ((categories.length) > 0) && (categories.indexOf(category) === -1)) return
 
     pqs = this.pqs[category]
     pq = pqs.sizes[size]
@@ -228,21 +265,24 @@ OIP.prototype.adUnitForIntents = function (intents, width, height) {
     this.trim(pq)
     if (pq.queue.isEmpty()) return
 
-    ilength = underscore.intersection(intents, pqs.intents)
+    ilength = underscore.intersection(keywords, pqs.intents)
     if (ilength <= score) return
 
     result = pqs
     score = ilength
-    suffix = { category: category, name: this.config.oip.categories[category] }
+    suffix = { category: category, name: this.pqs[category].name }
   })
 
-  if (!result) return debug('nothing matching intents of ' + JSON.stringify(intents))
+  if (!result) {
+    return debug('nothing matching keywords of ' + JSON.stringify(keywords) + ' for categories of ' +
+                 JSON.stringify(categories))
+  }
 
   pq = result.sizes[size]
   pq.impressions--
   ad = pq.queue.deq()
   if ((ad.impressions -= 1) > 0) pq.queue.enq(ad)
-  debug('mapping intents of ' + intents.length + ' to ' + this.config.oip.categories[result.category])
+  debug('mapping keywords of ' + keywords.length + ' to ' + this.pqs[result.category])
 
   return underscore.extend({}, ad, suffix)
 }
@@ -251,10 +291,10 @@ OIP.prototype.categories = function (formatP) {
   var now = new Date().getTime()
   var result = {}
 
-  underscore.keys(this.config.oip.categories).forEach(category => {
+  underscore.keys(this.pqs).forEach(category => {
     var pqs = this.pqs[category]
 
-    result[category] = { name: this.config.oip.categories[category],
+    result[category] = { name: this.config.oip.categories[category] || this.pqs[category].name,
                          errors: pqs.errors,
                          intents: pqs.intents,
                          sizes: {}
@@ -292,13 +332,13 @@ var bootTime = new Date().getTime()
 
 OIP.prototype.statistics = function (formatP) {
   var result = { uptime: formatP ? (new Date().getTime() - bootTime) / 1000 : bootTime,
-                 categories: { active: 0, total: underscore.keys(this.config.oip.categories).length },
+                 categories: { active: 0, total: underscore.keys(this.pqs).length },
                  errors: 0,
                  options: this.config.oip.options,
                  sizes: {}
                }
 
-  underscore.keys(this.config.oip.categories).forEach(category => {
+  underscore.keys(this.pqs).forEach(category => {
     var activeP = 0
     var pqs = this.pqs[category]
 

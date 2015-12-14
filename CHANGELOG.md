@@ -1,5 +1,31 @@
 # ChangeLog for Brave Vault
 
+## [candidate 0.0.4](https://github.com/brave/vault/commit/c5d650ccfe338e245e4797cd228747b93c93a66e)
+
+* in progress:
+    * client example
+
+* added:
+    * support for `header`/`payload`/`trailer` envelopes for cryptographic authentication and authorization
+    * `/ping` operation to bootstramp timestamps for `PUT /.../session/...`
+    * `/.../session/` operations and `sessions` database collection
+
+* replaced:
+    * `SharingApplicationState.md` -> `Principles.md`
+    * `statAdReplaceCount` -> `replacements`
+    * ad replacements from intents -> client now specifies categories and keywords
+    * `node` now `5.1.1`, `eccrypto` -> `elliptic`
+
+* fixed:
+    * `.gitignore` more checks
+    * `ad-manifest.js` enforce limit parameter to maximum of 100
+    * various schema issues
+    * `wallet.js` driver for `bitgo` no longer requires `bitgoUser` configuration option
+
+* removed:
+    * app_states` database collection
+
+
 ## [candidate 0.0.3](https://github.com/brave/vault/commit/dee106a36a80227b1ec7a49b31aa734fc85c5ee1)
 
 * added:
@@ -42,6 +68,7 @@
 
 * deprecated: `GET /sync/{userId}` and `POST /sync` by `GET /v1/users/{userId}/appState` and `PUT /v1/users/{userId}/appState`
     * supports _advisory locking_ using "last timestamp" strategy
+
 
 ## [candidate 0.0.1](https://github.com/brave/vault/commit/e462354cb52a474a1dfb8fe87ab05aee1e8b56df)
 

@@ -9,7 +9,7 @@ var v1 = {}
 
 /*
    POST /v1/users/{userId}/intents
-        { "sessionID": "...", "type": "...", "timestamp": "...", "payload": "..." }
+        { "sessionID": "...", "type": "...", "timestamp": "...", "data": "..." }
         always creates
  */
 
@@ -17,7 +17,7 @@ var intentSchema = Joi.object().keys({
   sessionId: Joi.string().guid().required().description('the identity of the session'),
   type: Joi.string().min(6).required().description('e.g., "browser.site.visit"'),
   timestamp: Joi.number().positive().required().description('opaque number identifying a instance of time'),
-  payload: Joi.object().required().description('an opaque JSON object')
+  data: Joi.object().required().description('an opaque JSON object')
 })
 
 var resultSchema = Joi.object().keys({
@@ -29,9 +29,9 @@ v1.post =
   return async function (request, reply) {
     var intent, result, user
     var debug = braveHapi.debug(module, request)
-    var userId = request.params.userId
-    var container = request.payload.intent ? request.payload.intent : request.payload
-    var sessionId = container.sessionId
+    var userId = request.params.userId.toUpperCase()
+    var container = request.payload.sessionId ? request.payload : request.payload.payload
+    var sessionId = container.sessionId.toUpperCase()
     var type = container.type
     var timestamp = container.timestamp
     var payload = container.payload
@@ -57,7 +57,7 @@ v1.post =
     try {
       await intents.insert(intent)
     } catch (ex) {
-      debug('insert error', ex)
+      debug('insert failed for intents', ex)
     }
   }
 },
@@ -68,8 +68,7 @@ v1.post =
 
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
-      payload: Joi.alternatives(intentSchema,
-                                Joi.object().keys({ envelope: Joi.any().required(), intent: intentSchema }))
+      payload: Joi.alternatives(intentSchema, helper.add_header_schema(intentSchema))   // NB: alternatives is temporary
     },
 
   response: {
@@ -84,7 +83,7 @@ v1.post =
         boomlet: Joi.string().required().description('unknown user entry cryptography version')
       }),
       400: Joi.object({
-        boomlet: Joi.string().required().description('envelope.nonce is invalid')
+        boomlet: Joi.string().required().description('header.nonce is invalid')
       }),
       404: Joi.object({
         boomlet: Joi.string().required().description('user entry does not exist')
@@ -93,7 +92,7 @@ v1.post =
         boomlet: Joi.string().required().description('user entry is not cryptographically-enabled')
       }),
       422: Joi.object({
-        boomlet: Joi.string().required().description('envelope.nonce is untimely')
+        boomlet: Joi.string().required().description('header.nonce is untimely')
       }),
       422: Joi.object({
         boomlet: Joi.string().required().description('signature error')
@@ -114,7 +113,7 @@ module.exports.initialize = async function (debug, runtime) {
       name: 'intents',
       property: 'userId',
       empty: { userId: '', sessionId: '', timestamp: bson.Timestamp.ZERO, type: '', payload: {} },
-      others: [ { userId: 0 }, { sessionId: 1 }, { timestamp: 1 } ]
+      others: [ { userId: 1 }, { sessionId: 1 }, { timestamp: 1 } ]
     }
   ])
 }

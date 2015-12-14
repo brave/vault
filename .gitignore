@@ -7,6 +7,7 @@ config/config.development.js
 # Logs
 logs
 *.log
+typescript
 
 # Runtime data
 pids
@@ -31,6 +32,9 @@ build/Release
 # Dependency directory
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
+
+# Mac OS X
+.DS_Store
 
 # emacs backup files
 *.*~

@@ -7,6 +7,7 @@ var standard = require('gulp-standard')
 
 var SRC = [
   'gulpfile.js',
+  'example/example.js',
   'src/**/[A-Za-z]*.js',
   'src/controllers/**/[A-Za-z]*.js',
   'test/**/[A-Za-z]*.js'
@@ -30,8 +31,22 @@ gulp.task('run', function () {
       js: './node_modules/.bin/babel-node'
     },
     watch: SRC
-  })
-    .on('change', ['lint', 'run'])
+  }).on('change', ['lint', 'run'])
+    .on('restart', function () {
+      console.log('restarted!')
+    })
+})
+
+gulp.task('example', function () {
+  nodemon({
+    script: 'example/example.js',
+    ext: 'js',
+    env: { 'DEBUG': '*' },
+    execMap: {
+      js: './node_modules/.bin/babel-node'
+    },
+    watch: [ 'example/example.js' ]
+  }).on('change', ['lint', 'run'])
     .on('restart', function () {
       console.log('restarted!')
     })

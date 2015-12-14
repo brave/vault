@@ -17,14 +17,14 @@ exports.routes = function (debug, runtime) {
     }
   ]
 
-  fs.readdirSync(__dirname).forEach(function (name) {
+  fs.readdirSync(__dirname).forEach(name => {
     var module = require(path.join(__dirname, name))
 
     if (!underscore.isArray(module.routes)) { return }
 
     if (typeof module.initialize === 'function') { module.initialize(debug, runtime) }
 
-    module.routes.forEach(function (route) {
+    module.routes.forEach(route => {
       var entry = route(runtime)
       var key = entry.method + ' ' + entry.path
 

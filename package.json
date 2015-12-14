@@ -1,7 +1,7 @@
 {
   "name": "vault",
-  "version": "0.0.3",
-  "description": "A Personal Data Store for holding high-value user behavior with high privacy.",
+  "version": "0.0.4",
+  "description": "A personal data store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {
     "start": "DEBUG=* ./node_modules/.bin/babel-node src/index.js"
@@ -26,7 +26,7 @@
     "bson": "0.4.19",
     "cryptiles": "3.0.0",
     "debug": "^2.2.0",
-    "eccrypto": "1.0.3",
+    "elliptic": "6.0.2",
     "github": "0.2.4",
     "hapi": "^11.1.0",
     "hapi-async-handler": "^1.0.3",
@@ -36,6 +36,7 @@
     "joi": "https://github.com/mrose17/joi.git#a8597b9ef6d63f0ceeff7122a0e45cb1f99ba248",
     "mongodb": "1.4.39",
     "monk": "^1.0.1",
+    "monotonic-timestamp": "0.0.9",
     "natural": "0.2.1",
     "newrelic": "1.23.1",
     "priorityqueuejs": "^1.0.0",
@@ -46,7 +47,7 @@
     "wreck": "7.0.0"
   },
   "engines": {
-    "node": "5.0.0"
+    "node": "5.1.1"
   },
   "devDependencies": {
     "babel-eslint": "^4.1.3",

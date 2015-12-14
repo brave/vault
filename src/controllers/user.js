@@ -14,8 +14,9 @@ var v1 = {}
 v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var result, user
-    var userId = request.params.userId
+    var result, user, wallet
+    var debug = braveHapi.debug(module, request)
+    var userId = request.params.userId.toUpperCase()
     var users = runtime.db.get('users')
 
     user = await users.findOne({ userId: userId })
@@ -24,9 +25,19 @@ v1.get =
     if (!user.timestamp) {
       user = await users.update({ userId: userId }, { $currentDate: { timestamp: { $type: 'timestamp' } } }, { upsert: true })
     }
-    result = underscore.extend(underscore.omit(user, '_id', 'wallet'), { timestamp: user.timestamp.toString() })
+    if (user.wallets) {
+      for (wallet of user.wallets) {
+        try {
+          wallet.balance = await runtime.wallet.balance(wallet.id)
+        } catch (ex) {
+          debug('wallet error', ex)
+        }
+      }
+    }
 
-    reply(helper.add_nonce(result))
+    result = underscore.extend(underscore.omit(user, '_id', 'keychains'), { timestamp: user.timestamp.toString() })
+
+    reply(helper.add_nonce_data(result))
   }
 },
 
@@ -54,47 +65,54 @@ v1.get =
 /*
    PUT /v1/users/{userId}
         create/update (entry MAY already exist)
+
+   i'd rather this be a POST for creation and a PUT for update, instead of a PUT for upsert
+   however, using a POST implies that the server generates the userId, which is contrary to "the model"
  */
 
 v1.put =
 { handler: function (runtime) {
   return async function (request, reply) {
-// FIXME
     if (!request.payload) request.payload = {}
 
     var count, createP, result, update, user, wallet
     var debug = braveHapi.debug(module, request)
-    var envelope = request.payload.envelope
-    var userId = request.params.userId
+    var userId = request.params.userId.toUpperCase()
     var timestamp = request.payload.timestamp
-    var appStates = runtime.db.get('app_states')
+    var payload = request.payload.payload || {}
     var users = runtime.db.get('users')
 
-    if (envelope) {
-      if (envelope.version !== 1) {
-        return reply(boom.badRequest('invalid or missing envelope.version: ' + JSON.stringify(envelope.version)))
+    user = await users.findOne({ userId: userId })
+    createP = !user
+    if (createP) {
+      // NB: payload.version should be mandatory
+      if ((payload.version) && (payload.version !== 1)) {
+        return reply(boom.badRequest('invalid or missing payload.version: ' + JSON.stringify(payload.version)))
       }
-      if ((!envelope.publicKey) || (typeof envelope.publicKey !== 'string') || (envelope.publicKey.length !== 130)) {
-        return reply(boom.badRequest('invalid or missing envelope.publicKey: ' + JSON.stringify(envelope.publicKey)))
+      // NB: payload.publicKey should be mandatory
+      if ((payload.version) &&
+             ((!payload.publicKey) || (typeof payload.publicKey !== 'string') || (payload.publicKey.length !== 130))) {
+        return reply(boom.badRequest('invalid or missing payload.publicKey: ' + JSON.stringify(payload.publicKey)))
       }
     }
-    /* not going to argue with Joi about the payload... */
-    if (request.payload.userId) return reply(boom.badRequest('"userId" is not allowed'))
-    if (request.payload.wallet) return reply(boom.badRequest('"wallet" is not allowed'))
+
+    if (user || payload.version) {
+      result = await helper.verify(debug, user || { userId: userId, version: payload.version, publicKey: payload.publicKey },
+                                   request.payload)
+      if (result) return reply(result)
+    }
 
     try {
+      delete request.payload.timestamp
       update = { $currentDate: { timestamp: { $type: 'timestamp' } },
-                 $setOnInsert: { statAdReplaceCount: 0 },
-                 $set: {},
-                 $unset: {} }
-      underscore.keys(request.payload).forEach(function (key) {
-        var value = request.payload[key]
+                 $setOnInsert: { replacements: 0 },
+                 $set: { state: request.payload }
+               }
 
-        if (key === 'timestamp') return
-        update[(key === 'envelope') ? '$setOnInsert' : (value !== null) ? '$set' : '$unset'][key] = value
-      })
-      if (underscore.keys(update.$set).length === 0) delete update.$set
-      if (underscore.keys(update.$unset).length === 0) delete update.$unset
+      if ((!user) && (payload.version)) {
+        update.$setOnInsert.version = payload.version
+        update.$setOnInsert.publicKey = payload.publicKey
+      }
 
       if (timestamp) {
         try { timestamp = bson.Timestamp.fromString(timestamp) } catch (ex) {
@@ -112,53 +130,36 @@ v1.put =
         await users.update({ userId: userId }, update, { upsert: true })
       }
     } catch (ex) {
-      debug('update error', ex)
+      debug('update failed for users', ex)
       return reply(boom.badImplementation('update failed: ' + userId, ex))
     }
 
     user = await users.findOne({ userId: userId })
-    if (!user) { return reply(boom.badImplementation('insert failed: ' + userId)) }
+    if (!user) { return reply(boom.badImplementation('upsert failed: ' + userId)) }
 
-    createP = !user.wallet
-    if (createP) {
-/*
+    if ((!user.wallets) && (payload.xpub)) {
       try {
-        wallet = await runtime.wallet.generate(user)
-
-        user.wallet =
-        { id: wallet.wallet.id(),
-          label: wallet.wallet.label(),
-          userKeychainEncryptedXprv: wallet.userKeychain.encryptedXprv,
-          backupKeychainEncryptedXprv: wallet.backupKeychain.encryptedXprv
-        }
+        result = await runtime.wallet.generate(user, payload.xpub)
+        wallet = result.wallet.wallet
+        user.wallets = [ { id: wallet.id, type: 'primary' } ]
+        user.keychains = [ underscore.extend({ id: wallet.id }, underscore.omit(result, 'wallet', 'warning')) ]
       } catch (ex) {
         debug('wallet error', ex)
-//      return reply(boom.badImplementation('wallet creation failed', ex))
-        wallet = {}
-        user.wallet = {}
+        return reply(boom.badImplementation('wallet creation failed', ex))
       }
- */
-      wallet = {}
-      user.wallet = {}
 
-      count = await users.update({ userId: userId }, { $set: { wallet: user.wallet } }, { upsert: true })
+      count = await users.update({ userId: userId }, { $set: { wallets: user.wallets, keychains: user.keychains } },
+                                 { upsert: true })
       if (typeof count === 'object') { count = count.nMatched }
       if (count === 0) { return reply(boom.badImplementation('update failed: ' + userId)) }
     }
 
-    result = helper.add_nonce(underscore.omit(user, '_id', 'wallet'))
-    if (!wallet) return reply(result)
-    reply(result).created()
-
-    try {
-      await appStates.insert({ userId: userId, timestamp: bson.Timestamp(), payload: {} })
-    } catch (ex) {
-      debug('insert error', ex)
-    }
+    result = underscore.extend(underscore.omit(user, '_id', 'keychains'), { timestamp: user.timestamp.toString() })
+    reply(helper.add_nonce_data(result)).code(createP ? 201 : 200)
   }
 },
 
-  description: 'Creates or updates a user entry with the vault',
+  description: 'Creates or updates a user entry',
   notes: 'Consult <a href="https://github.com/brave/vault/wiki/Principles#globalstate">Global State Principles</a>.',
   tags: ['api'],
 
@@ -173,17 +174,11 @@ v1.put =
       200: Joi.any(),
       201: Joi.any(),
       400: Joi.object({
-        boomlet: Joi.string().required().description('invalid or missing envelope.version')
+        boomlet: Joi.string().required().description('invalid or missing payload.version')
       }),
       400: Joi.object({
-        boomlet: Joi.string().required().description('invalid or missing envelope.publicKey')
+        boomlet: Joi.string().required().description('invalid or missing payload.publicKey')
       }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('userId is not allowed')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('wallet is not allowed')
-      })
       400: Joi.object({
         boomlet: Joi.string().required().description('invalid timestamp')
       }),
@@ -194,13 +189,13 @@ v1.put =
         boomlet: Joi.string().required().description('update failed')
       }),
       500: Joi.object({
-        boomlet: Joi.string().required().description('insert failed')
+        boomlet: Joi.string().required().description('upsert failed')
       }),
       400: Joi.object({
-        boomlet: Joi.string().required().description('envelope.nonce is invalid')
+        boomlet: Joi.string().required().description('header.nonce is invalid')
       }),
       422: Joi.object({
-        boomlet: Joi.string().required().description('envelope.nonce is untimely')
+        boomlet: Joi.string().required().description('header.nonce is untimely')
       }),
       422: Joi.object({
         boomlet: Joi.string().required().description('signature error')
@@ -210,9 +205,65 @@ v1.put =
   }
 }
 
+/*
+   DELETE /v1/users/{userId}
+ */
+
+v1.delete =
+{ handler: function (runtime) {
+  return async function (request, reply) {
+    if (!request.payload) request.payload = {}
+
+    var result, user
+    var debug = braveHapi.debug(module, request)
+    var userId = request.params.userId.toUpperCase()
+    var adUnits = runtime.db.get('ad_units')
+    var intents = runtime.db.get('intents')
+    var sessions = runtime.db.get('sessions')
+    var replacements = runtime.db.get('replacements')
+    var users = runtime.db.get('users')
+
+    user = await users.findOne({ userId: userId })
+    if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
+
+    result = await helper.verify(debug, user, request.payload)
+    if (result) return reply(result)
+
+    result = await users.remove({ userId: userId })
+
+    reply().code(204)
+
+    try { adUnits.remove({ userId: userId }) } catch (ex) { debug('remove failed for adUnits', ex) }
+    try { intents.remove({ userId: userId }) } catch (ex) { debug('remove failed for intents', ex) }
+    try { sessions.remove({ userId: userId }) } catch (ex) { debug('remove failed for sessions', ex) }
+    try { replacements.remove({ userId: userId }) } catch (ex) { debug('remove failed for ', ex) }
+  }
+},
+
+  description: 'Delete a user entry, along with any associated data',
+  notes: 'For the purpose authentication the HTTP body must be present and contain a header/payload pairing, the payload may be any JSON value.',
+  tags: ['api'],
+
+  validate:
+    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
+      payload: helper.add_header_schema(Joi.any())
+    },
+
+  response: {
+/*
+    status: {
+      404: Joi.object({
+        boomlet: Joi.string().required().description('user entry does not exist')
+      })
+    }
+ */
+  }
+}
+
 module.exports.routes =
 [ braveHapi.routes.async().get().path('/v1/users/{userId}').config(v1.get),
-  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put)
+  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put),
+  braveHapi.routes.async().delete().path('/v1/users/{userId}').config(v1.delete)
 ]
 
 module.exports.initialize = async function (debug, runtime) {

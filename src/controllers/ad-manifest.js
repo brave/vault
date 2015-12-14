@@ -136,7 +136,7 @@ v1.post =
     try {
       await siteInfo.insert(underscore.extend(payload, { timestamp: bson.Timestamp() }))
     } catch (ex) {
-      debug('insert error', ex)
+      debug('insert failed for siteInfo', ex)
       return reply(boom.badData('ad-manifest entry already exists: ' + hostname))
     }
 
