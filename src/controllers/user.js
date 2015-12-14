@@ -141,7 +141,7 @@ v1.put =
       try {
         result = await runtime.wallet.generate(user, payload.xpub)
         wallet = result.wallet.wallet
-        user.wallets = [ { id: wallet.id, type: 'primary' } ]
+        user.wallets = [ { id: wallet.id, type: 'primary', currency: 'btc' } ]
         user.keychains = [ underscore.extend({ id: wallet.id }, underscore.omit(result, 'wallet', 'warning')) ]
       } catch (ex) {
         debug('wallet error', ex)
