@@ -39,6 +39,7 @@ var OIP = function (config) {
 
     trie.addStrings(this.tokenizer.tokenize(this.config.oip.categories[category]))
     this.pqs[category] = { category: category,
+                           name: this.config.oip.categories[category],
                            errors: 0,
                            sizes: {},
                            trie: trie,
@@ -232,6 +233,7 @@ OIP.prototype.adUnitForKeywords = function (keywords, width, height, categories)
 
     trie.addStrings(keywords)
     pqs = { category: suffix,
+            name: suffix,
             errors: 0,
             sizes: {},
             trie: trie,
@@ -270,7 +272,7 @@ OIP.prototype.adUnitForKeywords = function (keywords, width, height, categories)
 
     result = pqs
     score = ilength
-    suffix = { category: category, name: this.pqs[category].name }
+    suffix = { category: category, name: pqs.name }
   })
 
   if (!result) {
@@ -282,8 +284,9 @@ OIP.prototype.adUnitForKeywords = function (keywords, width, height, categories)
   pq.impressions--
   ad = pq.queue.deq()
   if ((ad.impressions -= 1) > 0) pq.queue.enq(ad)
-  debug('mapping keywords of ' + keywords.length + ' to ' + JSON.stringify(this.pqs[result.category]))
+  debug('mapping keywords of ' + keywords.length + ' to ' + this.pqs[result.category].category)
   debug('suffix=' + JSON.stringify(suffix))
+  debug('ad=' + JSON.stringify(ad))
 
   return underscore.extend({}, ad, suffix)
 }
@@ -295,7 +298,7 @@ OIP.prototype.categories = function (formatP) {
   underscore.keys(this.pqs).forEach(category => {
     var pqs = this.pqs[category]
 
-    result[category] = { name: this.config.oip.categories[category] || this.pqs[category].name,
+    result[category] = { name: this.pqs[category].name,
                          errors: pqs.errors,
                          intents: pqs.intents,
                          sizes: {}
