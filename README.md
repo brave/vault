@@ -2,8 +2,9 @@
 
 # Brave Vault
 
-A Personal Data Store for holding high-value user behavior with high privacy.
+A personal data store for holding high-value user behavior with high privacy.
 
+<img src='documentation/ecosystem.png' />
 
 ## Setup
 
@@ -33,8 +34,9 @@ Use `gulp` to run the server in development. This also sets up watchers and will
 
 ## Proximo
 
-Proximo is currently used as a proxy so we can make outbound vault requests using a static IP. Poximo leverages the following files: bin/proximo vendor/dante. A command to start the stacklet exists in the Procfile.
-
+Proximo is currently used as a proxy so we can make outbound vault requests using a static IP. 
+Instead of using the `Profile` and `bin/proximo` `vendor/dante`,
+so `process.env.BITGO_USE_PROXY` is defined instead.
 
 ## Theory of Operation
 All operations are available via only HTTPS on public-facing systems.
