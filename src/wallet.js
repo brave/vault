@@ -5,6 +5,7 @@ var Wallet = function (config) {
 
   this.config = config
   this.bitgo = new (require('bitgo')).BitGo({ accessToken: config.bitgoAccessToken, env: 'prod' })
+  debug('environment: ' + this.bitgo.env)
 }
 
 Wallet.prototype =
