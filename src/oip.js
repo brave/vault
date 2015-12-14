@@ -282,7 +282,8 @@ OIP.prototype.adUnitForKeywords = function (keywords, width, height, categories)
   pq.impressions--
   ad = pq.queue.deq()
   if ((ad.impressions -= 1) > 0) pq.queue.enq(ad)
-  debug('mapping keywords of ' + keywords.length + ' to ' + this.pqs[result.category])
+  debug('mapping keywords of ' + keywords.length + ' to ' + JSON.stringify(this.pqs[result.category]))
+  debug('suffix='+JSON.stringify(suffix))
 
   return underscore.extend({}, ad, suffix)
 }
