@@ -15,8 +15,6 @@
 //    limitations under the License.
 //
 //*******************************************************************************
-
-
 if (typeof module !== 'undefined') {
     var window = global;
 }

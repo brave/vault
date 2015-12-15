@@ -1,25 +1,43 @@
 /*
-   node example.js [-f config.json] command args ...
+   node example.js [-f config.json] [-s server] command args ...
  */
 
 var bitgo = require('../node_modules/bitgo')
 var fs = require('fs')
+var http = require('http')
+var https = require('https')
+var underscore = require('../node_modules/underscore')
+var url = require('url')
 var webcrypto = require('./msrcrypto.js')
 
 var usage = function () {
   console.log('usage:\n\t' + process.argv[0] + ' ' + process.argv[1] + ' [ -f file ] command [ args... ]')
-  process.exit(0)
+  process.exit(1)
 }
 
-var argv, configFile
-if ((process.argv.length > 2) && (process.argv[2] === '-f')) {
-  if (process.argv.length === 3) usage()
-  configFile = process.argv[3]
-  argv = process.argv.slice(4)
-} else {
-  configFile = 'config.json'
-  argv = process.argv.slice(2)
+var oops = function (s, err) {
+  console.log(s + ': ' + err.toString())
+  console.log(err.stack)
+  process.exit(1)
 }
+
+var argv = process.argv.slice(2)
+var configFile = 'config.json'
+var server = 'https://vault-staging.brave.com'
+server = 'http://127.0.0.1:3000'
+
+while (argv.length > 0) {
+  if (argv[0].indexOf('-') !== 0) break
+  if (argv.length === 1) usage()
+
+  if (argv[0] === '-f') configFile = argv[1]
+  else if (argv[0] === '-s') server = argv[1]
+  else usage()
+
+  argv = argv.slice(2)
+}
+if (server.indexOf('http') !== 0) server = 'https://' + server
+server = url.parse(server)
 
 var uuid = function () {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -30,31 +48,39 @@ var uuid = function () {
   })
 }
 
-var config, keychain
-try {
-  config = fs.readFileSync(configFile, 'utf8')
-} catch (err) {
-  keychain = new (bitgo).BitGo({}).keychains().create()
-
-  config = { userId: uuid(), sessionId: uuid(), xpub: keychain.xpub, xprv: keychain.xprv }
-}
-
+var config
 var runtime = {}
 
 var init = function () {
+  var keychain
+
+  try {
+    config = fs.readFileSync(configFile, 'utf8')
+  } catch (err) {
+    keychain = new (bitgo).BitGo({}).keychains().create()
+
+    config = { userId: uuid(), sessionId: uuid(), xpub: keychain.xpub, xprv: keychain.xprv }
+  }
+
   if (config.masterKey) {
-    webcrypto.subtle.importKey('jwk', config.masterKey, { name: 'AES-GCM' }, true, [ 'encrypt', 'decrypt' ]).then(function (masterKey) {
-      runtime.masterKey = masterKey
+    console.log('runtime=' + JSON.stringify(runtime, null, 2))
+    webcrypto.subtle.importKey('jwk', config.masterKey, { name: 'AES-GCM' }, true, [ 'encrypt', 'decrypt' ]).then(
+      function (masterKey) {
+        runtime.masterKey = masterKey
 
-      webcrypto.subtle.importKey('jwk', config.privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, [ 'sign' ]).then(function (privateKey) {
-        runtime.pair = { private: privateKey }
+        webcrypto.subtle.importKey('jwk', config.privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, [ 'sign' ]).then(
+          function (privateKey) {
+            runtime.pair = { private: privateKey }
 
-        next()
-      })
-    })
+            next()
+          }
+        )
+      }
+    )
   } else {
     webcrypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']).then(function (masterKey) {
       runtime.masterKey = masterKey
+
       webcrypto.subtle.exportKey('raw', runtime.masterKey).then(function (exportKey) {
         config.masterKey = exportKey
 
@@ -67,7 +93,7 @@ var init = function () {
             webcrypto.subtle.exportKey('jwk', runtime.pair.publicKey).then(function (publicKey) {
               config.publicKey = publicKey
 
-              next()
+              try { create() } catch (ex) { oops('create', ex) }
             })
           })
         })
@@ -75,20 +101,127 @@ var init = function () {
     })
   }
 }
-init()
 
-var next = function () {
-  console.log(' config=' + JSON.stringify(config, null, 2))
-  console.log('runtime=' + JSON.stringify(runtime, null, 2))
-  console.log('argv=' + argv)
+var s2ab = function (s) {
+  var buffer = new Uint8Array(s.length)
+
+  for (var i = 0; i < s.length; i++) buffer[i] = s.charCodeAt(i)
+  return buffer
 }
 
-/* next step is to see if runtime.pair.publicKey is set, if so:
+var to_hex = function (bs) {
+  var encoded = []
 
-   - do the PUT
-   - on success, write the config file
+  for (var i = 0; i < bs.length; i++) {
+    encoded.push('0123456789abcdef'[(bs[i] >> 4) & 15])
+    encoded.push('0123456789abcdef'[bs[i] & 15])
+  }
+  return encoded.join('')
+}
 
- */
+var ab2b = function (ab) {
+  var buffer = []
+  var view = new Uint8Array(ab)
+
+  for (var i = 0; i < ab.byteLength; i++) buffer[i] = view[i]
+  return buffer
+}
+
+var roundtrip = function (options, callback) {
+  var request
+  var client = server.protocol === 'https:' ? https : http
+
+  options = underscore.extend(underscore.pick(server, 'protocol', 'hostname', 'port'), options)
+
+  request = client.request(underscore.omit(options, 'payload'), function (response) {
+    var body = ''
+
+    response.on('data', function (chunk) {
+      body += chunk.toString()
+    }).on('end', function () {
+      callback(null, response, body)
+    }).setEncoding('utf8')
+  }).on('error', function (err) {
+    callback(err)
+  })
+  if (options.payload) request.write(JSON.stringify(options.payload))
+  request.end()
+}
+
+var create = function () {
+  var combo
+  var nonce = (new Date().getTime() / 1000.0).toString()
+  var message = { header: {},
+              payload:
+              { version: 1,
+                publicKey: '04' +
+                           new Buffer(config.publicKey.x, 'base64').toString('hex') +
+                           new Buffer(config.publicKey.y, 'base64').toString('hex'),
+                xpub: config.xpub
+              }
+            }
+
+  combo = JSON.stringify({ userId: config.userId, nonce: nonce, payload: message.payload })
+  webcrypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                            runtime.pair.privateKey, s2ab(combo)).then(
+    function (signature) {
+      message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
+      console.log(JSON.stringify(message, null, 2))
+
+      roundtrip({ path: '/v1/users/' + config.userId,
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' }
+                }, function (err, response, body) {
+        if (err) oops('create', err)
+
+        console.log('HTTP response: ' + response.statusCode)
+        try {
+          console.log(JSON.stringify(JSON.parse(body), null, 2))
+        } catch (ex) {
+          console.log(body)
+        }
+        if (response.statusCode !== 201) process.exit(1)
+
+        fs.writeFile(configFile, JSON.stringify(config, null, 2), { encoding: 'utf8', mode: 0o644 }, function (err) {
+          if (err) oops(configFile, err)
+
+          next()
+        })
+      })
+    }
+  )
+}
+
+var next = function () {
+  console.log('runtime=' + JSON.stringify(runtime, null, 2))
+  console.log('argv=' + argv)
+
+  if (argv.length === 0) argv = [ 'get' ]
+  switch (argv[0]) {
+    case 'get':
+      get()
+      break
+
+    default:
+      usage()
+  }
+  process.exit(0)
+}
+
+var get = function () {
+  roundtrip({ path: '/v1/users/' + config.userId, method: 'GET' }, function (err, response, body) {
+    if (err) oops('get', err)
+
+    console.log('HTTP response: ' + response.statusCode)
+    try {
+      console.log(JSON.stringify(JSON.parse(body), null, 2))
+    } catch (ex) {
+      console.log(body)
+    }
+  })
+}
+
+init()
 
 /* actions:
      - get persona data
@@ -100,4 +233,6 @@ var next = function () {
      - delete persona
 
      - get ad replacement
+
+     - get site ad-info
  */

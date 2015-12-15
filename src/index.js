@@ -120,7 +120,7 @@ server.on('log', function (event, tags) {
     if ((entry.data) && (typeof entry.data.msec === 'number')) { duration = entry.data.msec }
   })
 
-  if (request.response._error) {
+  if ((newrelic) && (request.response._error)) {
     flattened = {}
     underscore.keys(params).forEach(param => {
       underscore.keys(params[param]).forEach(key => {
