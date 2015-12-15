@@ -10,24 +10,34 @@ var underscore = require('../node_modules/underscore')
 var url = require('url')
 var webcrypto = require('./msrcrypto.js')
 
+/*
+ *
+ * parse the command arguments
+ *
+ */
+
 var usage = function () {
   console.log('usage:\n\t' + process.argv[0] + ' ' + process.argv[1] + ' [ -f file ] command [ args... ]')
   process.exit(1)
 }
 
-var oops = function (s, err) {
-  console.log(s + ': ' + err.toString())
-  console.log(err.stack)
-  process.exit(1)
-}
-
 var argv = process.argv.slice(2)
-var configFile = 'config.json'
-var server = 'https://vault-staging.brave.com'
+var configFile = process.env.CONFIGFILE || 'config.json'
+var server = process.env.SERVER || 'https://vault-staging.brave.com'
+var verboseP = process.env.VERBOSE || false
+
 server = 'http://127.0.0.1:3000'
+verboseP = true
 
 while (argv.length > 0) {
   if (argv[0].indexOf('-') !== 0) break
+
+  if (argv[0] === '-v') {
+    verboseP = true
+    argv = argv.slice(1)
+    continue
+  }
+
   if (argv.length === 1) usage()
 
   if (argv[0] === '-f') configFile = argv[1]
@@ -39,31 +49,44 @@ while (argv.length > 0) {
 if (server.indexOf('http') !== 0) server = 'https://' + server
 server = url.parse(server)
 
-var uuid = function () {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = webcrypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0
-    var v = c === 'x' ? r : (r & 0x3 | 0x8)
-
-    return v.toString(16).toUpperCase()
-  })
-}
+/*
+ *
+ * read/create the configuration file
+ *
+ * if a configuration file already exists, then the Web Cryptography API is used to import the key used by the browsers for
+ * symmetric encryption (runtime.masterKey), and the private key bused by the browser to authenticate with the vault
+ * (runtime.pair.private)
+ *
+ * if a configuration file does not exist, then the BitGo API is used to generate a keychain that will be used for a subsequent
+ * BTC wallet creation
+ *
+ * then the Web Cryptography API is used to generate:
+ *  - the symmetric key (config.masterKey), unknown to the vault, used by browsers to encipher private data
+ *  - the keypair (config.privateKey/config.publicKey), used by browsers to authenticate modifications at the vault
+ *    (config.privateKey is unknown to the vault)
+ *
+ * note that the use of ECDSA/P-256 is MANDATORY for talking to the current version of the vault -- there is no negotation...
+ *
+ *
+ * if a configuration file already existed, then next() is called to process the command; otherwise, create() is called to
+ * create the persona and then process the command
+ */
 
 var config
 var runtime = {}
 
-var init = function () {
+fs.readFile(configFile, { encoding: 'utf8' }, function (err, data) {
   var keychain
 
-  try {
-    config = fs.readFileSync(configFile, 'utf8')
-  } catch (err) {
+  if (err) {
     keychain = new (bitgo).BitGo({}).keychains().create()
 
     config = { userId: uuid(), sessionId: uuid(), xpub: keychain.xpub, xprv: keychain.xprv }
+  } else {
+    config = JSON.parse(data)
   }
 
   if (config.masterKey) {
-    console.log('runtime=' + JSON.stringify(runtime, null, 2))
     webcrypto.subtle.importKey('jwk', config.masterKey, { name: 'AES-GCM' }, true, [ 'encrypt', 'decrypt' ]).then(
       function (masterKey) {
         runtime.masterKey = masterKey
@@ -100,66 +123,73 @@ var init = function () {
       })
     })
   }
-}
+})
 
-var s2ab = function (s) {
-  var buffer = new Uint8Array(s.length)
+/*
+ *
+ * process the command
+ *
+ *  - get
+ *
+ *  - put persona data
+ *  - create intent
+ *  - list sessions/types
+ *  - update session/type
+ *  - delete session/type
+ *  - delete persona
+ *  - get ad replacement
+ *  - get site ad-info
+ */
 
-  for (var i = 0; i < s.length; i++) buffer[i] = s.charCodeAt(i)
-  return buffer
-}
+var next = function () {
+  console.log('argv=' + JSON.stringify(argv))
 
-var to_hex = function (bs) {
-  var encoded = []
+  if (argv.length === 0) argv = [ 'get' ]
+  switch (argv[0]) {
+    case 'get':
+      get()
+      break
 
-  for (var i = 0; i < bs.length; i++) {
-    encoded.push('0123456789abcdef'[(bs[i] >> 4) & 15])
-    encoded.push('0123456789abcdef'[bs[i] & 15])
+    default:
+      usage()
   }
-  return encoded.join('')
 }
 
-var ab2b = function (ab) {
-  var buffer = []
-  var view = new Uint8Array(ab)
+var get = function () {
+  roundtrip({ path: '/v1/users/' + config.userId, method: 'GET' }, function (err, response, payload) {
+    if (err) oops('get', err)
 
-  for (var i = 0; i < ab.byteLength; i++) buffer[i] = view[i]
-  return buffer
-}
-
-var roundtrip = function (options, callback) {
-  var request
-  var client = server.protocol === 'https:' ? https : http
-
-  options = underscore.extend(underscore.pick(server, 'protocol', 'hostname', 'port'), options)
-
-  request = client.request(underscore.omit(options, 'payload'), function (response) {
-    var body = ''
-
-    response.on('data', function (chunk) {
-      body += chunk.toString()
-    }).on('end', function () {
-      callback(null, response, body)
-    }).setEncoding('utf8')
-  }).on('error', function (err) {
-    callback(err)
+// ...
   })
-  if (options.payload) request.write(JSON.stringify(options.payload))
-  request.end()
 }
+
+/*
+ *
+ * create a persona in the vault
+ *
+ * the pattern here is the same for all POSTs/PUTs to the vault:
+ *  - generate a nonce and build the message payload
+ *  - generate the string to be hashed and then convert to an array buffer
+ *  - generate a signature
+ *  - fill-in the message header
+ *  - round-trip to the vault
+ *
+ * note that the publicKey is not sent as an x/y pair, but a concatenation (the 0x04 prefix indicates this)
+ *
+ */
 
 var create = function () {
   var combo
   var nonce = (new Date().getTime() / 1000.0).toString()
   var message = { header: {},
-              payload:
-              { version: 1,
-                publicKey: '04' +
-                           new Buffer(config.publicKey.x, 'base64').toString('hex') +
-                           new Buffer(config.publicKey.y, 'base64').toString('hex'),
-                xpub: config.xpub
-              }
-            }
+                  payload:
+                  { version: 1,
+                    publicKey: '04' +
+                               new Buffer(config.publicKey.x, 'base64').toString('hex') +
+                               new Buffer(config.publicKey.y, 'base64').toString('hex'),
+                    xpub: config.xpub
+                  }
+                }
 
   combo = JSON.stringify({ userId: config.userId, nonce: nonce, payload: message.payload })
   webcrypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
@@ -174,12 +204,6 @@ var create = function () {
                 }, function (err, response, body) {
         if (err) oops('create', err)
 
-        console.log('HTTP response: ' + response.statusCode)
-        try {
-          console.log(JSON.stringify(JSON.parse(body), null, 2))
-        } catch (ex) {
-          console.log(body)
-        }
         if (response.statusCode !== 201) process.exit(1)
 
         fs.writeFile(configFile, JSON.stringify(config, null, 2), { encoding: 'utf8', mode: 0o644 }, function (err) {
@@ -192,47 +216,93 @@ var create = function () {
   )
 }
 
-var next = function () {
-  console.log('runtime=' + JSON.stringify(runtime, null, 2))
-  console.log('argv=' + argv)
+/*
+ *
+ * utility functions
+ *
+ */
 
-  if (argv.length === 0) argv = [ 'get' ]
-  switch (argv[0]) {
-    case 'get':
-      get()
-      break
+// roundtrip to the vault
+var roundtrip = function (options, callback) {
+  var request
+  var client = server.protocol === 'https:' ? https : http
 
-    default:
-      usage()
-  }
-  process.exit(0)
+  options = underscore.extend(underscore.pick(server, 'protocol', 'hostname', 'port'), options)
+
+  request = client.request(underscore.omit(options, 'payload'), function (response) {
+    var body = ''
+
+    response.on('data', function (chunk) {
+      body += chunk.toString()
+    }).on('end', function () {
+      var payload
+
+      if (verboseP) {
+        console.log('>>> HTTP/' + response.httpVersionMajor + '.' + response.httpVersionMinor + ' ' + response.statusCode +
+                   ' ' + (response.statusMessage || ''))
+        try {
+          payload = JSON.stringify(JSON.parse(body), null, 2)
+        } catch (ex) {
+          payload = body.toString()
+        }
+        console.log('>>> ' + payload.split('\n').join('\n>>> '))
+      }
+
+      callback(null, response, payload)
+    }).setEncoding('utf8')
+  }).on('error', function (err) {
+    callback(err)
+  })
+  if (options.payload) request.write(JSON.stringify(options.payload))
+  request.end()
+
+  if (!verboseP) return
+
+  console.log('<<< ' + options.method + ' ' + options.path)
+  if (options.payload) console.log('<<< ' + JSON.stringify(options.payload, null, 2).split('\n').join('\n<<< '))
 }
 
-var get = function () {
-  roundtrip({ path: '/v1/users/' + config.userId, method: 'GET' }, function (err, response, body) {
-    if (err) oops('get', err)
+// courtesy of http://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript#2117523
+var uuid = function () {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = webcrypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0
+    var v = c === 'x' ? r : (r & 0x3 | 0x8)
 
-    console.log('HTTP response: ' + response.statusCode)
-    try {
-      console.log(JSON.stringify(JSON.parse(body), null, 2))
-    } catch (ex) {
-      console.log(body)
-    }
+    return v.toString(16).toUpperCase()
   })
 }
 
-init()
+// convert a string to an array of unsigned octets
+var s2ab = function (s) {
+  var buffer = new Uint8Array(s.length)
 
-/* actions:
-     - get persona data
-     - put persona data
-     - create intent
-     - list sessions/types
-     - update session/type
-     - delete session/type
-     - delete persona
+  for (var i = 0; i < s.length; i++) buffer[i] = s.charCodeAt(i)
+  return buffer
+}
 
-     - get ad replacement
+// convert an array buffer to a array
+var ab2b = function (ab) {
+  var buffer = []
+  var view = new Uint8Array(ab)
 
-     - get site ad-info
- */
+  for (var i = 0; i < ab.byteLength; i++) buffer[i] = view[i]
+  return buffer
+}
+
+// the vault likes things in hex, not base64 (MTR is old, old-school)
+var to_hex = function (bs) {
+  var encoded = []
+
+  for (var i = 0; i < bs.length; i++) {
+    encoded.push('0123456789abcdef'[(bs[i] >> 4) & 15])
+    encoded.push('0123456789abcdef'[bs[i] & 15])
+  }
+  return encoded.join('')
+}
+
+// "hello, i must be going..." (Animal Crackers, 1930)
+var oops = function (s, err) {
+  console.log(s + ': ' + err.toString())
+  console.log(err.stack)
+  process.exit(1)
+}

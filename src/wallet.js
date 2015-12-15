@@ -32,7 +32,7 @@ Wallet.prototype =
         var result
 
         if (err) {
-          debug('error creating wallet', err)
+          debug('error fetching wallet', err)
           result = null
         } else {
           result = (wallet.balance() / 1e8).toFixed(4)
