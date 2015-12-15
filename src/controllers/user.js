@@ -24,6 +24,7 @@ v1.get =
     // NB: temporary
     if (!user.timestamp) {
       user = await users.update({ userId: userId }, { $currentDate: { timestamp: { $type: 'timestamp' } } }, { upsert: true })
+      user = await users.findOne({ userId: userId })
     }
     if (user.wallets) {
       for (wallet of user.wallets) {
