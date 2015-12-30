@@ -1,9 +1,8 @@
 language: node_js
 node_js:
-- '5.0'
+- '5.1.1'
 script:
   - "gulp angry-lint"
-  - "gulp test"
 notifications:
   slack:
     secure: PSj5eta2pbs4STQLRDDVat/rs///2BUDR17sfFJyiy729FMFlPuK46hTv4DfFEY9NoiLFgt7wutGSZlI32VslOkotefhKfPifQUZXw4DiSTIhNteLOPwjloug3TnwrUeWcGOvHXwZVO7lZRri789qcAKTqFdtn74vvuh8PY769g=
