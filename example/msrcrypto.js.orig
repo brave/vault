@@ -15,9 +15,7 @@
 //    limitations under the License.
 //
 //*******************************************************************************
-if (typeof module !== 'undefined') {
-    var window = global;
-}
+﻿
 
 var msrCryptoVersion = "1.4";
 var msrCrypto = msrCrypto || (function () {
@@ -6537,7 +6535,7 @@ if (typeof operations !== "undefined") {
         }
 
         if (p.operationSubType === "finish") {
-            result = gcm.finishDecrypt();
+             result = gcm.finishDecrypt();
             gcm = null;
             return result;
         }
@@ -6816,22 +6814,18 @@ function MsrcryptoEntropy() {
         }
 
         // Read HTTP headers that contain entropy and reseed the entropy pool
-        try {
-            var req = new XMLHttpRequest();
-            for (i = 0; i < headerList.length; i += 1) {
-                try {
-                    var header = req.getResponseHeader(headerList[i]);
-                    if (header) {
-                        var arr = msrcryptoUtilities.stringToBytes(header);
-                        pool = pool.concat(arr);
-                    }
-                }
-                catch (err) {
-                    // Ignore any header I can't get
+        var req = new XMLHttpRequest();
+        for (i = 0; i < headerList.length; i += 1) {
+            try {
+                var header = req.getResponseHeader(headerList[i]);
+                if (header) {
+                    var arr = msrcryptoUtilities.stringToBytes(header);
+                    pool = pool.concat(arr);
                 }
             }
-        } catch (err) {
-              // Ignore if it's not there
+            catch (err) {
+                // Ignore any header I can't get
+            }
         }
 
         if (!cryptographicPRNGPresent) {
@@ -6871,12 +6865,11 @@ function MsrcryptoEntropy() {
                     if (window.addEventListener) {
                         window.addEventListener("mousemove", this.MouseEventCallBack, true);
                         window.addEventListener("load", this.LoadTimeCallBack, true);
-                    } else if ((typeof document !== 'undefined') && (document.attachEvent)) {
+                    } else if (document.attachEvent) {
                         document.attachEvent("onmousemove", this.MouseEventCallBack);
                         document.attachEvent("onload", this.LoadTimeCallBack);
                     } else {
-                          if (typeof module === 'undefined') throw new Error("Can't attach events for entropy collection");
-                          console.log("Can't attach events for entropy collection");
+                        throw new Error("Can't attach events for entropy collection");
                     }
 
                     this.collectorsRegistered = 1;
@@ -7847,7 +7840,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdh.deriveBits = function (p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
         var privateKey = p.keyData;
@@ -7863,7 +7855,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdh.generateKey = function (p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
         ecdhInstance = msrcryptoEcdh(curve);
@@ -7901,7 +7892,6 @@ if (typeof operations !== "undefined") {
 
         // If only private key data 'd' is imported, create x and y
         if (keyObject.d && (!keyObject.x || !keyObject.y)) {
-            if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
 
             var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
@@ -8088,7 +8078,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdsa.sign = function ( p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var hashName = p.algorithm.hash.name,
             curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase()),
             hashFunc = msrcryptoHashFunctions[hashName.toLowerCase()],
@@ -8101,7 +8090,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdsa.verify = function ( p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var hashName = p.algorithm.hash.name,
             curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase()),
             hashFunc = msrcryptoHashFunctions[hashName.toLowerCase()],
@@ -8114,7 +8102,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdsa.generateKey = function (p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
         var ecdsa = msrcryptoEcdsa(curve);
@@ -8508,12 +8495,6 @@ function syncWorker() {
         // When using a sync worker, we'll have to catch thrown errors, so we
         // need a try/catch block here.
         try {
-            // this fires only once, so the cryptoOperation object never fires continueJob() with process/finish...
-            if ((data.operationType == "encrypt") || (data.operationType == "decrypt")) {
-              data.operationSubType = "process"
-              msrcryptoWorker.jsCryptoRunner( { data: data });
-              data.operationSubType = "finish"
-            }
             result = msrcryptoWorker.jsCryptoRunner( { data: data });
         } catch (ex) {
             this.onerror({ data: ex.description, type: "error" });
@@ -9604,7 +9585,3 @@ return publicMethods;
 
 })();
 
-if (typeof module !== 'undefined') {
-    msrCrypto.version = msrCryptoVersion;
-    module.exports = msrCrypto;
-}

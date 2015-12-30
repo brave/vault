@@ -1,5 +1,26 @@
 # ChangeLog for Brave Vault
 
+## [candidate 0.0.5]()
+
+* added:
+    * client example
+    * `process.env.VAULT_COLLECTION_RESET`
+
+* fixed:
+    * `.gitignore` more checks
+    * controller schema fixes
+    * BitGo driver
+
+* removed:
+    * OBE controllers: `intents.js`, `oip.js`, `replacement.js`
+    * OBE drivers: `oip.js`
+    * use of `proximo`
+
+* replaced:
+    * `eccrypto` -> `elliptic`
+    * `node 5.1.1`
+
+
 ## [candidate 0.0.4](https://github.com/brave/vault/commit/447b9efb4c7dbf308c57d056346d2d61da35f3ed)
 
 * in progress:

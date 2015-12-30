@@ -86,11 +86,14 @@ The `signature` and `nonce` properties are used to ensure that the client actual
     }
         
         
-    window.crypto.subtle.exportKey('raw', pair.publicKey).then(function (publicKey) {
+    // note that the publicKey is not sent as an x/y pair, but instead is a concatenation (the 0x04 prefix indicates this)
+    window.crypto.subtle.exportKey('jwk', pair.publicKey).then(function (publicKey) {
         var message = { header      : {}
                       , payload     : 
                         { version   : 1
-                        , publicKey : to_hex(ab2b(publicKey))
+                        , publicKey: '04' +
+                                     new Buffer(publicKey.x, 'base64').toString('hex') +
+                                     new Buffer(publicKey.y, 'base64').toString('hex')
                         }
                       }
         var nonce = (new Date().getTime() / 1000).toString()

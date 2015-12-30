@@ -1,5 +1,4 @@
 var DB = require('./db')
-var OIP = require('./oip')
 var Wallet = require('./wallet')
 
 var profile = process.env.NODE_ENV || 'development'
@@ -10,6 +9,5 @@ module.exports = {
   config: config,
   db: database,
   wallet: new Wallet(config),
-  oip: new OIP(config),
   login: config.login
 }

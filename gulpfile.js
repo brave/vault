@@ -37,21 +37,6 @@ gulp.task('run', function () {
     })
 })
 
-gulp.task('example', function () {
-  nodemon({
-    script: 'example/example.js',
-    ext: 'js',
-    env: { 'DEBUG': '*' },
-    execMap: {
-      js: './node_modules/.bin/babel-node'
-    },
-    watch: [ 'example/example.js' ]
-  }).on('change', ['lint', 'run'])
-    .on('restart', function () {
-      console.log('restarted!')
-    })
-})
-
 /**
  * Runs linters on all javascript files found in the src dir.
  */

@@ -213,41 +213,35 @@ v1.put =
 v1.delete =
 { handler: function (runtime) {
   return async function (request, reply) {
-    if (!request.payload) request.payload = {}
+    if (!request.query) request.query = {}
 
     var result, user
     var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toUpperCase()
-    var adUnits = runtime.db.get('ad_units')
-    var intents = runtime.db.get('intents')
     var sessions = runtime.db.get('sessions')
-    var replacements = runtime.db.get('replacements')
     var users = runtime.db.get('users')
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
 
-    result = await helper.verify(debug, user, request.payload)
+    result = await helper.verify(debug, user, request.query.message)
     if (result) return reply(result)
 
     result = await users.remove({ userId: userId })
 
     reply().code(204)
 
-    try { adUnits.remove({ userId: userId }) } catch (ex) { debug('remove failed for adUnits', ex) }
-    try { intents.remove({ userId: userId }) } catch (ex) { debug('remove failed for intents', ex) }
     try { sessions.remove({ userId: userId }) } catch (ex) { debug('remove failed for sessions', ex) }
-    try { replacements.remove({ userId: userId }) } catch (ex) { debug('remove failed for ', ex) }
   }
 },
 
   description: 'Delete a user entry, along with any associated data',
-  notes: 'For the purpose authentication the HTTP body must be present and contain a header/payload pairing, the payload may be any JSON value.',
+  notes: 'For the purpose authentication the "message" parameter just be present and contain a JSON-encoded header/payload pairing, with any JSON value for the  payload.',
   tags: ['api'],
 
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
-      payload: helper.add_header_schema(Joi.any())
+      query: { message: helper.add_header_schema(Joi.any()).required() }
     },
 
   response: {
@@ -277,4 +271,13 @@ module.exports.initialize = async function (debug, runtime) {
       others: [ { timestamp: 1 } ]
     }
   ])
+
+// temporary
+  'intents,ad_units,replacements'.split(',').forEach(collection => {
+    try {
+      runtime.db.get(collection).drop()
+    } catch (ex) {
+      debug('unable to reset ' + collection + ' collection: ' + ex.toString())
+    }
+  })
 }

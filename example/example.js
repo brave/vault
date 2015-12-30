@@ -1,11 +1,14 @@
+#!/usr/bin/env babel-node
+
 /*
-   node example.js [-f config.json] [-s server] command args ...
+   babel-node example.js [-f config.json] [-s server] [-v] command args ...
  */
 
 var bitgo = require('../node_modules/bitgo')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
+var querystring = require('querystring')
 var underscore = require('../node_modules/underscore')
 var url = require('url')
 var webcrypto = require('./msrcrypto.js')
@@ -16,9 +19,22 @@ var webcrypto = require('./msrcrypto.js')
  *
  */
 
-var usage = function () {
-  console.log('usage:\n\t' + process.argv[0] + ' ' + process.argv[1] + ' [ -f file ] command [ args... ]')
+var usage = function (command) {
+  if (typeof command !== 'string') command = 'get|put|rm [ args... ]'
+  console.log('usage: babel-node ' + process.argv[1] + ' [ -f file ] [ -v ] [ -s https://... ] ' + command)
   process.exit(1)
+}
+
+usage.get = function () {
+  usage('get [ -u personaID ] [ -s (sessionID | "*") [ -t type ] ]')
+}
+
+usage.put = function () {
+  usage('put [ -s sessionID -t type ] [ JSON.stringify(...) ]')
+}
+
+usage.rm = function () {
+  usage('rm')
 }
 
 var argv = process.argv.slice(2)
@@ -27,7 +43,6 @@ var server = process.env.SERVER || 'https://vault-staging.brave.com'
 var verboseP = process.env.VERBOSE || false
 
 server = 'http://127.0.0.1:3000'
-verboseP = true
 
 while (argv.length > 0) {
   if (argv[0].indexOf('-') !== 0) break
@@ -68,7 +83,7 @@ server = url.parse(server)
  * note that the use of ECDSA/P-256 is MANDATORY for talking to the current version of the vault -- there is no negotation...
  *
  *
- * if a configuration file already existed, then next() is called to process the command; otherwise, create() is called to
+ * if a configuration file already existed, then run() is called to process the command; otherwise, create() is called to
  * create the persona and then process the command
  */
 
@@ -95,33 +110,43 @@ fs.readFile(configFile, { encoding: 'utf8' }, function (err, data) {
           function (privateKey) {
             runtime.pair = { private: privateKey }
 
-            next()
+            run()
           }
         )
       }
     )
   } else {
-    webcrypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']).then(function (masterKey) {
-      runtime.masterKey = masterKey
+    webcrypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']).then(
+      function (masterKey) {
+        runtime.masterKey = masterKey
 
-      webcrypto.subtle.exportKey('raw', runtime.masterKey).then(function (exportKey) {
-        config.masterKey = exportKey
+        webcrypto.subtle.exportKey('raw', runtime.masterKey).then(
+          function (exportKey) {
+            config.masterKey = exportKey
 
-        webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [ 'sign', 'verify' ]).then(function (pair) {
-          runtime.pair = pair
+            webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [ 'sign', 'verify' ]).then(
+              function (pair) {
+                runtime.pair = pair
 
-          webcrypto.subtle.exportKey('jwk', runtime.pair.privateKey).then(function (privateKey) {
-            config.privateKey = privateKey
+                webcrypto.subtle.exportKey('jwk', runtime.pair.privateKey).then(
+                  function (privateKey) {
+                    config.privateKey = privateKey
 
-            webcrypto.subtle.exportKey('jwk', runtime.pair.publicKey).then(function (publicKey) {
-              config.publicKey = publicKey
+                    webcrypto.subtle.exportKey('jwk', runtime.pair.publicKey).then(
+                      function (publicKey) {
+                        config.publicKey = publicKey
 
-              try { create() } catch (ex) { oops('create', ex) }
-            })
-          })
-        })
-      })
-    })
+                        try { create() } catch (err) { oops('create', err) }
+                      }
+                    )
+                  }
+                )
+              }
+            )
+          }
+        )
+      }
+    )
   }
 })
 
@@ -129,37 +154,154 @@ fs.readFile(configFile, { encoding: 'utf8' }, function (err, data) {
  *
  * process the command
  *
- *  - get
- *
- *  - put persona data
- *  - create intent
- *  - list sessions/types
- *  - update session/type
- *  - delete session/type
- *  - delete persona
- *  - get ad replacement
- *  - get site ad-info
  */
 
-var next = function () {
-  console.log('argv=' + JSON.stringify(argv))
+var run = function () {
+  var argv0
 
   if (argv.length === 0) argv = [ 'get' ]
-  switch (argv[0]) {
-    case 'get':
-      get()
-      break
+  argv0 = argv[0]
+  argv = argv.slice(1)
 
-    default:
-      usage()
+  try {
+    ({ get: get,
+       put: put,
+       rm: rm
+     }[argv0] || usage)(argv)
+  } catch (err) {
+    oops(argv0, err)
   }
 }
 
-var get = function () {
-  roundtrip({ path: '/v1/users/' + config.userId, method: 'GET' }, function (err, response, payload) {
+var done = function (command) {
+  if (typeof command !== 'string') command = ''
+  else command += ' '
+  if (verboseP) console.log(command + 'done.')
+
+  process.exit(0)
+}
+
+// get persona/session data
+
+var get = function (argv) {
+  var path, sessionId, type, userId, uuid
+
+  userId = config.userId
+  while (argv.length > 0) {
+    if ((argv[0].indexOf('-') !== 0) || (argv.length === 1)) return usage.get()
+
+    if (argv[0] === '-u') userId = argv[1]
+    else if (argv[0] === '-s') sessionId = argv[1]
+    else if (argv[0] === '-t') type = argv[1]
+    else return usage.get()
+
+    argv = argv.slice(2)
+  }
+
+  if (userId !== config.userId) {
+    uuid = userId.split('-').join('')
+    if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('get', new Error('invalid userId: ' + userId))
+  }
+  if ((sessionId) && (sessionId !== '*')) {
+    uuid = sessionId.split('-').join('')
+    if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('get', new Error('invalid sessionId: ' + sessionId))
+  }
+
+  path = '/v1/users/' + userId
+  if (sessionId === '*') path += '/sessions'
+  else if (sessionId) {
+    path += '/sessions/' + sessionId + '/types'
+    if (type) path += '/' + type
+  }
+
+  roundtrip({ path: path, method: 'GET' }, function (err, response, payload) {
+    var ciphertext, inner, plaintext
+
     if (err) oops('get', err)
 
-// ...
+    inner = payload.payload
+    if (sessionId) inner = inner.payload
+    else {
+      console.log('Persona ID: ' + inner.userId)
+      console.log('Wallets:    ' + JSON.stringify(inner.wallets, null, 2))
+
+      if ((!inner.state) || (!inner.state.payload)) return
+      inner = inner.state.payload
+    }
+
+    plaintext = underscore.omit(inner, 'encryptedData', 'iv')
+    if (underscore.keys(plaintext).length !== 0) console.log('Plaintext:  ' + JSON.stringify(plaintext, null, 2))
+
+    ciphertext = underscore.pick(inner, 'encryptedData', 'iv')
+    if (underscore.keys(ciphertext).length === 0) return done('get')
+
+    webcrypto.subtle.decrypt({ name: 'AES-GCM',
+                               iv: hex2ab(ciphertext.iv)
+                             }, runtime.masterKey, hex2ab(ciphertext.encryptedData)).then(
+      function (plaintext) {
+        console.log('Ciphertext: ' + ab2str(plaintext))
+
+        done('get')
+      }
+    )
+  })
+}
+
+// put persona/session data
+
+var put = function (argv) {
+  var argv0, path, sessionId, type, uuid
+  var iv = webcrypto.getRandomValues(new Uint8Array(12))
+
+  while (argv.length > 1) {
+    if (argv[0].indexOf('-') !== 0) return usage.put()
+
+    if (argv[0] === '-s') sessionId = argv[1]
+    else if (argv[0] === '-t') type = argv[1]
+    else return usage.put()
+
+    argv = argv.slice(2)
+  }
+  argv0 = argv[0] || JSON.stringify({ hello: 'i must be going...' })
+
+  if (((sessionId) && (!type)) || ((!sessionId) && (type))) return usage.put()
+
+  uuid = sessionId.split('-').join('')
+  if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('put', new Error('invalid sessionId: ' + sessionId))
+
+  try { JSON.parse(argv0) } catch (err) { return oops('put', err) }
+
+  path = '/v1/users/' + config.userId
+  if (sessionId) path += '/sessions/' + sessionId + '/types/' + type
+
+  webcrypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, runtime.masterKey, str2ab(argv0)).then(
+    function (ciphertext) {
+      var payload = { encryptedData: ab2hex(ciphertext), iv: ab2hex(iv) }
+
+      signedtrip({ method: 'PUT', path: path }, payload, function (err, response, body) {
+        if (err) oops('put', err)
+
+        done('put')
+      })
+    }
+  )
+}
+
+// delete persona data
+
+var rm = function (argv) {
+  var payload = ab2hex(webcrypto.getRandomValues(new Uint8Array(12)))
+
+  if (argv.length !== 0) return usage.rm()
+
+  signedtrip({ method: 'DELETE', path: '/v1/users/' + config.userId }, payload, function (err, response, body) {
+    if (err) oops('delete', err)
+
+    fs.unlink(configFile, function (err) {
+      if (err) oops(configFile, err)
+
+      done('rm')
+    })
   })
 }
 
@@ -167,53 +309,29 @@ var get = function () {
  *
  * create a persona in the vault
  *
- * the pattern here is the same for all POSTs/PUTs to the vault:
- *  - generate a nonce and build the message payload
- *  - generate the string to be hashed and then convert to an array buffer
- *  - generate a signature
- *  - fill-in the message header
- *  - round-trip to the vault
- *
- * note that the publicKey is not sent as an x/y pair, but a concatenation (the 0x04 prefix indicates this)
+ * note that the publicKey is not sent as an x/y pair, but instead is a concatenation (the 0x04 prefix indicates this)
  *
  */
 
 var create = function () {
-  var combo
-  var nonce = (new Date().getTime() / 1000.0).toString()
-  var message = { header: {},
-                  payload:
-                  { version: 1,
-                    publicKey: '04' +
-                               new Buffer(config.publicKey.x, 'base64').toString('hex') +
-                               new Buffer(config.publicKey.y, 'base64').toString('hex'),
-                    xpub: config.xpub
-                  }
+  var payload = { version: 1,
+                  publicKey: '04' +
+                             new Buffer(config.publicKey.x, 'base64').toString('hex') +
+                             new Buffer(config.publicKey.y, 'base64').toString('hex'),
+                  xpub: config.xpub
                 }
 
-  combo = JSON.stringify({ userId: config.userId, nonce: nonce, payload: message.payload })
-  webcrypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                            runtime.pair.privateKey, s2ab(combo)).then(
-    function (signature) {
-      message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
-      console.log(JSON.stringify(message, null, 2))
+  signedtrip({ method: 'PUT', path: '/v1/users/' + config.userId }, payload, function (err, response, body) {
+    if (err) oops('create', err)
 
-      roundtrip({ path: '/v1/users/' + config.userId,
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' }
-                }, function (err, response, body) {
-        if (err) oops('create', err)
+    if (response.statusCode !== 201) process.exit(1)
 
-        if (response.statusCode !== 201) process.exit(1)
+    fs.writeFile(configFile, JSON.stringify(config, null, 2), { encoding: 'utf8', mode: 0o644 }, function (err) {
+      if (err) oops(configFile, err)
 
-        fs.writeFile(configFile, JSON.stringify(config, null, 2), { encoding: 'utf8', mode: 0o644 }, function (err) {
-          if (err) oops(configFile, err)
-
-          next()
-        })
-      })
-    }
-  )
+      run()
+    })
+  })
 }
 
 /*
@@ -221,6 +339,41 @@ var create = function () {
  * utility functions
  *
  */
+
+/*
+ *
+ * signed roundtrip to the vault
+ *
+ * the pattern here is the same for all POSTs/PUTs to the vault:
+ *  - generate a nonce
+ *  - generate the string to be hashed and then convert to an array buffer
+ *  - generate a signature
+ *  - fill-in the message
+ *  - round-trip to the vault
+ *
+ * although sending an HTTP body with DELETE is allowed, it may be sent as a query parameter
+ * (as some browsers may not be that clueful)
+ */
+
+var signedtrip = function (options, payload, callback) {
+  var nonce = (new Date().getTime() / 1000.0).toString()
+  var combo = JSON.stringify({ userId: config.userId, nonce: nonce, payload: payload })
+
+  webcrypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                            runtime.pair.privateKey, str2ab(combo)).then(
+    function (signature) {
+      var message = { header: { signature: ab2hex(signature), nonce: nonce }, payload: payload }
+
+      options.headers = { 'Content-Type': 'application/json' }
+      if (options.method === 'DELETE') {
+        options.path += '?' + querystring.stringify({ message: JSON.stringify(message) })
+      } else {
+        options.payload = message
+      }
+      roundtrip(options, callback)
+    }
+  )
+}
 
 // roundtrip to the vault
 var roundtrip = function (options, callback) {
@@ -240,15 +393,21 @@ var roundtrip = function (options, callback) {
       if (verboseP) {
         console.log('>>> HTTP/' + response.httpVersionMajor + '.' + response.httpVersionMinor + ' ' + response.statusCode +
                    ' ' + (response.statusMessage || ''))
-        try {
-          payload = JSON.stringify(JSON.parse(body), null, 2)
-        } catch (ex) {
-          payload = body.toString()
-        }
-        console.log('>>> ' + payload.split('\n').join('\n>>> '))
       }
+      if (Math.floor(response.statusCode / 100) !== 2) return callback(new Error('HTTP response ' + response.statusCode))
 
-      callback(null, response, payload)
+      try {
+        payload = (response.statusCode !== 204) ? JSON.parse(body) : null
+      } catch (err) {
+        return callback(err)
+      }
+      if (verboseP) console.log('>>> ' + JSON.stringify(payload, null, 2).split('\n').join('\n>>> '))
+
+      try {
+        callback(null, response, payload)
+      } catch (err) {
+        oops('callback', err)
+      }
     }).setEncoding('utf8')
   }).on('error', function (err) {
     callback(err)
@@ -273,31 +432,35 @@ var uuid = function () {
 }
 
 // convert a string to an array of unsigned octets
-var s2ab = function (s) {
+var str2ab = function (s) {
   var buffer = new Uint8Array(s.length)
 
   for (var i = 0; i < s.length; i++) buffer[i] = s.charCodeAt(i)
   return buffer
 }
 
-// convert an array buffer to a array
-var ab2b = function (ab) {
+// convert an array buffer to a utf8 string
+var ab2str = function (ab) {
   var buffer = []
   var view = new Uint8Array(ab)
 
   for (var i = 0; i < ab.byteLength; i++) buffer[i] = view[i]
-  return buffer
+  return new Buffer(buffer).toString('utf8')
 }
 
-// the vault likes things in hex, not base64 (MTR is old, old-school)
-var to_hex = function (bs) {
-  var encoded = []
+// convert a hex string to an array buffer
 
-  for (var i = 0; i < bs.length; i++) {
-    encoded.push('0123456789abcdef'[(bs[i] >> 4) & 15])
-    encoded.push('0123456789abcdef'[bs[i] & 15])
-  }
-  return encoded.join('')
+var hex2ab = function (s) {
+  return new Uint8Array(new Buffer(s, 'hex'))
+}
+
+// convert an array buffer to a hex string, not base64 (MTR is old, old-school)
+var ab2hex = function (ab) {
+  var buffer = []
+  var view = new Uint8Array(ab)
+
+  for (var i = 0; i < ab.byteLength; i++) buffer[i] = view[i]
+  return new Buffer(buffer).toString('hex')
 }
 
 // "hello, i must be going..." (Animal Crackers, 1930)

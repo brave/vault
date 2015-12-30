@@ -7,22 +7,6 @@ var Joi = require('joi')
 
 var exports = {}
 
-exports.userId2stats = async function (runtime, userId) {
-  var user
-  var users = runtime.db.get('users')
-
-  user = await users.findOne({ userId: userId }, { replacements: true })
-
-  return { replacements: user ? user.replacements : 0 }
-}
-
-exports.sessionId2stats = async function (runtime, userId, sessionId) {
-  var replacements = runtime.db.get('replacements')
-  var session = await replacements.findOne({ userId: userId, sessionId: sessionId }, { replacements: true })
-
-  return { replacements: session ? session.replacements : 0 }
-}
-
 exports.verify = async function (debug, user, data) {
   var combo, diff, hash, nonce, r, s, signature
   var header = data.header
