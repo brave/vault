@@ -67,40 +67,37 @@ The vault verifies the signature as the authorization check for an operation.
 
 The `signature` and `nonce` properties are used to ensure that the client actually knows the `signing.privateKey`:
 
-    var to_hex = function (bs) {
-        var encoded = []
-        
-        for (var i = 0; i < bs.length; i++) {
-            encoded.push('0123456789abcdef'[(bs[i] >> 4) & 15])
-            encoded.push('0123456789abcdef'[bs[i] & 15])
-        }
-        return encoded.join('')
+    var ab2hex = function (ab) {
+      var buffer = []
+      var view = new Uint8Array(ab)
+
+      for (var i = 0; i < ab.byteLength; i++) buffer[i] = view[i]
+      return new Buffer(buffer).toString('hex')
     }
-        
-    var ab2b = function (ab) {
-        var buffer = []
-        var view = new Uint8Array(ab)
-        
-        for (var i = 0; i < ab.byteLength; i++) buffer[i] = view[i]
-        return buffer
+
+    var str2ab = function (s) {
+      var buffer = new Uint8Array(s.length)
+
+      for (var i = 0; i < s.length; i++) buffer[i] = s.charCodeAt(i)
+      return buffer
     }
-        
+
         
     // note that the publicKey is not sent as an x/y pair, but instead is a concatenation (the 0x04 prefix indicates this)
     window.crypto.subtle.exportKey('jwk', pair.publicKey).then(function (publicKey) {
         var message = { header      : {}
                       , payload     : 
                         { version   : 1
-                        , publicKey: '04' +
-                                     new Buffer(publicKey.x, 'base64').toString('hex') +
-                                     new Buffer(publicKey.y, 'base64').toString('hex')
+                        , publicKey : '04' +
+                                       new Buffer(publicKey.x, 'base64').toString('hex') +
+                                       new Buffer(publicKey.y, 'base64').toString('hex')
                         }
                       }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
         window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                                  pair.privateKey, s2ab(combo)).then(function(signature) {
-            message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
+                                  pair.privateKey, str2ab(combo)).then(function(signature) {
+            message.header = { signature: ab2hex(signature), nonce: nonce }
 
             console.log('PUT /v1/users/' + userId)
             console.log(JSON.stringify(message, null, 2))
@@ -129,12 +126,6 @@ e.g.,
     ...
     var nonce = new Date().getTime() + offset
 
-(YZ: I think the part above is okay for now, but there is a good chance we will
-be able to get real network time through a separate protocol/API more easily,
-so nonce in the server response might not be necessary. Also, maybe should be
-renamed to "timestamp" because network time will be used for other purposes like
-conversion tracking.)
-
 To summarize:
 
 * Whenever the browser stores something encrypted in the vault,
@@ -158,8 +149,6 @@ Although the browser determines the lifetime of the session -- the common practi
 a lifetime `sessionId`.
 The reason is that the `sessionId` is used as a key to store browser-specific information such as history.
 
-[YZ: 'key' in the encryption sense or in the data structure sense? I assume the latter.]
-
 The `PUT /v1/users/{userId}/sessions/{sessionId}/types/{type}` operation
 creates or updates that `type` of information for that particular session of the persona.
 
@@ -178,9 +167,7 @@ the "new" browser needs to be told:
 The easiest way to do this is to have the "old" browser generate a [QR code](https://en.wikipedia.org/wiki/QR_code)
 of the form:
 
-    brave://vault/persona/{userId}?m={masterkey}&p={signingPair.privateKey}
-
-[YZ: Should this URI be versioned?]
+    brave://vault/v1/persona/{userId}?m={masterkey}&p={signingPair.privateKey}
 
 For example:
 
@@ -210,14 +197,12 @@ and then wiped:
         window.crypto.subtle.exportKey('jwk', pair.privateKey).then(function (p) {
             var format = { version    : 1
                          , personaURL : 'brave://vault/persona/' + userId
-                         , masterKey  : to_hex(ab2b(m))
+                         , masterKey  : ab2hex(m)
                          , privateKey : p
                          }
             console.log(JSON.stringify(format, null, 2))
         })
     })
-
-[YZ: I think the % of users who have a USB stick around at all times and know how to properly wipe it afterwards is pretty small. We can come up with a fancier camera-less device pairing protocol (like what Firefox sync used to do) after V1.]
 
 For example:
 
@@ -288,58 +273,29 @@ the HTTP body is:
 
 For example:
 
-    var s2ab = function (s) {
-        var buffer = new Uint8Array(s.length)
-
-        for (var i = 0; i < s.length; i++) buffer[i] = s.charCodeAt(i)
-        return buffer
-    }
-
     var history = { ... }
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
-                                 masterKey, s2ab(JSON.stringify(history))).then(function(encryptedData) {
+                                 masterKey, str2ab(JSON.stringify(history))).then(function(encryptedData) {
     var message = { header          : {}
                   , payload         :
-                    { iv            : to_hex(iv)
-                    , encryptedData : to_hex(ab2b(encryptedData))
+                    { iv            : ab2hex(iv)
+                    , encryptedData : ab2hex(encryptedData)
                     }
                   }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
         window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                                  signingPair.privateKey, s2ab(combo)).then(function(signature) {
-            message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
+                                  signingPair.privateKey, str2ab(combo)).then(function(signature) {
+            message.header = { signature: ab2hex(signature), nonce: nonce }
 
             console.log('PUT /v1/users/' + userId + '/sessions/' + sessionId + '/types/history')
             console.log(JSON.stringify(message, null, 2))
         })
     })
 
-In some cases,
-the browser may want the vault to be able to see the contents:
-
-    var message = { header      : {}
-                  , payload     : 
-                    { sessionId : sessionId
-                    , type      : 'browser.app.launch'
-                    , timestamp : new Date().getTime()
-                    , data      : {}
-                    }
-                  }
-    var nonce = (new Date().getTime() / 1000).toString()
-    var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-    window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                              signingPair.privateKey, s2ab(combo)).then(function(signature) {
-        message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
-
-        console.log('POST /v1/users/' + userId + '/intents')
-        console.log(JSON.stringify(message, null, 2))
-    })
-
-Note that in both cases,
-the vault verifies the digital signature in order to ensure that the operation is authorized.
+Note that the vault verifies the digital signature in order to ensure that the operation is authorized.
 The `nonce` property is a timestamp indicating the number of seconds since the UNIX epoch.
 In order for the `nonce` to be considered valid,
 it must be "close" to the vault's notion of the current time.
@@ -401,20 +357,20 @@ However, if an application must universally overwrite the shared information, it
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
-                                 masterKey, s2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
-        var message = { timestamp    : '...'
-                      , header       : {}
-                      , payload      :
-                        { iv         : to_hex(iv)
-                        , encryptedData : to_hex(ab2b(encryptedData))
+                                 masterKey, str2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
+        var message = { timestamp       : '...'
+                      , header          : {}
+                      , payload         :
+                        { iv            : ab2hex(iv)
+                        , encryptedData : ab2hex(encryptedData)
                         , plaintextData : publicGlobal
                         }
                       }
         var nonce = (new Date().getTime() / 1000).toString()
         var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
         window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                                  signingPair.privateKey, s2ab(combo)).then(function(signature) {
-            message.header = { signature: to_hex(ab2b(signature)), nonce: nonce }
+                                  signingPair.privateKey, str2ab(combo)).then(function(signature) {
+            message.header = { signature: ab2hex(signature), nonce: nonce }
 
             console.log('PUT /v1/users/' + userId)
             console.log(JSON.stringify(message, null, 2))

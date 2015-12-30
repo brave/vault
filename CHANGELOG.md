@@ -1,6 +1,6 @@
 # ChangeLog for Brave Vault
 
-## [candidate 0.0.5]()
+## [candidate 0.0.5](https://github.com/brave/vault/commit/4e9370b0c69ccab57fa86c401f73d9273563a41d)
 
 * added:
     * client example

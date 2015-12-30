@@ -34,7 +34,7 @@ usage.put = function () {
 }
 
 usage.rm = function () {
-  usage('rm')
+  usage('rm [ -s sessionID -t type ]')
 }
 
 var argv = process.argv.slice(2)
@@ -290,11 +290,28 @@ var put = function (argv) {
 // delete persona data
 
 var rm = function (argv) {
+  var path, sessionId, type
   var payload = ab2hex(webcrypto.getRandomValues(new Uint8Array(12)))
 
-  if (argv.length !== 0) return usage.rm()
+  while (argv.length > 0) {
+    if (argv[0].indexOf('-') !== 0) return usage.rm()
 
-  signedtrip({ method: 'DELETE', path: '/v1/users/' + config.userId }, payload, function (err, response, body) {
+    if (argv[0] === '-s') sessionId = argv[1]
+    else if (argv[0] === '-t') type = argv[1]
+    else return usage.rm()
+
+    argv = argv.slice(2)
+  }
+
+  if (((sessionId) && (!type)) || ((!sessionId) && (type))) return usage.put()
+
+  uuid = sessionId.split('-').join('')
+  if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('put', new Error('invalid sessionId: ' + sessionId))
+
+  path = '/v1/users/' + config.userId
+  if (sessionId) path += '/sessions/' + sessionId + '/types/' + type
+
+  signedtrip({ method: 'DELETE', path: path }, payload, function (err, response, body) {
     if (err) oops('delete', err)
 
     fs.unlink(configFile, function (err) {
@@ -360,7 +377,7 @@ var signedtrip = function (options, payload, callback) {
   var combo = JSON.stringify({ userId: config.userId, nonce: nonce, payload: payload })
 
   webcrypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                            runtime.pair.privateKey, str2ab(combo)).then(
+                        runtime.pair.privateKey, str2ab(combo)).then(
     function (signature) {
       var message = { header: { signature: ab2hex(signature), nonce: nonce }, payload: payload }
 
