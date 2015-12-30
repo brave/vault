@@ -8,9 +8,11 @@ var bitgo = require('../node_modules/bitgo')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
+var path = require('path')
 var querystring = require('querystring')
 var underscore = require('../node_modules/underscore')
 var url = require('url')
+var util = require('util')
 var webcrypto = require('./msrcrypto.js')
 
 /*
@@ -21,20 +23,20 @@ var webcrypto = require('./msrcrypto.js')
 
 var usage = function (command) {
   if (typeof command !== 'string') command = 'get|put|rm [ args... ]'
-  console.log('usage: babel-node ' + process.argv[1] + ' [ -f file ] [ -v ] [ -s https://... ] ' + command)
+  console.log('usage: babel-node ' + path.basename(process.argv[1]) + ' [ -f file ] [ -v ] [ -s https://... ] ' + command)
   process.exit(1)
 }
 
 usage.get = function () {
-  usage('get [ -u personaID ] [ -s (sessionID | "*") [ -t type ] ]')
+  usage('get [ -u personaID ] [ -s \'*\' | [ -t type [ -s sessionId ] ] ]')
 }
 
 usage.put = function () {
-  usage('put [ -s sessionID -t type ] [ JSON.stringify(...) ]')
+  usage('put [ -t type [ -s sessionID ] ] [ JSON.stringify(...) ]')
 }
 
 usage.rm = function () {
-  usage('rm [ -s sessionID -t type ]')
+  usage('rm [ -t type [ -s sessionID ] ]')
 }
 
 var argv = process.argv.slice(2)
@@ -94,7 +96,7 @@ fs.readFile(configFile, { encoding: 'utf8' }, function (err, data) {
   var keychain
 
   if (err) {
-    keychain = new (bitgo).BitGo({}).keychains().create()
+    keychain = new (bitgo).BitGo({ env: 'prod' }).keychains().create()
 
     config = { userId: uuid(), sessionId: uuid(), xpub: keychain.xpub, xprv: keychain.xprv }
   } else {
@@ -108,7 +110,7 @@ fs.readFile(configFile, { encoding: 'utf8' }, function (err, data) {
 
         webcrypto.subtle.importKey('jwk', config.privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, true, [ 'sign' ]).then(
           function (privateKey) {
-            runtime.pair = { private: privateKey }
+            runtime.pair = { privateKey: privateKey }
 
             run()
           }
@@ -202,9 +204,12 @@ var get = function (argv) {
     uuid = userId.split('-').join('')
     if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('get', new Error('invalid userId: ' + userId))
   }
-  if ((sessionId) && (sessionId !== '*')) {
-    uuid = sessionId.split('-').join('')
-    if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('get', new Error('invalid sessionId: ' + sessionId))
+  if ((type) && (!sessionId)) sessionId = config.sessionId
+  if (sessionId) {
+    if (sessionId !== '*') {
+      uuid = sessionId.split('-').join('')
+      if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('get', new Error('invalid sessionId: ' + sessionId))
+    } else if (type) return usage.get()
   }
 
   path = '/v1/users/' + userId
@@ -215,35 +220,52 @@ var get = function (argv) {
   }
 
   roundtrip({ path: path, method: 'GET' }, function (err, response, payload) {
-    var ciphertext, inner, plaintext
+    var ciphertext, count, inner, plaintext
+
+    var more = function () {
+      if (--count <= 0) done('get')
+    }
+
+    var process = function (state) {
+      var inner = state.payload
+
+      plaintext = underscore.omit(inner, 'encryptedData', 'iv')
+      if (underscore.keys(plaintext).length !== 0) console.log('Plaintext:  ' + JSON.stringify(plaintext, null, 2))
+
+      ciphertext = underscore.pick(inner, 'encryptedData', 'iv')
+      if (underscore.keys(ciphertext).length === 0) return more()
+
+      webcrypto.subtle.decrypt({ name: 'AES-GCM',
+                                 iv: hex2ab(ciphertext.iv)
+                               }, runtime.masterKey, hex2ab(ciphertext.encryptedData)).then(
+        function (plaintext) {
+          console.log('Ciphertext: ' + ab2str(plaintext))
+          more()
+        }
+      )
+    }
 
     if (err) oops('get', err)
 
+    count = 1
     inner = payload.payload
-    if (sessionId) inner = inner.payload
-    else {
+    if (sessionId) {
+      if (util.isArray(inner)) {
+        count = inner.length
+        if (count === 0) more()
+        inner.forEach(entry => {
+          console.log('Session ID: ' + entry.sessionId)
+          console.log('Type:       ' + entry.type)
+          process(entry)
+        })
+      } else process(inner)
+    } else {
       console.log('Persona ID: ' + inner.userId)
       console.log('Wallets:    ' + JSON.stringify(inner.wallets, null, 2))
 
       if ((!inner.state) || (!inner.state.payload)) return
-      inner = inner.state.payload
+      process(inner.state)
     }
-
-    plaintext = underscore.omit(inner, 'encryptedData', 'iv')
-    if (underscore.keys(plaintext).length !== 0) console.log('Plaintext:  ' + JSON.stringify(plaintext, null, 2))
-
-    ciphertext = underscore.pick(inner, 'encryptedData', 'iv')
-    if (underscore.keys(ciphertext).length === 0) return done('get')
-
-    webcrypto.subtle.decrypt({ name: 'AES-GCM',
-                               iv: hex2ab(ciphertext.iv)
-                             }, runtime.masterKey, hex2ab(ciphertext.encryptedData)).then(
-      function (plaintext) {
-        console.log('Ciphertext: ' + ab2str(plaintext))
-
-        done('get')
-      }
-    )
   })
 }
 
@@ -263,11 +285,16 @@ var put = function (argv) {
     argv = argv.slice(2)
   }
   argv0 = argv[0] || JSON.stringify({ hello: 'i must be going...' })
+  if (argv0.indexOf('-') === 0) return usage.put()
 
-  if (((sessionId) && (!type)) || ((!sessionId) && (type))) return usage.put()
+  if (type) {
+    if (!sessionId) sessionId = config.sessionId
+  } else if (sessionId) return usage.put()
 
-  uuid = sessionId.split('-').join('')
-  if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('put', new Error('invalid sessionId: ' + sessionId))
+  if (sessionId) {
+    uuid = sessionId.split('-').join('')
+    if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('put', new Error('invalid sessionId: ' + sessionId))
+  }
 
   try { JSON.parse(argv0) } catch (err) { return oops('put', err) }
 
@@ -278,11 +305,15 @@ var put = function (argv) {
     function (ciphertext) {
       var payload = { encryptedData: ab2hex(ciphertext), iv: ab2hex(iv) }
 
-      signedtrip({ method: 'PUT', path: path }, payload, function (err, response, body) {
-        if (err) oops('put', err)
+      try {
+        signedtrip({ method: 'PUT', path: path }, payload, function (err, response, body) {
+          if (err) oops('put', err)
 
-        done('put')
-      })
+          done('put')
+        })
+      } catch (err) {
+        oops('signedtrip', err)
+      }
     }
   )
 }
@@ -303,13 +334,17 @@ var rm = function (argv) {
     argv = argv.slice(2)
   }
 
-  if (((sessionId) && (!type)) || ((!sessionId) && (type))) return usage.put()
-
-  uuid = sessionId.split('-').join('')
-  if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('put', new Error('invalid sessionId: ' + sessionId))
+  if (type) {
+    if (!sessionId) sessionId = config.sessionId
+  } else if (sessionId) return usage.rm()
 
   path = '/v1/users/' + config.userId
-  if (sessionId) path += '/sessions/' + sessionId + '/types/' + type
+  if (sessionId) {
+    uuid = sessionId.split('-').join('')
+    if ((uuid.length !== 32) || (uuid.substr(12, 1) !== '4')) return oops('put', new Error('invalid sessionId: ' + sessionId))
+
+    path += '/sessions/' + sessionId + '/types/' + type
+  }
 
   signedtrip({ method: 'DELETE', path: path }, payload, function (err, response, body) {
     if (err) oops('delete', err)
