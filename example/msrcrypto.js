@@ -7847,7 +7847,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdh.deriveBits = function (p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
         var privateKey = p.keyData;
@@ -7863,7 +7862,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdh.generateKey = function (p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
         ecdhInstance = msrcryptoEcdh(curve);
@@ -7901,7 +7899,6 @@ if (typeof operations !== "undefined") {
 
         // If only private key data 'd' is imported, create x and y
         if (keyObject.d && (!keyObject.x || !keyObject.y)) {
-            if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
 
             var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
@@ -8088,7 +8085,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdsa.sign = function ( p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var hashName = p.algorithm.hash.name,
             curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase()),
             hashFunc = msrcryptoHashFunctions[hashName.toLowerCase()],
@@ -8101,7 +8097,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdsa.verify = function ( p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var hashName = p.algorithm.hash.name,
             curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase()),
             hashFunc = msrcryptoHashFunctions[hashName.toLowerCase()],
@@ -8114,7 +8109,6 @@ if (typeof operations !== "undefined") {
 
     msrcryptoEcdsa.generateKey = function (p) {
 
-        if (!p.algorithm.namedCurve) p.algorithm.namedCurve = p.keyHandle.algorithm.namedCurve;
         var curve = cryptoECC.createCurve(p.algorithm.namedCurve.toUpperCase());
 
         var ecdsa = msrcryptoEcdsa(curve);
