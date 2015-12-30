@@ -271,13 +271,4 @@ module.exports.initialize = async function (debug, runtime) {
       others: [ { timestamp: 1 } ]
     }
   ])
-
-// temporary
-  'intents,ad_units,replacements'.split(',').forEach(collection => {
-    try {
-      runtime.db.get(collection).drop()
-    } catch (ex) {
-      debug('unable to reset ' + collection + ' collection: ' + ex.toString())
-    }
-  })
 }
