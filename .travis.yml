@@ -5,7 +5,7 @@ services:
     - mongodb
 before_script:
     - sleep 15
-    - mongo --eval 'db.version();'
+    - mongo --version
     - cp config/config.development.js.tpl config/config.development.js
     - DEBUG=server,monk:queries ./node_modules/.bin/babel-node src/index.js &
     - sleep 5
