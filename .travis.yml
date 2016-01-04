@@ -1,11 +1,33 @@
 language: node_js
 node_js:
-- '5.1.1'
+    - "5.1.1"
+services:
+    - mongodb
+addons:
+  apt:
+    sources:
+        - mongodb-3.0-precise
+    packages:
+        - mongodb-org-server
+before_script:
+    - sleep 15
+    - cp config/config.development.js.tpl config/config.development.js
+    - DEBUG=server ./node_modules/.bin/babel-node src/index.js &
+    - sleep 5
 script:
-  - "gulp angry-lint"
+  - gulp angry-lint
+  - example/example.js -s 'http://127.0.0.1:3000' put 
+  - example/example.js -s 'http://127.0.0.1:3000' get
+  - example/example.js -s 'http://127.0.0.1:3000' put -s $SESSIONID -t data
+  - example/example.js -s 'http://127.0.0.1:3000' get -s $SESSIONID -t data
+  - example/example.js -s 'http://127.0.0.1:3000' get -s '*'
+  - example/example.js -s 'http://127.0.0.1:3000' rm  -s $SESSIONID -t data
+  - example/example.js -s 'http://127.0.0.1:3000' get -s '*'
+  - example/example.js -s 'http://127.0.0.1:3000' rm
 notifications:
   slack:
     secure: PSj5eta2pbs4STQLRDDVat/rs///2BUDR17sfFJyiy729FMFlPuK46hTv4DfFEY9NoiLFgt7wutGSZlI32VslOkotefhKfPifQUZXw4DiSTIhNteLOPwjloug3TnwrUeWcGOvHXwZVO7lZRri789qcAKTqFdtn74vvuh8PY769g=
 branches:
   only:
     - master
+    - integration
