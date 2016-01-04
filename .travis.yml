@@ -4,6 +4,7 @@ node_js:
 services:
     - mongodb
 before_script:
+    - npm start &
     - sleep 15
     - cp config/config.development.js.tpl config/config.development.js
 script:
