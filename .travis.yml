@@ -1,6 +1,11 @@
 language: node_js
 node_js:
-- '5.1.1'
+    - "5.1.1"
+services:
+    - mongodb
+before_script:
+    - sleep 15
+    - cp config/config.development.js.tpl config/config.development.js
 script:
   - "gulp angry-lint"
 notifications:
@@ -9,3 +14,4 @@ notifications:
 branches:
   only:
     - master
+    - integration
