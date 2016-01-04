@@ -47,7 +47,8 @@
     "wreck": "7.0.0"
   },
   "engines": {
-    "node": "5.1.1"
+    "node": "5.1.1",
+    "npm": "3.3.12"
   },
   "devDependencies": {
     "babel-eslint": "^4.1.3",
