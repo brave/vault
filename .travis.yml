@@ -6,7 +6,7 @@ services:
 before_script:
     - sleep 15
     - cp config/config.development.js.tpl config/config.development.js
-    - ./node_modules/.bin/babel-node src/index.js &
+    - DEBUG=server,monk:queries ./node_modules/.bin/babel-node src/index.js &
 script:
   - gulp angry-lint
   - example/example.js
