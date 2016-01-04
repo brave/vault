@@ -275,6 +275,8 @@ v1.putSessionType =
 v1.delete =
 { handler: function (runtime) {
   return async function (request, reply) {
+    if (!request.query) request.query = {}
+
     var result, user
     var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toUpperCase()
@@ -286,7 +288,7 @@ v1.delete =
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
 
-    result = await helper.verify(debug, user, request.payload)
+    result = await helper.verify(debug, user, request.query.message)
     if (result) return reply(result)
 
     result = await sessions.remove({ userId: userId, sessionId: sessionId, type: type })
@@ -305,7 +307,7 @@ v1.delete =
         sessionId: Joi.string().guid().required().description('the identity of the session'),
         type: Joi.string().min(1).required().description('the name of the type')
       },
-      payload: helper.add_header_schema(Joi.any())
+      query: { message: helper.add_header_schema(Joi.any()).required() }
     },
 
   response: {

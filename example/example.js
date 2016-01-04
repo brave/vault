@@ -44,8 +44,6 @@ var configFile = process.env.CONFIGFILE || 'config.json'
 var server = process.env.SERVER || 'https://vault-staging.brave.com'
 var verboseP = process.env.VERBOSE || false
 
-server = 'http://127.0.0.1:3000'
-
 while (argv.length > 0) {
   if (argv[0].indexOf('-') !== 0) break
 
