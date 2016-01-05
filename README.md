@@ -1,4 +1,4 @@
-[![Build Status](https://magnum.travis-ci.com/brave/vault.svg?token=tEKWpRH3WZFkPWrgxB9T)](https://magnum.travis-ci.com/brave/vault)
+[![Build Status](https://travis-ci.com/brave/vault.svg?token=HMjyRuzVkZQ3vaoghtzo&branch=master)](https://travis-ci.com/brave/vault)
 
 # Brave Vault
 
@@ -49,13 +49,8 @@ Commonly used data types are:
 
 | data type     | syntax                                                                                                      |
 | -------------:|:----------------------------------------------------------------------------------------------------------- |
-| `adUnitId`    | opaque string                                                                                               |
-| `data`        | opaque string  (interpreted only by applications)                                                           |
 | `diagnostic`  | localized string intended for logging and human consumption                                                 |
-| `replacement` | string containing a (possibly) nested HTML tag                                                              |
-| `stats`       | a [statistics summary](#statisticssummary) for the user's behavior                                          |
-| `userId`      | [UUID v4](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29) string        |
-| `tagName`     | string identifing an HTML tag (e.g., `'iframe'` for the `<iframe/>` tag)                                    |
+| `sessionId`   | [UUID v4](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29) string        |
 | `timestamp`   | opaque string identifying a unique instance of time                                                         |
 | `userId`      | [UUID v4](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29) string        |
 
