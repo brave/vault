@@ -1,4 +1,4 @@
-[![Build Status](https://magnum.travis-ci.com/brave/vault.svg?token=tEKWpRH3WZFkPWrgxB9T)](https://magnum.travis-ci.com/brave/vault)
+[![Build Status](https://travis-ci.com/brave/vault.svg?token=HMjyRuzVkZQ3vaoghtzo&branch=master)](https://travis-ci.com/brave/vault)
 
 # Brave Vault
 
