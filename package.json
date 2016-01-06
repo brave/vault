@@ -10,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/brave/vault.git"
   },
-  "author": "",
+  "author": "Brave Developers <support@brave.com>",
   "license": "MPL-2.0",
   "bugs": {
     "url": "https://github.com/brave/vault/issues"
@@ -43,6 +43,7 @@
     "request": "^2.64.0",
     "transliteration": "0.1.1",
     "underscore": "1.8.3",
+    "vault-client": "git+ssh://git@github.com/brave/vault-client.git#b058355fa88cf81648836c040dc1e08da4a074c6",
     "vision": "^4.0.0",
     "wreck": "7.0.0"
   },
