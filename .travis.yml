@@ -16,14 +16,14 @@ before_script:
     - sleep 5
 script:
   - gulp angry-lint
-  - example/example.js -s 'http://127.0.0.1:3000' put 
-  - example/example.js -s 'http://127.0.0.1:3000' get
-  - example/example.js -s 'http://127.0.0.1:3000' put -s $SESSIONID -t data
-  - example/example.js -s 'http://127.0.0.1:3000' get -s $SESSIONID -t data
-  - example/example.js -s 'http://127.0.0.1:3000' get -s '*'
-  - example/example.js -s 'http://127.0.0.1:3000' rm  -s $SESSIONID -t data
-  - example/example.js -s 'http://127.0.0.1:3000' get -s '*'
-  - example/example.js -s 'http://127.0.0.1:3000' rm
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put 
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put -s $SESSIONID -t data
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get -s $SESSIONID -t data
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get -s '*'
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' rm  -s $SESSIONID -t data
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get -s '*'
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' rm
 notifications:
   slack:
     secure: PSj5eta2pbs4STQLRDDVat/rs///2BUDR17sfFJyiy729FMFlPuK46hTv4DfFEY9NoiLFgt7wutGSZlI32VslOkotefhKfPifQUZXw4DiSTIhNteLOPwjloug3TnwrUeWcGOvHXwZVO7lZRri789qcAKTqFdtn74vvuh8PY769g=
