@@ -43,7 +43,7 @@
     "request": "^2.64.0",
     "transliteration": "0.1.1",
     "underscore": "1.8.3",
-    "vault-client": "git+https://git:4eae79e63748bdb432a491b7d4f0db93e3027f65@github.com/brave/vault-client.git#b058355fa88cf81648836c040dc1e08da4a074c6",
+    "vault-client": "git+https://git:4eae79e63748bdb432a491b7d4f0db93e3027f65@github.com/brave/vault-client.git#79cdc11402255588d8ed34e9006142a587df08e1",
     "vision": "^4.0.0",
     "wreck": "7.0.0"
   },
