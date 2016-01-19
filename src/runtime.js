@@ -1,5 +1,5 @@
 var DB = require('./db')
-var Wallet = require('./wallet')
+// var Wallet = require('./wallet')
 
 var profile = process.env.NODE_ENV || 'development'
 var config = require('../config/config.' + profile + '.js')
