@@ -167,13 +167,13 @@ the "new" browser needs to be told:
 The easiest way to do this is to have the "old" browser generate a [QR code](https://en.wikipedia.org/wiki/QR_code)
 of the form:
 
-    brave://vault/v1/persona/{userId}?m={masterkey}&p={signingPair.privateKey}
+    persona://.../v1/{userId}?m={masterkey}&p={signingPair.privateKey}
 
 For example:
 
-    var url = 'brave://vault/persona/' + userId
-    window.crypto.subtle.exportKey('raw', masterKey).then(function (exportKey) {
-        url += '?m=' + ab2b(exportKey)
+    var url = 'persona://.../v1/' + userId
+    window.crypto.subtle.exportKey('jwk', masterKey).then(function (exportKey) {
+        url += '?m=' + encodeURIComponent(JSON.stringify(exportKey))
 
         window.crypto.subtle.exportKey('jwk', signingPair.privateKey).then(function (exportKey) {
             url += '&p=' + encodeURIComponent(JSON.stringify(exportKey))
@@ -182,7 +182,14 @@ For example:
         })
     })
 
-<img src='data:image/jpeg;base64,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' width='405' height='405' />
+<!--
+persona://127.0.0.1:3000/v1/BCF88057-07ED-4D7C-93DF-7A8BAC70ECEA?m=%7B%22kty%22%3A%22oct%22%2C%22ext%22%3Atrue%2C%22alg%22%3A%22A256GCM%22%2C%22key_ops%22%3A%5B%22encrypt%22%2C%22decrypt%22%5D%2C%22k%22%3A%22vG3p0niH675aHV5b-0YJzMtxT2d9S9xwNIRqwJ4fHQk%22%7D&p=%7B%22kty%22%3A%22EC%22%2C%22ext%22%3Atrue%2C%22alg%22%3A%22EC-256%22%2C%22key_ops%22%3A%5B%22sign%22%2C%22verify%22%5D%2C%22x%22%3A%22rEeEBWVfTy9JKnAp3b9A3l7TfTgf2FBEq4lJYREVgJU%22%2C%22y%22%3A%22MWOaDtHDRsX0nlS4RF5AuELactw9r01PnwuASzZYUb8%22%2C%22d%22%3A%22pRH8arCw6sWxibiFXzi8MIvUwDt_3UwK493Odhrr2kw%22%2C%22crv%22%3A%22P-256%22%7D
+
+http://www.qrstuff.com/
+http://dopiaza.org/tools/datauri/index.php
+ -->
+
+<img src='data:image/png;base64,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' width='405' height='405' />
 
 Once the QR code is generated,
 the "new" browser can use its camera and a QR decoder to derive the three elements pertaining to the persona.
@@ -191,34 +198,7 @@ If the "new" browser does not have a camera,
 then the "old" browser should save a file to a USB stick on its platform,
 which is subsequently moved to the platform with the "new" browser,
 imported in to the "new" browser,
-and then wiped:
-
-    window.crypto.subtle.exportKey('raw', masterKey).then(function (m) {
-        window.crypto.subtle.exportKey('jwk', pair.privateKey).then(function (p) {
-            var format = { version    : 1
-                         , personaURL : 'brave://vault/persona/' + userId
-                         , masterKey  : ab2hex(m)
-                         , privateKey : p
-                         }
-            console.log(JSON.stringify(format, null, 2))
-        })
-    })
-
-For example:
-
-    { version    : 1
-    , personaId  : 'brave://vault/persona/D7AE8B62-7D59-4417-B335-209B766D09D1'
-    , masterKey  : '3f9bf659d1e469025006bc20885dd0ef445229a585a65d3d5d2d4a1514fc1d36'
-    , privateKey :
-      { crv      : 'P-256'
-      , d        : 'm5_ZKjR64DK-t4WzIrsKcRQhcKZwJf1BGjv9P0MAiS0'
-      , ext      : true,
-      , key_ops  : [ 'sign' ]
-      , kty      : 'EC'
-      , x        : 'VY2NyRpYRPQ2onuDFdzmfZ8fACyYTWsjZTO_gb5eN_0'
-      , y        : 'Yrex6N1BEflazfIP3OEy7_2J2v7ZCTParAFelMF_WqA'
-      }
-    }
+and then wiped.
 
 ## Managing State
 The vault manages two kinds of state:
