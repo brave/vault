@@ -17,16 +17,6 @@ exports.routes = function (debug, runtime) {
     }
   ]
 
-  if (typeof process.env.VAULT_COLLECTION_RESET === 'string') {
-    process.env.VAULT_COLLECTION_RESET.split(',').forEach(collection => {
-      try {
-        runtime.db.get(collection).drop()
-      } catch (ex) {
-        debug('unable to reset ' + collection + ' collection: ' + ex.toString())
-      }
-    })
-  }
-
   fs.readdirSync(__dirname).forEach(name => {
     var module = require(path.join(__dirname, name))
 

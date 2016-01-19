@@ -8,6 +8,6 @@ var database = new DB(config)
 module.exports = {
   config: config,
   db: database,
-  wallet: new Wallet(config),
+//  wallet: new Wallet(config),
   login: config.login
 }
