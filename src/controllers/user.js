@@ -26,7 +26,7 @@ v1.get =
       user = await users.update({ userId: userId }, { $currentDate: { timestamp: { $type: 'timestamp' } } }, { upsert: true })
       user = await users.findOne({ userId: userId })
     }
-    if (user.wallets) {
+    if ((runtime.wallet) && (user.wallets)) {
       for (wallet of user.wallets) {
         try {
           wallet.balance = await runtime.wallet.balance(wallet.id)
@@ -138,7 +138,7 @@ v1.put =
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.badImplementation('upsert failed: ' + userId)) }
 
-    if ((!user.wallets) && (payload.xpub)) {
+    if ((runtime.wallet) && (!user.wallets) && (payload.xpub)) {
       try {
         result = await runtime.wallet.generate(user, payload.xpub)
         wallet = result.wallet.wallet
