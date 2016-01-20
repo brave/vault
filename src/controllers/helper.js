@@ -14,20 +14,7 @@ exports.verify = async function (debug, user, data) {
 
   var u8 = function (a) { return new Uint8Array(a) }
 
-  if (user.version) {
-    if (!header) return boom.badRequest('payload is not cryptographically-signed')
-
-    if (user.version !== 1) {
-      return boom.badRequest('unknown user entry cryptography version: ' + JSON.stringify(user.version))
-    }
-
-    nonce = header.nonce
-    if (typeof nonce === 'string') nonce = parseFloat(nonce)
-    if (isNaN(nonce)) return boom.badRequest('header.nonce is invalid: ' + JSON.stringify(header.nonce))
-    diff = Math.abs(new Date().getTime() - (nonce * 1000.0))
-    // NB: 10 minutes is temporary
-    if (diff > (10 * 60 * 1000)) return boom.badData('header.nonce is untimely: ' + JSON.stringify(header.nonce))
-  } else {
+  if (!user.version) {
     if (header) return boom.badData('user entry is not cryptographically-enabled')
 
     return null    // no user entry credentials, no data signature
@@ -44,7 +31,7 @@ exports.verify = async function (debug, user, data) {
   if (isNaN(nonce)) return boom.badRequest('header.nonce is invalid: ' + JSON.stringify(header.nonce))
   diff = Math.abs(new Date().getTime() - (nonce * 1000.0))
   // NB: 10 minutes is temporary
-  if (diff > (6000 * 1000)) return boom.badData('header.nonce is untimely: ' + JSON.stringify(header.nonce))
+  if (diff > (10 * 60 * 1000)) return boom.badData('header.nonce is untimely: ' + JSON.stringify(header.nonce))
 
   if (typeof header.signature !== 'string') {
     return boom.badRequest('header.signature is invalid: ' + JSON.stringify(header.signature))
