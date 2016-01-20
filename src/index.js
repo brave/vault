@@ -26,12 +26,7 @@ server.register(
   {
     register: require('hapi-swagger'),
     options: {
-      apiVersion: pack.version,
-      auth:
-      { strategy: 'session',
-        scope: [ 'admin', 'devops' ],
-        mode: 'required'
-      }
+      apiVersion: pack.version
     }
   }
 ], function (err) {
