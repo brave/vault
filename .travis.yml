@@ -23,6 +23,7 @@ script:
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get -s '*'
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' rm  -s $SESSIONID -t data
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get -s '*'
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' qr
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' rm
 notifications:
   slack:
