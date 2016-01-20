@@ -37,8 +37,8 @@ exports.verify = async function (debug, user, data) {
     return boom.badRequest('header.signature is invalid: ' + JSON.stringify(header.signature))
   }
 
-  if (typeof header.publicKey !== 'string') {
-    return boom.badRequest('header.publicKey is invalid: ' + JSON.stringify(header.publicKey))
+  if (typeof user.publicKey !== 'string') {
+    return boom.badRequest('user.publicKey is invalid: ' + JSON.stringify(user.publicKey))
   }
 
   combo = JSON.stringify({ userId: user.userId, nonce: header.nonce, payload: payload })
