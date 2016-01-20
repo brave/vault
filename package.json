@@ -43,7 +43,7 @@
     "request": "^2.64.0",
     "transliteration": "0.1.1",
     "underscore": "1.8.3",
-    "vault-client": "git+https://git:4eae79e63748bdb432a491b7d4f0db93e3027f65@github.com/brave/vault-client.git#minimized",
+    "vault-client": "https://github.com/brave/vault-client.git#minimized",
     "vision": "^4.0.0",
     "wreck": "7.0.0"
   },
