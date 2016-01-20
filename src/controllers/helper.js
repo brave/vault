@@ -26,7 +26,7 @@ exports.verify = async function (debug, user, data) {
     if (isNaN(nonce)) return boom.badRequest('header.nonce is invalid: ' + JSON.stringify(header.nonce))
     diff = Math.abs(new Date().getTime() - (nonce * 1000.0))
     // NB: 10 minutes is temporary
-    if (diff > (6000 * 1000)) return boom.badData('header.nonce is untimely: ' + JSON.stringify(header.nonce))
+    if (diff > (10 * 60 * 1000)) return boom.badData('header.nonce is untimely: ' + JSON.stringify(header.nonce))
   } else {
     if (header) return boom.badData('user entry is not cryptographically-enabled')
 
