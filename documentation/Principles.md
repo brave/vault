@@ -333,7 +333,7 @@ This allows multiple applications to (patiently) coordinate their actions in upg
 However, if an application must universally overwrite the shared information, it omits the "timestamp" parameter.
 
     var publicGlobal   = { ... }
-      ,  privateGlobal = { ... }
+      , privateGlobal = { ... }
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
