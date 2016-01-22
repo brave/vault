@@ -4,8 +4,8 @@
   "description": "A personal data store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {
-    "checks": "npm run check-security",
-    "check-security": "nsp check",
+    "test": "npm run test-security",
+    "test-security": "nsp check",
     "start": "DEBUG=*,-babel ./node_modules/.bin/babel-node src/index.js"
   },
   "repository": {
