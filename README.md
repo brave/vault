@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/brave/vault.svg?token=HMjyRuzVkZQ3vaoghtzo&branch=master)](https://travis-ci.com/brave/vault)
+[![Build Status](https://travis-ci.org/brave/vault.svg?branch=master)](https://travis-ci.com/brave/vault)
 
 # Brave Vault
 
