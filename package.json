@@ -4,6 +4,8 @@
   "description": "A personal data store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {
+    "test": "npm run test-security",
+    "test-security": "nsp check",
     "start": "DEBUG=*,-babel ./node_modules/.bin/babel-node src/index.js"
   },
   "repository": {
@@ -61,6 +63,7 @@
     "gulp-shell": "^0.5.1",
     "gulp-standard": "^5.2.2",
     "lab": "7.2.0",
+    "nsp": "^2.2.0",
     "run-sequence": "^1.1.0"
   },
   "standard": {
