@@ -49,7 +49,7 @@ server.register(
   debug('github authentication: forceHttps=' + runtime.login.isSecure)
 
   server.auth.strategy('session', 'cookie', {
-    password: 'cookie-encryption-password',
+    password: runtime.login.ironKey,
     cookie: 'sid',
     isSecure: runtime.login.isSecure
   })
