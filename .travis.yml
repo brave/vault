@@ -13,9 +13,10 @@ before_script:
     - sleep 15
     - cp config/config.development.js.tpl config/config.development.js
     - DEBUG=server ./node_modules/.bin/babel-node src/index.js &
-    - sleep 5
+    - sleep 30
 script:
   - gulp angry-lint
+  - SESSIONID=00000000-0000-4000-0000-000000000000 export SESSIONID
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put 
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put -s $SESSIONID -t data
