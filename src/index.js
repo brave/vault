@@ -37,22 +37,24 @@ server.register(
 
   debug('extensions registered')
 
-  server.auth.strategy('github', 'bell', {
-    provider: 'github',
-    password: require('cryptiles').randomString(64),
-    clientId: runtime.login.clientId,
-    clientSecret: runtime.login.clientSecret,
-    isSecure: runtime.login.isSecure,
-    forceHttps: runtime.login.isSecure,
-    scope: ['user:email', 'read:org']
-  })
-  debug('github authentication: forceHttps=' + runtime.login.isSecure)
+  if (runtime.login) {
+    server.auth.strategy('github', 'bell', {
+      provider: 'github',
+      password: require('cryptiles').randomString(64),
+      clientId: runtime.login.clientId,
+      clientSecret: runtime.login.clientSecret,
+      isSecure: runtime.login.isSecure,
+      forceHttps: runtime.login.isSecure,
+      scope: ['user:email', 'read:org']
+    })
+    debug('github authentication: forceHttps=' + runtime.login.isSecure)
 
-  server.auth.strategy('session', 'cookie', {
-    password: runtime.login.ironKey,
-    cookie: 'sid',
-    isSecure: runtime.login.isSecure
-  })
+    server.auth.strategy('session', 'cookie', {
+      password: runtime.login.ironKey,
+      cookie: 'sid',
+      isSecure: runtime.login.isSecure
+    })
+  } else debug('github authentication disabled')
 })
 
 server.route(routes.routes(debug, runtime))
