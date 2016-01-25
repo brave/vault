@@ -16,7 +16,7 @@ before_script:
     - sleep 30
 script:
   - gulp angry-lint
-  - SESSIONID=`uuidgen` export SESSIONID
+  - SESSIONID=00000000-0000-4000-0000-000000000000 export SESSIONID
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put 
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put -s $SESSIONID -t data
