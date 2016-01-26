@@ -19,6 +19,12 @@ debug.initialize({ 'server': { id: server.info.id } })
 server.register(
 [ require('bell'),
   require('blipp'),
+  {
+    register: require('crumb'),
+    options: {
+      cookieOptions: { isSecure: true }
+    }
+  },
   require('hapi-async-handler'),
   require('hapi-auth-cookie'),
   require('inert'),
