@@ -22,7 +22,7 @@ server.register(
   {
     register: require('crumb'),
     options: {
-      cookieOptions: { 
+      cookieOptions: {
         clearInvalid: true,
         isSecure: true
       }
