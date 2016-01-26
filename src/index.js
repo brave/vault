@@ -22,7 +22,10 @@ server.register(
   {
     register: require('crumb'),
     options: {
-      cookieOptions: { isSecure: true }
+      cookieOptions: { 
+        clearInvalid: true,
+        isSecure: true
+      }
     }
   },
   require('hapi-async-handler'),
