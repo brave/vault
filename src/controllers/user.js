@@ -81,15 +81,15 @@ v1.put =
     user = await users.findOne({ userId: userId })
     createP = !user
     if (createP) {
-      if ((!payload.version) && (payload.version !== 1)) {
+      if (payload.version !== 1) {
         return reply(boom.badRequest('invalid or missing payload.version: ' + JSON.stringify(payload.version)))
       }
       if ((!payload.publicKey) || (typeof payload.publicKey !== 'string') || (payload.publicKey.length !== 130)) {
         return reply(boom.badRequest('invalid or missing payload.publicKey: ' + JSON.stringify(payload.publicKey)))
       }
       // NB: payload.publicKey should be mandatory
-      if ((!payload.privateKey) || (typeof payload.privateKey !== 'object')
-            || (typeof payload.privateKey.encryptedData !== 'string')) {
+      if ((!payload.privateKey) || (typeof payload.privateKey !== 'object') ||
+            (typeof payload.privateKey.encryptedData !== 'string')) {
         return reply(boom.badRequest('invalid or missing payload.privateKey: ' + JSON.stringify(payload.privateKey)))
       }
     }

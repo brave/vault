@@ -106,7 +106,7 @@ The `signature` and `nonce` properties are used to ensure that the client actual
                                               new Buffer(publicKey.y, 'base64').toString('hex')
                           , privateKey      : 
                             { encryptedData : ab2hex(ciphertext)
-                            , iv            : ab2tex(iv)
+                            , iv            : ab2hex(iv)
                             }
                           }
                         }
