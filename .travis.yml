@@ -1,19 +1,19 @@
 language: node_js
 node_js:
-    - 5.1.1
+  - 5.1.1
 services:
-    - mongodb
+  - mongodb
 addons:
   apt:
     sources:
-        - mongodb-3.0-precise
+      - mongodb-3.0-precise
     packages:
-        - mongodb-org-server
+      - mongodb-org-server
 before_script:
-    - sleep 15
-    - cp config/config.development.js.tpl config/config.development.js
-    - DEBUG=server ./node_modules/.bin/babel-node src/index.js &
-    - sleep 30
+  - sleep 15
+  - cp config/config.development.js.tpl config/config.development.js
+  - DEBUG=server ./node_modules/.bin/babel-node src/index.js &
+  - sleep 30
 script:
   - gulp angry-lint
   - SESSIONID=00000000-0000-4000-0000-000000000000 export SESSIONID
@@ -28,8 +28,7 @@ script:
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' rm
 notifications:
   slack:
-    secure: sVo/JL6S39+8qB50QD+F9LwKqOvLJS7AkKdPWtf5ITzNJAb2KgK9WS+b/aLyMXdRlHrzHUUbm2uD1vHk1fcSUwJJdys4k/FYmPRryzhrz/jM+nbWJf20hIMvaYYgD7Lqli+lRdJcLogx9zePEBdJXmlalJm9LJ4dMl++nasywZz5zx3UxtytZjSEA/dExc8rs8QEy1PVCRhIwIrcNgfbPL7mV6RPhz9oiUPSeo4/2sY2GAJyMwSbvZtACb02Ajw9QSW6yTuxgyvL7tNti+lZTagXVMVjf3wKchwtOCMewTiMnPvVj4ZPlU/rxnh+QxW0OHjnMvqIxi5DEOKOvx0Jk7fYwQac0p8DYHtQ+kRgGVQPMrlCWfk+IMKmLvzebiAQmE5PE3oweGmRKJfQU5y/r/RkgBtuP36aszinZ4fw6nS2Knk6gRgm4xPPHh+QCxrO/23plI3P6MOo+u4IR/Zvk8RGoFfRf+7GnpjWdACt6//BRgmIvLQP1rLM7HOSz4JJGjusK579Z9coesort+qS0HaegQBVWIasZiIipdZN0e77NcFGmVqc638Snlrd7BlaOWWv+nBya2d8RcL5w2JWNRoTyngwBkhBQf6JxM6+kQ9GXBFsCHPV2bcCnIICvdfn43b4TZblyWZEQL7ZeJ8U4zKPwUi7dAujUnqHk0JATNg=
+    secure: "Lz/Mi0ZXCHUzbZpjSAUaM3M5S4XHhkY2B1GXY8JKorvv/eHR+rq7VMa4TwVjjxAC2tip3LdxlfBu+fFNKXo8Z7ccOhmKfZwbd2AqW+iqvQ5lcqyYERegiFBOxqBs4sE9JJ77n+ryRqGVINxeXO4m+M7eBY0k67WHozAobZqWBR86P6LnhLmNeDLGUInfS4sNQQAtEDS7DfNss1rBOsuSm1XihQnZ0cCnVtWLlM0VuJjw1yfeUFr/wcK4FIO/9LfeNTbEFHDEEyoBYjcNGyCeWpkcx+0nT27tssuKnj0Hk/yiWQgVSRKEwRWyO4GmOLUr2rzD9HwPHxvI7LdtnU6RnCQJGerOIcMtRWkGXdDsb69kC5M5ssoZHDsUriRWfeGkSaLgw8UeCviR/+GmsOcQcGt2xcq7/HnTxsTQ+iJDWVSQdhxCgQwlFj5frytDyXaB4l931gneNvoP9Ho6TSMsbBpqcNb62JHb5KibryJSK3FlZd2X/haXU53dRreJenvizdcEZOcg6KzNTXFYWZ3PQzA8iSJsPiLWtYarZny+X55ouh/V73/lFakhVYFnow7tY62f2htssjn9NC1sCdu3IZZEn1vHC+l/Lx3l5t1eHtZ9PbPmhEWA587oV3lxmqyPlbwHspA6cXKKBuqmCbCYTicANAZGhEtFOfzxf8hMsjE="
 branches:
-  only:
-  - master
-  - integration
+  except:
+  - stable
