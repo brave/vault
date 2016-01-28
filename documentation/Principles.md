@@ -50,13 +50,17 @@ Both the `masterKey` and `signingPair.privateKey` must be securely persisted in 
 When creating a persona,
 the HTTP body is:
 
-    { header      :
-      { signature : '...'
-      , nonce     : '...'
+    { header            :
+      { signature       : '...'
+      , nonce           : '...'
       }
-    , payload     :
-      { version   : 1
-      , publicKey : '...'
+    , payload           :
+      { version         : 1
+      , publicKey       : '...',
+      , privateKey      :
+        { encryptedData : '...',
+        , iv            : '...'
+        }
       }
     }
 
@@ -64,6 +68,9 @@ The `version` property is self-explanatory.
 
 The `publicKey` property is the hexadecimal string representation of the public key used to verify digital signatures.
 The vault verifies the signature as the authorization check for an operation.
+
+The `privateKey` property is an object with an `iv` parameter used with the `masterKey` to generate the `encryptedData`
+parameter.
 
 The `signature` and `nonce` properties are used to ensure that the client actually knows the `signing.privateKey`:
 
@@ -83,25 +90,40 @@ The `signature` and `nonce` properties are used to ensure that the client actual
     }
 
         
-    // note that the publicKey is not sent as an x/y pair, but instead is a concatenation (the 0x04 prefix indicates this)
-    window.crypto.subtle.exportKey('jwk', pair.publicKey).then(function (publicKey) {
-        var message = { header      : {}
-                      , payload     : 
-                        { version   : 1
-                        , publicKey : '04' +
-                                       new Buffer(publicKey.x, 'base64').toString('hex') +
-                                       new Buffer(publicKey.y, 'base64').toString('hex')
-                        }
-                      }
-        var nonce = (new Date().getTime() / 1000).toString()
-        var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-        window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                                  pair.privateKey, str2ab(combo)).then(function(signature) {
-            message.header = { signature: ab2hex(signature), nonce: nonce }
+    window.crypto.subtle.exportKey('jwk', pair.privateKey).then(function (privateKey) {
+      window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, self.runtime.masterKey,
+                                       obj2ab(privateKey)).then(function (ciphertext) {
+        /* the publicKey is not sent as an x/y pair, but instead is a concatenation (the 0x04 prefix indicates this),
+           and the privateKey is encrypted using the masterKey and a one-time initialization vector */
 
+        window.crypto.subtle.exportKey('jwk', pair.publicKey).then(function (publicKey) {
+          var iv = window.crypto.getRandomValues(new Uint8Array(12))
+          var message = { header           : {}
+                        , payload          : 
+                          { version        : 1
+                          , publicKey      : '04' +
+                                              new Buffer(publicKey.x, 'base64').toString('hex') +
+                                              new Buffer(publicKey.y, 'base64').toString('hex')
+                          , privateKey      : 
+                            { encryptedData : ab2hex(ciphertext)
+                            , iv            : ab2hex(iv)
+                            }
+                          }
+                        }
+
+          message.payload.privateKey = { encryptedData: ab2hex(ciphertext) , iv: ab2hex(iv) }
+
+          var nonce = (new Date().getTime() / 1000).toString()
+          var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
+          window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                                    pair.privateKey, str2ab(combo)).then(function(signature) {
+            message.header = { signature: ab2hex(signature), nonce: nonce }
+    
             console.log('PUT /v1/users/' + userId)
             console.log(JSON.stringify(message, null, 2))
+          })
         })
+      })
     })
 
 In order for the `nonce` to be considered valid,
@@ -160,9 +182,7 @@ the "new" browser needs to be told:
 
 * the persona-identifier (`userId`)
 
-* the `masterKey`
-
-* the `signingPair.privateKey`
+* the `masterKey` (for data encryption and to decrypt the encrypted `signingPair.privateKey` in the vault)
 
 The easiest way to do this is to have the "old" browser generate a [QR code](https://en.wikipedia.org/wiki/QR_code)
 of the form:
@@ -173,23 +193,18 @@ For example:
 
     var url = 'persona://.../v1/' + userId
     window.crypto.subtle.exportKey('jwk', masterKey).then(function (exportKey) {
-        url += '?m=' + encodeURIComponent(JSON.stringify(exportKey))
-
-        window.crypto.subtle.exportKey('jwk', signingPair.privateKey).then(function (exportKey) {
-            url += '&p=' + encodeURIComponent(JSON.stringify(exportKey))
-
-            console.log('QR code: ' + url)
-        })
+      url += '?m=' + encodeURIComponent(JSON.stringify(exportKey))
+      console.log('QR code: ' + url)
     })
 
 <!--
-persona://127.0.0.1:3000/v1/BCF88057-07ED-4D7C-93DF-7A8BAC70ECEA?m=%7B%22kty%22%3A%22oct%22%2C%22ext%22%3Atrue%2C%22alg%22%3A%22A256GCM%22%2C%22key_ops%22%3A%5B%22encrypt%22%2C%22decrypt%22%5D%2C%22k%22%3A%22vG3p0niH675aHV5b-0YJzMtxT2d9S9xwNIRqwJ4fHQk%22%7D&p=%7B%22kty%22%3A%22EC%22%2C%22ext%22%3Atrue%2C%22alg%22%3A%22EC-256%22%2C%22key_ops%22%3A%5B%22sign%22%2C%22verify%22%5D%2C%22x%22%3A%22rEeEBWVfTy9JKnAp3b9A3l7TfTgf2FBEq4lJYREVgJU%22%2C%22y%22%3A%22MWOaDtHDRsX0nlS4RF5AuELactw9r01PnwuASzZYUb8%22%2C%22d%22%3A%22pRH8arCw6sWxibiFXzi8MIvUwDt_3UwK493Odhrr2kw%22%2C%22crv%22%3A%22P-256%22%7D
+persona://127.0.0.1:3000/v1/BCF88057-07ED-4D7C-93DF-7A8BAC70ECEA?m=%7B%22kty%22%3A%22oct%22%2C%22ext%22%3Atrue%2C%22alg%22%3A%22A256GCM%22%2C%22key_ops%22%3A%5B%22encrypt%22%2C%22decrypt%22%5D%2C%22k%22%3A%22vG3p0niH675aHV5b-0YJzMtxT2d9S9xwNIRqwJ4fHQk%22%7D
 
 http://www.qrstuff.com/
 http://dopiaza.org/tools/datauri/index.php
  -->
 
-<img src='data:image/png;base64,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' width='405' height='405' />
+<img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQMAAACXljzdAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAADlklEQVRYw+2XvY3rOhBGR1CgTGyAANtQ5pboBky5AbMlZWqDABuQMwWE5x2ujXtfurMbXkYSjiBS8/N9I5F/y7acam7Xrbj63EsMWVVH1WIks4wr92MO902zxEvN4ypmwmUbzpr9bfHSZvFpzOdPSHiJd17ES1j5jh+SNmxhbU5bLOn8GSEG4+MyKgcu0d+mcPwvOt8lPT/+uvtYH0v9XP3N3HdJX7oKqZmlSd8ilb/1813iSLTMS4k1a4nFnSU2d5ZfJ6zk0+mlPrUempWo86CVTJTna6nq40Sp36n45jYrGZQtOLDzwzaujdKKMmxiJPOFzLmz39ON7UZF+PfHWMjAIcf7KZHM8fnXXqOPyUrcGTQ8pDgyVaJcld5+qpUMu6TxTgj9sOtaht3zlJkIZ613tiCivXUmQkI0rGQigGlvKMX01dYtEQ8robezHmw2Hj0QcZFEO4mRUHVR0sbbbxcv/rqNxPTr1Cayh9XPpLfqSd6faC2NJ0YiSxN9TEV6WPkIAkF+yq+TmVQ1meqBnFclcz4SdTshUekkvr0HEeDxU1Im4rSuJalP3lGevkfp09sWMpOvekhLhagf9Xl619vJSOgaRSmUfKkeJU66qr4VyUBwKte6aI9E9CiYw5/8GAipyTigjwHPWsfXJSjuZSV9H6Sa1NwwLs2bxDJPViKL8mIJR9Au2hEf0Nc73QbCvJDC/Sypub2u4fnWs2Il3FPN9ODtIlKGrWIoi5XI5cuUQg4PRhA2825c7WRBw/qLyfZIz1GYo56/T+beM1ccnpaEEPVMA4iZ4AsPKtNftfvpQh3ET4V8nwzILjLRh0V0MxwMUPW5mcne5zkGGuqcifFJ1L1cxEjInNRXL1QqE3NYxIXVTFDYI9wZQcgKYaWJaOylGAm+HutxaeJvtLV3mySU20r4iSDVl7Dqk9k45LMf/T0jWYg24cXjoa+pRc0nLv32EhNhBtQnbx9fk0+FApJ+ayZ0Y8KYQ97r11Sz+quZzEvIjZEXFdsZK/kvoVXeFW8gXen7pcPs+Bd7LD59nOl3idAwfuB7PM+k1kXu41k2Ij06Vbsv9Im4SZknK8FFV/qHsf/W6/yq4pjFrKT/N/a3J6wUX7jvIZf5YiaX2vWBEsjIBQXqRV8/IZl9EDK3oUC4zMEA9hPC+Ioc3jd+4WnEVD+zsoUwX5duqqgjhUps80cpLMR99CHql5TlDZxPMZJ/63fXf+fUEqmMdj1IAAAAAElFTkSuQmCC' width='405' height='405' />
 
 Once the QR code is generated,
 the "new" browser can use its camera and a QR decoder to derive the three elements pertaining to the persona.
@@ -258,21 +273,21 @@ For example:
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
                                  masterKey, str2ab(JSON.stringify(history))).then(function(encryptedData) {
-    var message = { header          : {}
-                  , payload         :
-                    { iv            : ab2hex(iv)
-                    , encryptedData : ab2hex(encryptedData)
+      var message = { header          : {}
+                    , payload         :
+                      { iv            : ab2hex(iv)
+                      , encryptedData : ab2hex(encryptedData)
+                      }
                     }
-                  }
-        var nonce = (new Date().getTime() / 1000).toString()
-        var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-        window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                                  signingPair.privateKey, str2ab(combo)).then(function(signature) {
-            message.header = { signature: ab2hex(signature), nonce: nonce }
+      var nonce = (new Date().getTime() / 1000).toString()
+      var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
+      window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                                signingPair.privateKey, str2ab(combo)).then(function(signature) {
+        message.header = { signature: ab2hex(signature), nonce: nonce }
 
-            console.log('PUT /v1/users/' + userId + '/sessions/' + sessionId + '/types/history')
-            console.log(JSON.stringify(message, null, 2))
-        })
+        console.log('PUT /v1/users/' + userId + '/sessions/' + sessionId + '/types/history')
+        console.log(JSON.stringify(message, null, 2))
+      })
     })
 
 Note that the vault verifies the digital signature in order to ensure that the operation is authorized.
@@ -333,27 +348,27 @@ This allows multiple applications to (patiently) coordinate their actions in upg
 However, if an application must universally overwrite the shared information, it omits the "timestamp" parameter.
 
     var publicGlobal   = { ... }
-      , privateGlobal = { ... }
+      , privateGlobal  = { ... }
 
     var iv = window.crypto.getRandomValues(new Uint8Array(12))
     window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv },
                                  masterKey, str2ab(JSON.stringify(privateGlobal))).then(function(encryptedData) {
-        var message = { timestamp       : '...'
-                      , header          : {}
-                      , payload         :
-                        { iv            : ab2hex(iv)
-                        , encryptedData : ab2hex(encryptedData)
-                        , plaintextData : publicGlobal
-                        }
+      var message = { timestamp       : '...'
+                    , header          : {}
+                    , payload         :
+                      { iv            : ab2hex(iv)
+                      , encryptedData : ab2hex(encryptedData)
+                      , plaintextData : publicGlobal
                       }
-        var nonce = (new Date().getTime() / 1000).toString()
-        var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
-        window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
-                                  signingPair.privateKey, str2ab(combo)).then(function(signature) {
-            message.header = { signature: ab2hex(signature), nonce: nonce }
+                    }
+      var nonce = (new Date().getTime() / 1000).toString()
+      var combo = JSON.stringify({ userId: userId, nonce: nonce, payload: message.payload })
+      window.crypto.subtle.sign({ name: 'ECDSA', namedCurve: 'P-256', hash: { name: 'SHA-256' } },
+                                signingPair.privateKey, str2ab(combo)).then(function(signature) {
+        message.header = { signature: ab2hex(signature), nonce: nonce }
 
-            console.log('PUT /v1/users/' + userId)
-            console.log(JSON.stringify(message, null, 2))
-        })
+        console.log('PUT /v1/users/' + userId)
+        console.log(JSON.stringify(message, null, 2))
+      })
     })
 

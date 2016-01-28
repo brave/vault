@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-    - "5.1.1"
+    - 5.1.1
 services:
     - mongodb
 addons:
@@ -17,7 +17,7 @@ before_script:
 script:
   - gulp angry-lint
   - SESSIONID=00000000-0000-4000-0000-000000000000 export SESSIONID
-  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put 
+  - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' put -s $SESSIONID -t data
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' get -s $SESSIONID -t data
@@ -28,8 +28,8 @@ script:
   - node_modules/vault-client/example.js -s 'http://127.0.0.1:3000' rm
 notifications:
   slack:
-    secure: PSj5eta2pbs4STQLRDDVat/rs///2BUDR17sfFJyiy729FMFlPuK46hTv4DfFEY9NoiLFgt7wutGSZlI32VslOkotefhKfPifQUZXw4DiSTIhNteLOPwjloug3TnwrUeWcGOvHXwZVO7lZRri789qcAKTqFdtn74vvuh8PY769g=
+    secure: sVo/JL6S39+8qB50QD+F9LwKqOvLJS7AkKdPWtf5ITzNJAb2KgK9WS+b/aLyMXdRlHrzHUUbm2uD1vHk1fcSUwJJdys4k/FYmPRryzhrz/jM+nbWJf20hIMvaYYgD7Lqli+lRdJcLogx9zePEBdJXmlalJm9LJ4dMl++nasywZz5zx3UxtytZjSEA/dExc8rs8QEy1PVCRhIwIrcNgfbPL7mV6RPhz9oiUPSeo4/2sY2GAJyMwSbvZtACb02Ajw9QSW6yTuxgyvL7tNti+lZTagXVMVjf3wKchwtOCMewTiMnPvVj4ZPlU/rxnh+QxW0OHjnMvqIxi5DEOKOvx0Jk7fYwQac0p8DYHtQ+kRgGVQPMrlCWfk+IMKmLvzebiAQmE5PE3oweGmRKJfQU5y/r/RkgBtuP36aszinZ4fw6nS2Knk6gRgm4xPPHh+QCxrO/23plI3P6MOo+u4IR/Zvk8RGoFfRf+7GnpjWdACt6//BRgmIvLQP1rLM7HOSz4JJGjusK579Z9coesort+qS0HaegQBVWIasZiIipdZN0e77NcFGmVqc638Snlrd7BlaOWWv+nBya2d8RcL5w2JWNRoTyngwBkhBQf6JxM6+kQ9GXBFsCHPV2bcCnIICvdfn43b4TZblyWZEQL7ZeJ8U4zKPwUi7dAujUnqHk0JATNg=
 branches:
   only:
-    - master
-    - integration
+  - master
+  - integration
