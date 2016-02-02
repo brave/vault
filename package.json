@@ -1,11 +1,12 @@
 {
   "name": "vault",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A personal data store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {
     "start": "DEBUG=*,-babel ./node_modules/.bin/babel-node src/index.js",
-    "test": "echo waiting on nsp update"
+    "test": "echo waiting on nsp update",
+    "test-security": "nsp check"
   },
   "repository": {
     "type": "git",
@@ -21,7 +22,7 @@
     "babel-cli": "^6.1.2",
     "babel-preset-stage-2": "^6.1.2",
     "bell": "6.0.0",
-    "bitgo": "^0.11.32",
+    "bitgo": "^0.11.64",
     "blipp": "2.3.0",
     "boom": "3.0.0",
     "bson": "0.4.19",
@@ -63,6 +64,7 @@
     "gulp-shell": "^0.5.1",
     "gulp-standard": "^5.2.2",
     "lab": "7.2.0",
+    "nsp": "^2.2.0",
     "run-sequence": "^1.1.0"
   },
   "standard": {

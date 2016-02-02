@@ -21,11 +21,6 @@ v1.get =
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
-    // NB: temporary
-    if (!user.timestamp) {
-      user = await users.update({ userId: userId }, { $currentDate: { timestamp: { $type: 'timestamp' } } }, { upsert: true })
-      user = await users.findOne({ userId: userId })
-    }
     if ((runtime.wallet) && (user.wallets)) {
       for (wallet of user.wallets) {
         try {
@@ -86,14 +81,16 @@ v1.put =
     user = await users.findOne({ userId: userId })
     createP = !user
     if (createP) {
-      // NB: payload.version should be mandatory
-      if ((payload.version) && (payload.version !== 1)) {
+      if (payload.version !== 1) {
         return reply(boom.badRequest('invalid or missing payload.version: ' + JSON.stringify(payload.version)))
       }
-      // NB: payload.publicKey should be mandatory
-      if ((payload.version) &&
-             ((!payload.publicKey) || (typeof payload.publicKey !== 'string') || (payload.publicKey.length !== 130))) {
+      if ((!payload.publicKey) || (typeof payload.publicKey !== 'string') || (payload.publicKey.length !== 130)) {
         return reply(boom.badRequest('invalid or missing payload.publicKey: ' + JSON.stringify(payload.publicKey)))
+      }
+      // NB: payload.publicKey should be mandatory
+      if ((!payload.privateKey) || (typeof payload.privateKey !== 'object') ||
+            (typeof payload.privateKey.encryptedData !== 'string')) {
+        return reply(boom.badRequest('invalid or missing payload.privateKey: ' + JSON.stringify(payload.privateKey)))
       }
     }
 
@@ -106,13 +103,14 @@ v1.put =
     try {
       delete request.payload.timestamp
       update = { $currentDate: { timestamp: { $type: 'timestamp' } },
-                 $setOnInsert: { replacements: 0 },
                  $set: { state: request.payload }
                }
 
       if ((!user) && (payload.version)) {
-        update.$setOnInsert.version = payload.version
-        update.$setOnInsert.publicKey = payload.publicKey
+        update.$setOnInsert = { version: payload.version,
+                                publicKey: payload.publicKey,
+                                privateKey: payload.privateKey
+                              }
       }
 
       if (timestamp) {
@@ -179,6 +177,9 @@ v1.put =
       }),
       400: Joi.object({
         boomlet: Joi.string().required().description('invalid or missing payload.publicKey')
+      }),
+      400: Joi.object({
+        boomlet: Joi.string().required().description('invalid or missing payload.privateKey')
       }),
       400: Joi.object({
         boomlet: Joi.string().required().description('invalid timestamp')
