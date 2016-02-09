@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A personal data store for holding high-value user behavior with high privacy.",
   "main": "index.js",
   "scripts": {
@@ -51,8 +51,8 @@
     "wreck": "7.0.0"
   },
   "engines": {
-    "node": "5.1.1",
-    "npm": "3.3.12"
+    "node": "5.6.0",
+    "npm": "3.6.0"
   },
   "devDependencies": {
     "babel-eslint": "^4.1.3",
