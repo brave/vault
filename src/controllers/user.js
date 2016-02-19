@@ -14,22 +14,12 @@ var v1 = {}
 v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
-    var result, user, wallet
-    var debug = braveHapi.debug(module, request)
+    var result, user
     var userId = request.params.userId.toUpperCase()
     var users = runtime.db.get('users')
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
-    if ((runtime.wallet) && (user.wallets)) {
-      for (wallet of user.wallets) {
-        try {
-          wallet.balance = await runtime.wallet.balance(wallet.id)
-        } catch (ex) {
-          debug('wallet error', ex)
-        }
-      }
-    }
 
     result = underscore.extend(underscore.omit(user, '_id', 'keychains'), { timestamp: user.timestamp.toString() })
 
@@ -71,7 +61,7 @@ v1.put =
   return async function (request, reply) {
     if (!request.payload) request.payload = {}
 
-    var count, createP, result, update, user, wallet
+    var count, createP, result, update, user
     var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toUpperCase()
     var timestamp = request.payload.timestamp
@@ -135,23 +125,6 @@ v1.put =
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.badImplementation('upsert failed: ' + userId)) }
-
-    if ((runtime.wallet) && (!user.wallets) && (payload.xpub)) {
-      try {
-        result = await runtime.wallet.generate(user, payload.xpub)
-        wallet = result.wallet.wallet
-        user.wallets = [ { id: wallet.id, type: 'primary', currency: 'btc' } ]
-        user.keychains = [ underscore.extend({ id: wallet.id }, underscore.omit(result, 'wallet', 'warning')) ]
-      } catch (ex) {
-        debug('wallet error', ex)
-        return reply(boom.badImplementation('wallet creation failed', ex))
-      }
-
-      count = await users.update({ userId: userId }, { $set: { wallets: user.wallets, keychains: user.keychains } },
-                                 { upsert: true })
-      if (typeof count === 'object') { count = count.nMatched }
-      if (count === 0) { return reply(boom.badImplementation('update failed: ' + userId)) }
-    }
 
     result = underscore.extend(underscore.omit(user, '_id', 'keychains'), { timestamp: user.timestamp.toString() })
     reply(helper.add_nonce_data(result)).code(createP ? 201 : 200)

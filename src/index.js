@@ -4,7 +4,7 @@ if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { var n
 var Hapi = require('hapi')
 
 var braveHapi = require('./brave-hapi')
-var debug = new (require('./sdebug'))('server')
+var debug = new (require('sdebug'))('server')
 var pack = require('./../package')
 var routes = require('./controllers/index')
 var underscore = require('underscore')

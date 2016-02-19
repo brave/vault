@@ -2,7 +2,7 @@
 
 # Brave Vault
 
-A personal data store for holding high-value user behavior with high privacy.
+Brave personal data store vault.
 
 <img src='documentation/ecosystem.png' />
 
