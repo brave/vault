@@ -34,7 +34,7 @@ v1.login =
       debug('login  ' + credentials.provider + ' ' + credentials.profile.email + ': ' + JSON.stringify(credentials.scope))
 
       request.auth.session.set(credentials)
-      return reply.redirect(runtime.login.world)
+      reply.redirect(runtime.login.world)
     })
   }
 },
