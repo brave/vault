@@ -4,7 +4,7 @@ if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { var n
 var Hapi = require('hapi')
 
 var braveHapi = require('./brave-hapi')
-var debug = new (require('./sdebug'))('server')
+var debug = new (require('sdebug'))('server')
 var pack = require('./../package')
 var routes = require('./controllers/index')
 var underscore = require('underscore')
@@ -19,6 +19,17 @@ debug.initialize({ 'server': { id: server.info.id } })
 server.register(
 [ require('bell'),
   require('blipp'),
+/* TBD: waiting on adbot
+  {
+    register: require('crumb'),
+    options: {
+      cookieOptions: {
+        clearInvalid: true,
+        isSecure: true
+      }
+    }
+  },
+ */
   require('hapi-async-handler'),
   require('hapi-auth-cookie'),
   require('inert'),

@@ -10,7 +10,7 @@ var wreck = require('wreck')
 var exports = {}
 
 exports.debug = function (info, request) {
-  var sdebug = new (require('./sdebug'))(info.id)
+  var sdebug = new (require('sdebug'))(info.id)
 
   sdebug.initialize({ request: { id: request.id } })
   return sdebug
