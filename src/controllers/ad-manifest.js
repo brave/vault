@@ -158,7 +158,7 @@ v1.post =
   tags: ['api'],
 
   validate:
-    { query: { crumb: Joi.string().description('') },
+    { query: { crumb: Joi.string().description('the CRUMB token') },
       payload:
       { hostname: Joi.string().hostname().required().description('the domain name of the site'),
         timestamp: Joi.any().forbidden(),
@@ -230,7 +230,7 @@ v1.putHostname =
   validate:
     { params:
       { hostname: Joi.string().hostname().required().description('the domain name of the site'),
-        crumb: Joi.string().description('')
+        crumb: Joi.string().description('the CRUMB token')
       },
       payload:
       { hostname: Joi.any().forbidden(),
