@@ -158,7 +158,8 @@ v1.post =
   tags: ['api'],
 
   validate:
-    { payload:
+    { query: { crumb: Joi.string().description('') },
+      payload:
       { hostname: Joi.string().hostname().required().description('the domain name of the site'),
         timestamp: Joi.any().forbidden(),
         replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required().description('the ad\'s width in pixels'),
@@ -227,7 +228,10 @@ v1.putHostname =
   tags: ['api'],
 
   validate:
-    { params: { hostname: Joi.string().hostname().required().description('the domain name of the site') },
+    { params:
+      { hostname: Joi.string().hostname().required().description('the domain name of the site'),
+        crumb: Joi.string().description('')
+      },
       payload:
       { hostname: Joi.any().forbidden(),
         timestamp: Joi.any().forbidden(),
