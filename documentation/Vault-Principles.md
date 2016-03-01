@@ -1,5 +1,5 @@
 # Principles of using the Brave Vault
-The Brave _vault_ is a mediation server for your browsing activities as they relate to advertisements.
+The Brave _vault_ is a private repository for your browsing information.
 Because you may use multiple browsers,
 the vault also allows browsers to sync data.
 
@@ -187,7 +187,7 @@ the "new" browser needs to be told:
 The easiest way to do this is to have the "old" browser generate a [QR code](https://en.wikipedia.org/wiki/QR_code)
 of the form:
 
-    persona://.../v1/{userId}?m={masterkey}&p={signingPair.privateKey}
+    persona://.../v1/{userId}?m={masterKey}&p={signingPair.privateKey}
 
 For example:
 
