@@ -1,13 +1,11 @@
 [![Build Status](https://travis-ci.org/brave/vault.svg)](https://travis-ci.org/brave/vault)
 
 # Brave Vault
-
 Brave personal data store vault.
 
 <img src='documentation/ecosystem.png' />
 
 ## Setup
-
 Clone the repo: `git clone git@github.com:brave/vault.git`
 
 Install dependencies with `npm install`
@@ -17,26 +15,15 @@ Install MongoDB: `brew update && brew install mongodb`
 Start MongoDB. There are a variety of ways to do this, one option on a mac: `brew tap homebrew/services && brew services start mongodb`
 
 ## StandardJS
-
 For linting we use [StandardJS](https://github.com/feross/standard). It's recommended that you install the necessary IDE plugin. Since this repo uses ES7 features, you'll need a global install of both the standard and babel-eslint packages.
 
 ## Configuration
-
 For staging or production environments configuration variables are stored as environment preferences. See config/config.production.js for a list of these variables.
 
 For local development you can copy config/config.development.js.tpl to config/config.development.js and define the local config variables.
 
-
 ## Running the server
-
 Use `gulp` to run the server in development. This also sets up watchers and will restart the server on a file change.
-
-
-## Proximo
-
-Proximo is currently used as a proxy so we can make outbound vault requests using a static IP. 
-Instead of using the `Profile` and `bin/proximo` `vendor/dante`,
-so `process.env.BITGO_USE_PROXY` is defined instead.
 
 ## Theory of Operation
 All operations are available via only HTTPS on public-facing systems.
