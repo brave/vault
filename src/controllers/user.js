@@ -15,7 +15,7 @@ v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result, user
-    var userId = request.params.userId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
     var users = runtime.db.get('users')
 
     user = await users.findOne({ userId: userId })
@@ -63,7 +63,7 @@ v1.put =
 
     var count, createP, result, update, user
     var debug = braveHapi.debug(module, request)
-    var userId = request.params.userId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
     var timestamp = request.payload.timestamp
     var payload = request.payload.payload || {}
     var users = runtime.db.get('users')
@@ -191,7 +191,7 @@ v1.delete =
 
     var result, user
     var debug = braveHapi.debug(module, request)
-    var userId = request.params.userId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
     var sessions = runtime.db.get('sessions')
     var users = runtime.db.get('users')
 

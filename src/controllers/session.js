@@ -32,7 +32,7 @@ v1.getSessions =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
-    var userId = request.params.userId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
     var limit = parseInt(request.query.limit, 10)
     var timestamp = request.query.timestamp
     var type = request.query.type
@@ -93,8 +93,8 @@ v1.getTypes =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
-    var userId = request.params.userId.toUpperCase()
-    var sessionId = request.params.sessionId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
+    var sessionId = request.params.sessionId.toLowerCase()
     var limit = parseInt(request.query.limit, 10)
     var timestamp = request.query.timestamp
     var sessions = runtime.db.get('sessions')
@@ -153,8 +153,8 @@ v1.getSessionType =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
-    var userId = request.params.userId.toUpperCase()
-    var sessionId = request.params.sessionId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
+    var sessionId = request.params.sessionId.toLowerCase()
     var type = request.params.type
     var sessions = runtime.db.get('sessions')
 
@@ -199,8 +199,8 @@ v1.putSessionType =
   return async function (request, reply) {
     var result, state, user
     var debug = braveHapi.debug(module, request)
-    var userId = request.params.userId.toUpperCase()
-    var sessionId = request.params.sessionId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
+    var sessionId = request.params.sessionId.toLowerCase()
     var type = request.params.type
     var users = runtime.db.get('users')
     var sessions = runtime.db.get('sessions')
@@ -279,8 +279,8 @@ v1.delete =
 
     var result, user
     var debug = braveHapi.debug(module, request)
-    var userId = request.params.userId.toUpperCase()
-    var sessionId = request.params.sessionId.toUpperCase()
+    var userId = request.params.userId.toLowerCase()
+    var sessionId = request.params.sessionId.toLowerCase()
     var type = request.params.type
     var users = runtime.db.get('users')
     var sessions = runtime.db.get('sessions')
