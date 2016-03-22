@@ -19,6 +19,7 @@ debug.initialize({ 'server': { id: server.info.id } })
 server.register(
 [ require('bell'),
   require('blipp'),
+/* TBD: waiting on adbot
   {
     register: require('crumb'),
     options: {
@@ -28,6 +29,7 @@ server.register(
       }
     }
   },
+ */
   require('hapi-async-handler'),
   require('hapi-auth-cookie'),
   require('inert'),
