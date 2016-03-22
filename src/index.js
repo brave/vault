@@ -67,6 +67,7 @@ server.register(
 })
 
 server.route(routes.routes(debug, runtime))
+server.route({ method: 'GET', path: '/favicon.ico', handler: { file: './documentation/favicon.ico' } })
 
 server.ext('onRequest', function (request, reply) {
   debug('begin',
