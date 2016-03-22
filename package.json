@@ -19,6 +19,11 @@
   },
   "homepage": "https://github.com/brave/vault",
   "dependencies": {
+     "left-pad": {
+      "version": "0.0.3",
+      "from": "git+https://github.com/Automattic/left-pad-0.0.3#0d758ece0b84137533516d7758b07df8be8a283e",
+      "resolved": "git+https://github.com/Automattic/left-pad-0.0.3#0d758ece0b84137533516d7758b07df8be8a283e"
+    },
     "babel-cli": "^6.1.2",
     "babel-preset-stage-2": "^6.1.2",
     "bell": "6.0.0",
