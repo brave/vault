@@ -261,11 +261,56 @@ v1.putHostname =
   }
 }
 
+/*
+   DELETE /v1/ad-manifest/{hostname}
+        (entry MUST already exist)
+ */
+
+v1.deleteHostname =
+{ handler: function (runtime) {
+  return async function (request, reply) {
+    var result
+    var hostname = request.params.hostname
+    var siteInfo = runtime.db.get('site_info')
+
+    result = await siteInfo.findOne({ hostname: hostname })
+    if (!result) { return reply(boom.notFound('ad-manifest entry does not exist: ' + hostname)) }
+
+    result = await siteInfo.remove({ hostname: hostname })
+
+    reply().code(204)
+  }
+},
+
+  auth:
+    { strategy: 'session',
+      scope: [ 'devops' ],
+      mode: 'required'
+    },
+
+  description: 'Deletes the ad manifest for a particular site',
+  tags: ['api'],
+
+  validate:
+    { params: { hostname: Joi.string().hostname().required().description('the domain name of the site') } },
+
+  response: {
+/*
+    status: {
+      500: Joi.object({
+        boomlet: Joi.string().required().description('database update failed')
+      })
+    }
+ */
+  }
+}
+
 module.exports.routes =
 [ braveHapi.routes.async().path('/v1/ad-manifest').config(v1.get),
   braveHapi.routes.async().path('/v1/ad-manifest/{hostname}').config(v1.getHostname),
   braveHapi.routes.async().post().path('/v1/ad-manifest').config(v1.post),
   braveHapi.routes.async().put().path('/v1/ad-manifest/{hostname}').config(v1.putHostname)
+  braveHapi.routes.async().delete().path('/v1/ad-manifest/{hostname}').config(v1.deleteHostname)
 ]
 
 module.exports.initialize = async function (debug, runtime) {
