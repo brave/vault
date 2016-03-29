@@ -1,14 +1,14 @@
-# Principles of using the Brave Vault
-The Brave _vault_ is a private repository for your browsing information.
+# Principles of using the Brave Vault (0.1.1)
+The Brave Vault is a private repository for your browsing information.
 Because you may use multiple browsers,
-the vault also allows browsers to sync data.
+the Vault also allows browsers to sync data.
 
-The vault is carefully designed so as to "know" as little as possible about you and your browsing habits.
+The Vault is carefully designed so as to "know" as little as possible about you and your browsing habits.
 In order to understand the limitations of this design,
-we need to examine the basic principles of the vault.
+we need to examine the basic principles of the Vault.
 
 ## Personas and Sessions
-The central data element in the vault is a _persona_ -- sometimes referred to as a _user_ of the system.
+The central data element in the Vault is a _persona_ -- sometimes referred to as a _user_ of the system.
 A persona is meant to identify a set of your browsing behaviors,
 without identifying you.
 Each Brave-capable browser is free to create its own persona,
@@ -67,7 +67,7 @@ the HTTP body is:
 The `version` property is self-explanatory.
 
 The `publicKey` property is the hexadecimal string representation of the public key used to verify digital signatures.
-The vault verifies the signature as the authorization check for an operation.
+The Vault verifies the signature as the authorization check for an operation.
 
 The `privateKey` property is an object with an `iv` parameter used with the `masterKey` to generate the `encryptedData`
 parameter.
@@ -127,9 +127,9 @@ The `signature` and `nonce` properties are used to ensure that the client actual
     })
 
 In order for the `nonce` to be considered valid,
-it must be "close" to the vault's notion of the current time.
+it must be "close" to the Vault's notion of the current time.
 In order to avoid time synchronization issues,
-the vault will include its own `nonce` property in the results of these operations:
+the Vault will include its own `nonce` property in the results of these operations:
 
     GET /v1/ping
 
@@ -150,15 +150,15 @@ e.g.,
 
 To summarize:
 
-* Whenever the browser stores something encrypted in the vault,
+* Whenever the browser stores something encrypted in the Vault,
 it encrypts data using the `masterKey` and a one-time initialization vector.
-The `masterKey` is never stored in the vault:
+The `masterKey` is never stored in the Vault:
 only the browser that created the persona
 -- along with any other browsers that you configure to be authorized --
 are able to decrypt the actual value.
 
-* Whenever the browser stores something in the vault,
-it uses the `signingPair.privateKey` to generate a signature over a hashed value to allow the vault to determine if
+* Whenever the browser stores something in the Vault,
+it uses the `signingPair.privateKey` to generate a signature over a hashed value to allow the Vault to determine if
 the browser is authorized.
 
 ### Creating a Session
@@ -182,7 +182,7 @@ the "new" browser needs to be told:
 
 * the persona-identifier (`userId`)
 
-* the `masterKey` (for data encryption and to decrypt the encrypted `signingPair.privateKey` in the vault)
+* the `masterKey` (for data encryption and to decrypt the encrypted `signingPair.privateKey` in the Vault)
 
 The easiest way to do this is to have the "old" browser generate a [QR code](https://en.wikipedia.org/wiki/QR_code)
 of the form:
@@ -216,7 +216,7 @@ imported in to the "new" browser,
 and then wiped.
 
 ## Managing State
-The vault manages two kinds of state:
+The Vault manages two kinds of state:
 
 * session state, that is session-specific; and,
 
@@ -290,12 +290,12 @@ For example:
       })
     })
 
-Note that the vault verifies the digital signature in order to ensure that the operation is authorized.
+Note that the Vault verifies the digital signature in order to ensure that the operation is authorized.
 The `nonce` property is a timestamp indicating the number of seconds since the UNIX epoch.
 In order for the `nonce` to be considered valid,
-it must be "close" to the vault's notion of the current time.
+it must be "close" to the Vault's notion of the current time.
 In order to avoid time synchronization issues,
-the vault will include its own `nonce` property in the results of many operations.
+the Vault will include its own `nonce` property in the results of many operations.
 The browser is responsible for correlating this value to its own notion of the current time,
 e.g.,
 
