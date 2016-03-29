@@ -309,7 +309,7 @@ module.exports.routes =
 [ braveHapi.routes.async().path('/v1/ad-manifest').config(v1.get),
   braveHapi.routes.async().path('/v1/ad-manifest/{hostname}').config(v1.getHostname),
   braveHapi.routes.async().post().path('/v1/ad-manifest').config(v1.post),
-  braveHapi.routes.async().put().path('/v1/ad-manifest/{hostname}').config(v1.putHostname)
+  braveHapi.routes.async().put().path('/v1/ad-manifest/{hostname}').config(v1.putHostname),
   braveHapi.routes.async().delete().path('/v1/ad-manifest/{hostname}').config(v1.deleteHostname)
 ]
 
