@@ -4,6 +4,7 @@ var Elliptic = require('elliptic').ec
 var ec = new Elliptic('p256')
 var Joi = require('joi')
 // var timestamp = require('monotonic-timestamp')
+var underscore = require('underscore')
 
 var exports = {}
 
