@@ -7,7 +7,7 @@ config/config.development.js
 
 # Logs
 logs
-*.log
+*.log*
 typescript
 
 # Runtime data

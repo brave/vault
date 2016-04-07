@@ -29,7 +29,7 @@ exports.verify = async function (debug, user, data) {
   nonce = header.nonce
   if (typeof nonce === 'string') nonce = parseFloat(nonce)
   if (isNaN(nonce)) return boom.badRequest('header.nonce is invalid: ' + JSON.stringify(header.nonce))
-  diff = Math.abs(new Date().getTime() - (nonce * 1000.0))
+  diff = Math.abs(underscore.now() - (nonce * 1000.0))
   // NB: 10 minutes is temporary
   if (diff > (10 * 60 * 1000)) return boom.badData('header.nonce is untimely: ' + JSON.stringify(header.nonce))
 
@@ -67,7 +67,7 @@ exports.add_header_schema = function (payload) {
 }
 
 exports.add_nonce_data = function (payload) {
-  return { payload: payload, trailer: { nonce: (new Date().getTime() / 1000.0).toString() } }
+  return { payload: payload, trailer: { nonce: (underscore.now() / 1000.0).toString() } }
 }
 
 exports.add_nonce_schema = function (payload) {
