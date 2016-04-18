@@ -1,11 +1,10 @@
-var DB = require('./db')
+var DB = require('./database')
 
 var profile = process.env.NODE_ENV || 'development'
 var config = require('../config/config.' + profile + '.js')
-var database = new DB(config)
 
 module.exports = {
   config: config,
-  db: database,
+  db: new DB(config),
   login: config.login
 }

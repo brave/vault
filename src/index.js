@@ -110,21 +110,20 @@ server.on('log', function (event, tags) {
           }
         })
 }).on('response', function (request) {
-  var duration, flattened
+  var flattened
   var logger = request._logger || []
   var params = { request:
                  { id: request.id,
                    method: request.method.toUpperCase(),
                    pathname: request.url.pathname,
-                   statusCode: request.response.statusCode,
-                   duration: (duration) && (duration / 1000)
+                   statusCode: request.response.statusCode
                  },
                  headers: request.response.headers,
                  error: braveHapi.error.inspect(request.response._error)
                }
 
   logger.forEach(function (entry) {
-    if ((entry.data) && (typeof entry.data.msec === 'number')) { duration = entry.data.msec }
+    if ((entry.data) && (typeof entry.data.msec === 'number')) { params.request.duration = entry.data.msec }
   })
 
   if ((newrelic) && (request.response._error)) {
