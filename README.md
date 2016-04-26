@@ -5,7 +5,25 @@ Brave personal data store vault.
 
 <img src='documentation/ecosystem.png' />
 
-## Setup
+# Initialization
+Take a look at the files in the `config/` directory.
+When the server starts,
+it will look file a file called `config/config.{PROFILE}.js` where `{PROFILE}` is `$NODE_ENV` (defaulting to `"development"`).
+
+Authentication is achieved via a GitHub [OAuth application](https://github.com/settings/developers).
+Create a developer application with an authorization callback of the form `https://{DOMAIN:PORT}/v1/login` and update the
+`login.clientId` and `login.clientSecret` properties.
+
+Authorization is achieved by verifying that the user is a member of a GitHub organization, i.e.,
+`https://github.com/orgs/{ORGANIZATION}/teams`.
+Set the `login.organization` property to the name of the organization.
+
+Now start the server with `npm start` and `https://{DOMAIN:PORT}/v1/login` which will start the authentication/authorization
+process.
+On success,
+you will be redirected to `https://{DOMAIN:PORT}/documentation`.
+
+# Setup
 Clone the repo: `git clone git@github.com:brave/vault.git`
 
 Install dependencies with `npm install`
