@@ -26,12 +26,10 @@ v1.ping =
   tags: ['api'],
 
   validate:
-    { query: {}
-    },
+    { query: {} },
 
   response:
-    { schema: helper.add_nonce_schema(Joi.any())
-    }
+    { schema: helper.add_nonce_schema(Joi.any().description('static properties of the server')) }
 }
 
 module.exports.routes =
