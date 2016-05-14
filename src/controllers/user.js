@@ -32,8 +32,7 @@ v1.get =
   tags: ['api'],
 
   validate:
-    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') }
-    },
+    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') } },
 
   response: {
     schema: Joi.any()
@@ -136,8 +135,7 @@ v1.put =
   tags: ['api'],
 
   validate:
-    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') }
-    },
+    { params: { userId: Joi.string().guid().required().description('the identity of the user entry') } },
 
   response: {
     schema: Joi.any()
