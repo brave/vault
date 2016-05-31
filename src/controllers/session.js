@@ -13,7 +13,7 @@ var sessionSchema = Joi.object().keys({
   type: Joi.string().min(1).required().description('the name of the type'),
   header: Joi.object({
     signature: Joi.string().required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
-    nonce: Joi.string().regex(/^-?\d+\.?\d*$/).required().description('a time-based, monotonically-increasing value')
+    nonce: Joi.string().regex(/^\d+\.?\d*$/).required().description('a time-based, monotonically-increasing value')
   }).required(),
   payload: Joi.object().required().keys({
     iv: Joi.string().min(1).required().description('a once-only initialization vector'),
