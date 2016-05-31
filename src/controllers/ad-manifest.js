@@ -54,20 +54,13 @@ v1.get =
   response: {
     schema: Joi.array().items(Joi.object().keys({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
         replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
       }).required())
     }))
-/*
-    status: {
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid value for the timestamp parameter')
-      })
-    }
- */
   }
 }
 
@@ -101,20 +94,13 @@ v1.getHostname =
   response: {
     schema: Joi.object({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
         replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
       }).required())
     })
-/*
-    status: {
-      404: Joi.object({
-        boomlet: Joi.string().required().description('ad-manifest entry does not exist')
-      })
-    }
- */
   }
 }
 
@@ -158,7 +144,8 @@ v1.post =
   tags: ['api'],
 
   validate:
-    { payload:
+    { query: { crumb: Joi.string().description('the CRUMB token') },
+      payload:
       { hostname: Joi.string().hostname().required().description('the domain name of the site'),
         timestamp: Joi.any().forbidden(),
         replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required().description('the ad\'s width in pixels'),
@@ -171,23 +158,13 @@ v1.post =
   response: {
     schema: Joi.object({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
         replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
       }).required())
     })
-/*
-    status: {
-      422: Joi.object({
-        boomlet: Joi.string().required().description('ad-manifest entry already exists')
-      }),
-      500: Joi.object({
-        boomlet: Joi.string().required().description('database creation failed')
-      })
-    }
- */
   }
 }
 
@@ -227,7 +204,9 @@ v1.putHostname =
   tags: ['api'],
 
   validate:
-    { params: { hostname: Joi.string().hostname().required().description('the domain name of the site') },
+    { params: { hostname: Joi.string().hostname().required().description('the domain name of the site'),
+      crumb: Joi.string().description('the CRUMB token')
+    },
       payload:
       { hostname: Joi.any().forbidden(),
         timestamp: Joi.any().forbidden(),
@@ -241,20 +220,13 @@ v1.putHostname =
   response: {
     schema: Joi.object({
       hostname: Joi.string().hostname().required().description('the domain name of the site'),
-      timestamp: Joi.string().required().description('an opaque, monotonically-increasing value'),
+      timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value'),
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
         replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
       }).required())
     })
-/*
-    status: {
-      500: Joi.object({
-        boomlet: Joi.string().required().description('database update failed')
-      })
-    }
- */
   }
 }
 
@@ -292,13 +264,6 @@ v1.deleteHostname =
     { params: { hostname: Joi.string().hostname().required().description('the domain name of the site') } },
 
   response: {
-/*
-    status: {
-      500: Joi.object({
-        boomlet: Joi.string().required().description('database update failed')
-      })
-    }
- */
   }
 }
 

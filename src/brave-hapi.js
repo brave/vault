@@ -1,6 +1,6 @@
 /* utilities for Brave's HAPI servers
 
-   soon to be an open source module...
+   not really extensive enough for its own package...
 
 */
 
@@ -36,6 +36,11 @@ AsyncRoute.prototype.get = function () {
 
 AsyncRoute.prototype.put = function () {
   this.internal.method = 'PUT'
+  return this
+}
+
+AsyncRoute.prototype.patch = function () {
+  this.internal.method = 'PATCH'
   return this
 }
 
@@ -83,7 +88,24 @@ var ErrorInspect = function (err) {
 
 exports.error = { inspect: ErrorInspect }
 
-/**
+/*
+ * Async wrapper for wreck.get to return the response payload.
+ */
+var WreckGet = async function (server, opts) {
+  return new Promise((resolve, reject) => {
+    wreck.get(
+      server,
+      opts,
+      (err, response, body) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve(body)
+      })
+  })
+}
+
+/*
  * Async wrapper for wreck.post to return the response payload.
  */
 var WreckPost = async function (server, opts) {
@@ -100,6 +122,6 @@ var WreckPost = async function (server, opts) {
   })
 }
 
-exports.wreck = { post: WreckPost }
+exports.wreck = { get: WreckGet, post: WreckPost }
 
 module.exports = exports

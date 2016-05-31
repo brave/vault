@@ -34,17 +34,7 @@ v1.get =
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') } },
 
-  response: {
-    schema: Joi.any()
-
-/*
-    status: {
-      404: Joi.object({
-        boomlet: Joi.string().required().description('user entry does not exist')
-      })
-    }
- */
-  }
+  response: { schema: Joi.any() }
 }
 
 /*
@@ -137,45 +127,7 @@ v1.put =
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') } },
 
-  response: {
-    schema: Joi.any()
-/*
-    status: {
-      200: Joi.any(),
-      201: Joi.any(),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid or missing payload.version')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid or missing payload.publicKey')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid or missing payload.privateKey')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid timestamp')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('timestamp mismatch')
-      }),
-      500: Joi.object({
-        boomlet: Joi.string().required().description('update failed')
-      }),
-      500: Joi.object({
-        boomlet: Joi.string().required().description('upsert failed')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('header.nonce is invalid')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('header.nonce is untimely')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('signature error')
-      })
-    }
- */
-  }
+  response: { schema: Joi.any() }
 }
 
 /*
@@ -216,15 +168,7 @@ v1.delete =
       query: { message: helper.add_header_schema(Joi.any()).required() }
     },
 
-  response: {
-/*
-    status: {
-      404: Joi.object({
-        boomlet: Joi.string().required().description('user entry does not exist')
-      })
-    }
- */
-  }
+  response: { schema: Joi.any() }
 }
 
 module.exports.routes =
