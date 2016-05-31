@@ -13,13 +13,13 @@ var sessionSchema = Joi.object().keys({
   type: Joi.string().min(1).required().description('the name of the type'),
   header: Joi.object({
     signature: Joi.string().required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
-    nonce: Joi.string().required().description('a time-based, monotonically-increasing value')
+    nonce: Joi.string().regex(/^[0-9]+$/).required().description('a time-based, monotonically-increasing value')
   }).required(),
   payload: Joi.object().required().keys({
     iv: Joi.string().min(1).required().description('a once-only initialization vector'),
     encryptedData: Joi.string().min(1).required()
   }),
-  timestamp: Joi.string().required().description('an opaque, monotonically-increasing value')
+  timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value')
 })
 
 /*
@@ -73,13 +73,6 @@ v1.getSessions =
 
   response: {
     schema: helper.add_nonce_schema(Joi.array().items(sessionSchema))
-/*
-    status: {
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid value for the timestamp parameter')
-      })
-    }
- */
   }
 }
 
@@ -135,13 +128,6 @@ v1.getTypes =
 
   response: {
     schema: helper.add_nonce_schema(Joi.array().items(sessionSchema))
-/*
-    status: {
-      400: Joi.object({
-        boomlet: Joi.string().required().description('invalid value for the timestamp parameter')
-      })
-    }
- */
   }
 }
 
@@ -179,13 +165,6 @@ v1.getSessionType =
 
   response: {
     schema: helper.add_nonce_schema(sessionSchema)
-/*
-    status: {
-      404: Joi.object({
-        boomlet: Joi.string().required().description('session/type entry does not exist')
-      })
-    }
- */
   }
 }
 
@@ -235,37 +214,7 @@ v1.putSessionType =
       }))
     },
 
-  response: {
-    schema: helper.add_nonce_schema(Joi.any())
-/*
-    status: {
-      400: Joi.object({
-        boomlet: Joi.string().required().description('payload is not cryptographically-signed')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('unknown user entry cryptography version')
-      }),
-      400: Joi.object({
-        boomlet: Joi.string().required().description('header.nonce is invalid')
-      }),
-      404: Joi.object({
-        boomlet: Joi.string().required().description('user entry does not exist')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('user entry is not cryptographically-enabled')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('header.nonce is untimely')
-      }),
-      422: Joi.object({
-        boomlet: Joi.string().required().description('signature error')
-      })
-      500: Joi.object({
-        boomlet: Joi.string().required().description('database update failed')
-      })
-    }
- */
-  }
+  response: { schema: helper.add_nonce_schema(Joi.any()) }
 }
 
 /*
@@ -310,15 +259,7 @@ v1.delete =
       query: { message: helper.add_header_schema(Joi.any()).required() }
     },
 
-  response: {
-/*
-    status: {
-      404: Joi.object({
-        boomlet: Joi.string().required().description('user entry does not exist')
-      })
-    }
- */
-  }
+  response: { schema: Joi.any() }
 }
 
 module.exports.routes =

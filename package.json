@@ -1,9 +1,10 @@
 {
   "name": "vault",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Brave personal data store vault.",
   "main": "index.js",
   "scripts": {
+    "lint": "gulp lint",
     "start": "DEBUG=*,-babel ./node_modules/.bin/babel-node src/index.js",
     "test": "npm run test-security",
     "test-security": "nsp check"
