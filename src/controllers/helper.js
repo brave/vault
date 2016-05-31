@@ -61,7 +61,7 @@ exports.add_header_schema = function (payload) {
   return Joi.object({
     header: Joi.object({
       signature: Joi.string().required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
-      nonce: Joi.string().regex(/^[0-9]+$/).required().description('a time-based, monotonically-increasing value')
+      nonce: Joi.string().regex(/^-?\d+\.?\d*$/).required().description('a time-based, monotonically-increasing value')
     }).required(),
     payload: payload.required()
   })
@@ -75,7 +75,7 @@ exports.add_nonce_schema = function (payload) {
   return Joi.object({
     payload: payload.required(),
     trailer: Joi.object({
-      nonce: Joi.string().regex(/^[0-9]+$/).required().description('a time-based, monotonically-increasing value')
+      nonce: Joi.string().regex(/^-?\d+\.?\d*$/).required().description('a time-based, monotonically-increasing value')
     }).required()
   })
 }
