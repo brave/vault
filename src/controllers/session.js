@@ -12,12 +12,12 @@ var sessionSchema = Joi.object().keys({
   sessionId: Joi.string().guid().required().description('the identity of the session'),
   type: Joi.string().min(1).required().description('the name of the type'),
   header: Joi.object({
-    signature: Joi.string().required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
+    signature: Joi.string().hex().length(128).required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
     nonce: Joi.string().regex(/^\d+\.?\d*$/).required().description('a time-based, monotonically-increasing value')
   }).required(),
   payload: Joi.object().required().keys({
-    iv: Joi.string().min(1).required().description('a once-only initialization vector'),
-    encryptedData: Joi.string().min(1).required()
+    iv: Joi.string().hex().length(24).required().description('a once-only initialization vector'),
+    encryptedData: Joi.string().hex().min(1).required()
   }),
   timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value')
 })
@@ -209,8 +209,8 @@ v1.putSessionType =
         type: Joi.string().min(1).required().description('the name of the type')
       },
       payload: helper.add_header_schema(Joi.object().keys({
-        iv: Joi.string().min(1).required().description('a once-only initialization vector'),
-        encryptedData: Joi.string().min(1).required()
+        iv: Joi.string().hex().length(24).required().description('a once-only initialization vector'),
+        encryptedData: Joi.string().hex().min(1).required()
       }))
     },
 
