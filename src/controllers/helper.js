@@ -60,7 +60,7 @@ exports.verify = async function (debug, user, data) {
 exports.add_header_schema = function (payload) {
   return Joi.object({
     header: Joi.object({
-      signature: Joi.string().required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
+      signature: Joi.string().hex().length(128).required().description('a digital signature calculated over userId:nonce:JSON.stringify(payload)'),
       nonce: Joi.string().regex(/^\d+\.?\d*$/).required().description('a time-based, monotonically-increasing value')
     }).required(),
     payload: payload.required()

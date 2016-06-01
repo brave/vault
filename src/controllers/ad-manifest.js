@@ -58,7 +58,7 @@ v1.get =
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
-        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+        replaceId: Joi.string().regex(/^[A-Za-z][\w\.:-]*$/).required().description('the ad\'s DOM identifier ')
       }).required())
     }))
   }
@@ -98,7 +98,7 @@ v1.getHostname =
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
-        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+        replaceId: Joi.string().regex(/^[A-Za-z][\w\.:-]*$/).required().description('the ad\'s DOM identifier ')
       }).required())
     })
   }
@@ -150,7 +150,7 @@ v1.post =
         timestamp: Joi.any().forbidden(),
         replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required().description('the ad\'s width in pixels'),
                                                              height: Joi.number().positive().required().description('the ad\'s height in pixels'),
-                                                             replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+                                                             replaceId: Joi.string().regex(/^[A-Za-z][\w\.:-]*$/).required().description('the ad\'s DOM identifier ')
                                                            })).required()
       }
     },
@@ -162,7 +162,7 @@ v1.post =
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
-        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+        replaceId: Joi.string().regex(/^[A-Za-z][\w\.:-]*$/).required().description('the ad\'s DOM identifier ')
       }).required())
     })
   }
@@ -212,7 +212,7 @@ v1.putHostname =
         timestamp: Joi.any().forbidden(),
         replacementAd: Joi.array().items(Joi.object().keys({ width: Joi.number().positive().required(),
                                                              height: Joi.number().positive().required(),
-                                                             replaceId: Joi.string().required()
+                                                             replaceId: Joi.string().regex(/^[A-Za-z][\w\.:-]*$/).required()
                                                            })).required()
       }
     },
@@ -224,7 +224,7 @@ v1.putHostname =
       replacementAd: Joi.array().items(Joi.object().keys({
         width: Joi.number().positive().required().description('the ad\'s width in pixels'),
         height: Joi.number().positive().required().description('the ad\'s height in pixels'),
-        replaceId: Joi.string().required().description('the ad\'s DOM identifier ')
+        replaceId: Joi.string().regex(/^[A-Za-z][\w\.:-]*$/).required().description('the ad\'s DOM identifier ')
       }).required())
     })
   }
