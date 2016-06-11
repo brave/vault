@@ -5,12 +5,12 @@ var Hapi = require('hapi')
 
 var braveHapi = require('./brave-hapi')
 var debug = new (require('sdebug'))('server')
-var npminfo = require(path.join(__dirname, '..', 'package'))
 var path = require('path')
 var routes = require('./controllers/index')
 var underscore = require('underscore')
 var util = require('util')
 
+var npminfo = require(path.join(__dirname, '..', 'package'))
 var runtime = require('./runtime.js')
 
 var server = new Hapi.Server()
