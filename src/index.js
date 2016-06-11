@@ -5,9 +5,11 @@ var Hapi = require('hapi')
 
 var braveHapi = require('./brave-hapi')
 var debug = new (require('sdebug'))('server')
-var pack = require('./../package')
+var path = require('path')
+var npminfo = require(path.join(__dirname, '..', 'package'))
 var routes = require('./controllers/index')
 var underscore = require('underscore')
+var util = require('util')
 
 var runtime = require('./runtime.js')
 
@@ -35,7 +37,7 @@ server.register(
   {
     register: require('hapi-swagger'),
     options: {
-      apiVersion: pack.version
+      apiVersion: npminfo.version
     }
   }
 ], function (err) {
@@ -146,6 +148,25 @@ server.on('log', function (event, tags) {
 })
 
 server.start(function (err) {
+  var children = {}
+  var f = (m) => {
+    m.children.forEach(entry => {
+      var p, version
+      var components = path.parse(entry.filename).dir.split(path.sep)
+      var i = components.indexOf('node_modules')
+
+      if (i >= 0) {
+        p = components[i + 1]
+        version = require(path.join(components.slice(0, i + 2).join(path.sep), 'package.json')).version
+        if (!children[p]) children[p] = version
+        else if (util.isArray(children[p])) {
+          if (children[p].indexOf(version) < 0) children[p].push(version)
+        } else if (children[p] !== version) children[p] = [ children[p], version ]
+      }
+      f(entry)
+    })
+  }
+
   if (err) {
     debug('unable to start server', err)
     throw err
@@ -157,6 +178,12 @@ server.start(function (err) {
     port: runtime.config.port,
     version: server.version
   })
+
+  runtime.npminfo = underscore.pick(npminfo, 'name', 'version', 'description', 'author', 'license', 'bugs', 'homepage')
+  runtime.npminfo.children = {}
+
+  f(module)
+  underscore.keys(children).sort().forEach(m => { runtime.npminfo.children[m] = children[m] })
 
   // Hook to notify start script.
   if (process.send) { process.send('started') }
