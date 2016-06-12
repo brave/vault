@@ -37,7 +37,13 @@ server.register(
   {
     register: require('hapi-swagger'),
     options: {
-      apiVersion: npminfo.version
+      info: {
+        title: npminfo.name,
+        description: npminfo.description,
+        contact: npminfo.author,
+        license: npminfo.license,
+        version: npminfo.version
+      }
     }
   }
 ], function (err) {
