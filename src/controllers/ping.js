@@ -25,6 +25,4 @@ v1.ping =
     { schema: helper.add_nonce_schema(Joi.any().description('static properties of the server')) }
 }
 
-module.exports.routes =
-[ braveHapi.routes.async().path('/v1/ping').config(v1.ping)
-]
+module.exports.routes = [ braveHapi.routes.async().path('/v1/ping').config(v1.ping) ]
