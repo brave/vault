@@ -11,7 +11,7 @@ var v1 = {}
    GET /v1/users/{userId}
  */
 
-v1.get =
+v1.read =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result, user
@@ -45,7 +45,7 @@ v1.get =
    however, using a POST implies that the server generates the userId, which is contrary to "the model"
  */
 
-v1.put =
+v1.write =
 { handler: function (runtime) {
   return async function (request, reply) {
     if (!request.payload) request.payload = {}
@@ -172,8 +172,8 @@ v1.delete =
 }
 
 module.exports.routes =
-[ braveHapi.routes.async().get().path('/v1/users/{userId}').config(v1.get),
-  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.put),
+[ braveHapi.routes.async().get().path('/v1/users/{userId}').config(v1.read),
+  braveHapi.routes.async().put().path('/v1/users/{userId}').config(v1.write),
   braveHapi.routes.async().delete().path('/v1/users/{userId}').config(v1.delete)
 ]
 

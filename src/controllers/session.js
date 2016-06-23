@@ -28,7 +28,7 @@ var sessionSchema = Joi.object().keys({
 
  */
 
-v1.getSessions =
+v1.readSessions =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
@@ -82,7 +82,7 @@ v1.getSessions =
 
  */
 
-v1.getTypes =
+v1.readTypes =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
@@ -135,7 +135,7 @@ v1.getTypes =
    GET /v1/users/{userId}/sessions/{sessionId}/types/{type}
  */
 
-v1.getSessionType =
+v1.readSessionType =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
@@ -173,7 +173,7 @@ v1.getSessionType =
         create/update (entry MAY already exist)
  */
 
-v1.putSessionType =
+v1.writeSessionType =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result, state, user
@@ -221,7 +221,7 @@ v1.putSessionType =
    DELETE /v1/users/{userId}/sessions/{sessionId}/types/{type}
  */
 
-v1.delete =
+v1.deleteSessionType =
 { handler: function (runtime) {
   return async function (request, reply) {
     if (!request.query) request.query = {}
@@ -263,11 +263,11 @@ v1.delete =
 }
 
 module.exports.routes =
-[ braveHapi.routes.async().path('/v1/users/{userId}/sessions').config(v1.getSessions),
-  braveHapi.routes.async().path('/v1/users/{userId}/sessions/{sessionId}/types').config(v1.getTypes),
-  braveHapi.routes.async().path('/v1/users/{userId}/sessions/{sessionId}/types/{type}').config(v1.getSessionType),
-  braveHapi.routes.async().put().path('/v1/users/{userId}/sessions/{sessionId}/types/{type}').config(v1.putSessionType),
-  braveHapi.routes.async().delete().path('/v1/users/{userId}/sessions/{sessionId}/types/{type}').config(v1.delete)
+[ braveHapi.routes.async().path('/v1/users/{userId}/sessions').config(v1.readSessions),
+  braveHapi.routes.async().path('/v1/users/{userId}/sessions/{sessionId}/types').config(v1.readTypes),
+  braveHapi.routes.async().path('/v1/users/{userId}/sessions/{sessionId}/types/{type}').config(v1.readSessionType),
+  braveHapi.routes.async().put().path('/v1/users/{userId}/sessions/{sessionId}/types/{type}').config(v1.writeSessionType),
+  braveHapi.routes.async().delete().path('/v1/users/{userId}/sessions/{sessionId}/types/{type}').config(v1.deleteSessionType)
 ]
 
 module.exports.initialize = async function (debug, runtime) {

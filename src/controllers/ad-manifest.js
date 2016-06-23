@@ -68,7 +68,7 @@ v1.get =
    GET /v1/ad-manifest/{hostname}
  */
 
-v1.getHostname =
+v1.read =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
@@ -110,7 +110,7 @@ v1.getHostname =
         create (entry MUST not exist)
  */
 
-v1.post =
+v1.create =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
@@ -174,7 +174,7 @@ v1.post =
         create/update (entry MAY already exist)
  */
 
-v1.putHostname =
+v1.write =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result, state
@@ -235,7 +235,7 @@ v1.putHostname =
         (entry MUST already exist)
  */
 
-v1.deleteHostname =
+v1.delete =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
@@ -269,10 +269,10 @@ v1.deleteHostname =
 
 module.exports.routes =
 [ braveHapi.routes.async().path('/v1/ad-manifest').config(v1.get),
-  braveHapi.routes.async().path('/v1/ad-manifest/{hostname}').config(v1.getHostname),
-  braveHapi.routes.async().post().path('/v1/ad-manifest').config(v1.post),
-  braveHapi.routes.async().put().path('/v1/ad-manifest/{hostname}').config(v1.putHostname),
-  braveHapi.routes.async().delete().path('/v1/ad-manifest/{hostname}').config(v1.deleteHostname)
+  braveHapi.routes.async().path('/v1/ad-manifest/{hostname}').config(v1.read),
+  braveHapi.routes.async().post().path('/v1/ad-manifest').config(v1.create),
+  braveHapi.routes.async().put().path('/v1/ad-manifest/{hostname}').config(v1.write),
+  braveHapi.routes.async().delete().path('/v1/ad-manifest/{hostname}').config(v1.delete)
 ]
 
 module.exports.initialize = async function (debug, runtime) {
