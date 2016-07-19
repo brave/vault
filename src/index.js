@@ -1,5 +1,12 @@
 process.env.NEW_RELIC_NO_CONFIG_FILE = true
 if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { var newrelic = require('newrelic') }
+if (!newrelic) {
+  newrelic = {
+    createBackgroundTransaction: (name, group, cb) => { return (cb || group) },
+    noticeError: (ex, params) => {},
+    endTransaction: () => {}
+  }
+}
 
 var Hapi = require('hapi')
 
