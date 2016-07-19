@@ -1,7 +1,7 @@
 module.exports =
 { port: process.env.PORT || 3000
 , database       :
-  { mongo        : process.env.MONGO_URI || 'localhost/test' }
+  { mongo        : process.env.MONGODB_URI || 'localhost/test' }
 ,  login:
   { organization : 'brave'
   , world        : '/documentation'
