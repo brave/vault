@@ -1,5 +1,12 @@
 process.env.NEW_RELIC_NO_CONFIG_FILE = true
 if (process.env.NEW_RELIC_APP_NAME && process.env.NEW_RELIC_LICENSE_KEY) { var newrelic = require('newrelic') }
+if (!newrelic) {
+  newrelic = {
+    createBackgroundTransaction: (name, group, cb) => { return (cb || group) },
+    noticeError: (ex, params) => {},
+    endTransaction: () => {}
+  }
+}
 
 var Hapi = require('hapi')
 
@@ -21,6 +28,7 @@ debug.initialize({ 'server': { id: server.info.id } })
 server.register(
 [ require('bell'),
   require('blipp'),
+/* TBD: waiting on adbot
   {
     register: require('crumb'),
     options: {
@@ -30,6 +38,7 @@ server.register(
       }
     }
   },
+ */
   require('hapi-async-handler'),
   require('hapi-auth-cookie'),
   require('inert'),
