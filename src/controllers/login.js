@@ -43,7 +43,7 @@ v1.login =
 
   description: 'Logs the user into management operations',
   notes: 'This operation authenticates an administrative role ("devops") for the vault. The user is asked to authenticate their GitHub identity, and are assigned permissions based on team-membership. Operations are henceforth authenticated via an encrypted session cookie.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { query:
@@ -74,7 +74,7 @@ v1.logout =
 
   description: 'Logs the user out',
   notes: 'Used to remove the authenticating session cookie.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { query: {}

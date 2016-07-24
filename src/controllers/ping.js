@@ -16,7 +16,7 @@ v1.ping =
 },
 
   description: 'Returns information about the server',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { query: {} },

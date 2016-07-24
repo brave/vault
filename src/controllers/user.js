@@ -29,7 +29,7 @@ v1.read =
 
   description: 'Returns user entry information',
   notes: 'Consult <a href="https://github.com/brave/vault/wiki/Principles#globalstate">Global State Principles</a>.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') } },
@@ -122,7 +122,7 @@ v1.write =
 
   description: 'Creates or updates a user entry',
   notes: 'Consult <a href="https://github.com/brave/vault/wiki/Principles#globalstate">Global State Principles</a>.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') } },
@@ -151,7 +151,7 @@ v1.delete =
     result = await helper.verify(debug, user, request.query.message)
     if (result) return reply(result)
 
-    result = await users.remove({ userId: userId })
+    await users.remove({ userId: userId })
 
     reply().code(204)
 
@@ -161,7 +161,7 @@ v1.delete =
 
   description: 'Delete a user entry, along with any associated data',
   notes: 'For the purpose authentication the "message" parameter just be present and contain a JSON-encoded header/payload pairing, with any JSON value for the  payload.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
@@ -183,7 +183,7 @@ module.exports.initialize = async function (debug, runtime) {
       name: 'users',
       property: 'userId',
       empty: { userId: '', timestamp: bson.Timestamp.ZERO },
-      unique: [ { userId: 1 } ],
+      unique: [ { userId: 0 } ],
       others: [ { timestamp: 1 } ]
     }
   ])
