@@ -42,7 +42,7 @@ v1.get =
 
   description: 'Incrementally returns ad manifests for zero or more sites',
   notes: 'The "timestamp" parameter corresponding to an opaque value, defaulting to "0". The "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { query:
@@ -84,7 +84,7 @@ v1.read =
 },
 
   description: 'Returns the ad manifest for a particular site',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params:
@@ -141,7 +141,7 @@ v1.create =
     },
 
   description: 'Creates the ad manifest for a particular site',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { query: { crumb: Joi.string().description('the CRUMB token') },
@@ -201,7 +201,7 @@ v1.write =
     },
 
   description: 'Sets the ad manifest for a particular site',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params: { hostname: Joi.string().hostname().required().description('the domain name of the site'),
@@ -245,7 +245,7 @@ v1.delete =
     result = await siteInfo.findOne({ hostname: hostname })
     if (!result) { return reply(boom.notFound('ad-manifest entry does not exist: ' + hostname)) }
 
-    result = await siteInfo.remove({ hostname: hostname })
+    await siteInfo.remove({ hostname: hostname })
 
     reply().code(204)
   }
@@ -258,7 +258,7 @@ v1.delete =
     },
 
   description: 'Deletes the ad manifest for a particular site',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params: { hostname: Joi.string().hostname().required().description('the domain name of the site') } },

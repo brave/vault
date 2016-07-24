@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Brave personal data store vault.",
   "main": "index.js",
   "scripts": {
@@ -33,7 +33,7 @@
     "hapi": "^12.1.0",
     "hapi-async-handler": "^1.0.3",
     "hapi-auth-cookie": "3.1.0",
-    "hapi-swagger": "^2.2.3",
+    "hapi-swagger": "^6.1.0",
     "inert": "^3.2.0",
     "joi": "https://github.com/mrose17/joi.git#a8597b9ef6d63f0ceeff7122a0e45cb1f99ba248",
     "mongodb": "1.4.39",

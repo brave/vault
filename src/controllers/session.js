@@ -60,7 +60,7 @@ v1.readSessions =
 
   description: 'Incrementally returns session information for a user entry',
   notes: 'The "timestamp" parameter corresponding to an opaque value, defaulting to "0". The "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params: { userId: Joi.string().guid().required().description('the identity of the user entry') },
@@ -113,7 +113,7 @@ v1.readTypes =
 
   description: 'Incrementally returns state information for a session',
   notes: 'The "timestamp" parameter corresponding to an opaque value, defaulting to "0". The "limit" parameter defaults to "100". The result is a JSON array containing zero or more entries.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params:
@@ -153,7 +153,7 @@ v1.readSessionType =
 },
 
   description: 'Returns session information for a particular user entry',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params:
@@ -200,7 +200,7 @@ v1.writeSessionType =
 },
 
   description: 'Records session information for a particular user entry',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params:
@@ -240,7 +240,7 @@ v1.deleteSessionType =
     result = await helper.verify(debug, user, request.query.message)
     if (result) return reply(result)
 
-    result = await sessions.remove({ userId: userId, sessionId: sessionId, type: type })
+    await sessions.remove({ userId: userId, sessionId: sessionId, type: type })
 
     reply().code(204)
   }
@@ -248,7 +248,7 @@ v1.deleteSessionType =
 
   description: 'Delete session information for a particular user entry',
   notes: 'For the purpose authentication the HTTP body must be present and contain a header/payload pairing, the payload may be any JSON value.',
-  tags: ['api'],
+  tags: [ 'api' ],
 
   validate:
     { params:
@@ -274,9 +274,10 @@ module.exports.initialize = async function (debug, runtime) {
   runtime.db.checkIndices(debug,
   [ { category: runtime.db.get('sessions'),
       name: 'sessions',
-      property: 'sessionId',
+      property: 'userId_0_sessionId',
       empty: { userId: '', sessionId: '', type: '', timestamp: bson.Timestamp.ZERO },
-      others: [ { userId: 1 }, { sessionId: 1 }, { type: 1 }, { timestamp: 1 } ]
+      unique: [ { userId: 0, sessionId: 0 } ],
+      others: [ { type: 1 }, { timestamp: 1 } ]
     }
   ])
 }
