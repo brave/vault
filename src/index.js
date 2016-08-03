@@ -4,6 +4,7 @@ if (!newrelic) {
   newrelic = {
     createBackgroundTransaction: (name, group, cb) => { return (cb || group) },
     noticeError: (ex, params) => {},
+    recordCustomEvent: (eventType, attributes) => {},
     endTransaction: () => {}
   }
 }
@@ -19,6 +20,7 @@ var util = require('util')
 
 var npminfo = require(path.join(__dirname, '..', 'package'))
 var runtime = require('./runtime.js')
+runtime.newrelic = newrelic
 
 var server = new Hapi.Server()
 server.connection({ port: runtime.config.port })
@@ -85,6 +87,7 @@ server.route(routes.routes(debug, runtime))
 server.route({ method: 'GET', path: '/favicon.ico', handler: { file: './documentation/favicon.ico' } })
 
 server.ext('onRequest', function (request, reply) {
+  if (request.headers['x-request-id']) request.id = request.headers['x-request-id']
   debug('begin',
         { sdebug:
           { request:
@@ -139,7 +142,7 @@ server.on('log', function (event, tags) {
                  error: braveHapi.error.inspect(request.response._error)
                }
 
-  logger.forEach(function (entry) {
+  logger.forEach((entry) => {
     if ((entry.data) && (typeof entry.data.msec === 'number')) { params.request.duration = entry.data.msec }
   })
 
@@ -189,7 +192,8 @@ server.start(function (err) {
   { protocol: server.info.protocol,
     address: server.info.address,
     port: runtime.config.port,
-    version: server.version
+    version: server.version,
+    env: underscore.pick(process.env, [ 'DEBUG', 'NEW_RELIC_APP_NAME', 'NODE_ENV' ])
   })
 
   runtime.npminfo = underscore.pick(npminfo, 'name', 'version', 'description', 'author', 'license', 'bugs', 'homepage')
