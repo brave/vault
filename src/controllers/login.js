@@ -77,11 +77,10 @@ v1.logout =
   tags: [ 'api' ],
 
   validate:
-    { query: {}
-    }
+    { query: {} }
 }
 
-module.exports.routes =
-[ braveHapi.routes.async().path('/v1/login').config(v1.login),
+module.exports.routes = [
+  braveHapi.routes.async().path('/v1/login').config(v1.login),
   braveHapi.routes.async().path('/v1/logout').config(v1.logout)
 ]
