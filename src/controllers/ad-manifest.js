@@ -16,9 +16,10 @@ v1.get =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
+    var debug = braveHapi.debug(module, request)
     var limit = parseInt(request.query.limit, 10)
     var timestamp = request.query.timestamp
-    var siteInfo = runtime.db.get('site_info')
+    var siteInfo = runtime.db.get('site_info', debug)
 
     try { timestamp = (timestamp || 0) ? bson.Timestamp.fromString(timestamp) : bson.Timestamp.ZERO } catch (ex) {
       return reply(boom.badRequest('invalid value for the timestamp parameter: ' + timestamp))
@@ -72,8 +73,9 @@ v1.read =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
+    var debug = braveHapi.debug(module, request)
     var hostname = request.params.hostname
-    var siteInfo = runtime.db.get('site_info')
+    var siteInfo = runtime.db.get('site_info', debug)
 
     result = await siteInfo.findOne({ hostname: hostname })
     if (!result) { return reply(boom.notFound('ad-manifest entry does not exist: ' + hostname)) }
@@ -117,7 +119,7 @@ v1.create =
     var debug = braveHapi.debug(module, request)
     var payload = request.payload
     var hostname = payload.hostname
-    var siteInfo = runtime.db.get('site_info')
+    var siteInfo = runtime.db.get('site_info', debug)
 
     try {
       await siteInfo.insert(underscore.extend(payload, { timestamp: bson.Timestamp() }))
@@ -178,8 +180,9 @@ v1.write =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result, state
+    var debug = braveHapi.debug(module, request)
     var hostname = request.params.hostname
-    var siteInfo = runtime.db.get('site_info')
+    var siteInfo = runtime.db.get('site_info', debug)
 
     state = { $currentDate: { timestamp: { $type: 'timestamp' } },
               $set: request.payload
@@ -239,8 +242,9 @@ v1.delete =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
+    var debug = braveHapi.debug(module, request)
     var hostname = request.params.hostname
-    var siteInfo = runtime.db.get('site_info')
+    var siteInfo = runtime.db.get('site_info', debug)
 
     result = await siteInfo.findOne({ hostname: hostname })
     if (!result) { return reply(boom.notFound('ad-manifest entry does not exist: ' + hostname)) }
@@ -277,7 +281,7 @@ module.exports.routes =
 
 module.exports.initialize = async function (debug, runtime) {
   runtime.db.checkIndices(debug,
-  [ { category: runtime.db.get('site_info'),
+  [ { category: runtime.db.get('site_info', debug),
       name: 'site_info',
       property: 'hostname',
       empty: { hostname: '', timestamp: bson.Timestamp.ZERO },
