@@ -16,7 +16,7 @@ DB.prototype.get = function (collection, debug) {
 
   sdebug.initial = debug.initial
 
-  return this.db.get(collection, { debug: sdebug })
+  return this.db.get(collection, { cache: false, debug: sdebug })
 }
 
 DB.prototype.checkIndices = async function (debug, entries) {

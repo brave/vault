@@ -17,7 +17,7 @@ exports.debug = function (info, request) {
 }
 
 var AsyncRoute = function () {
-  if (!(this instanceof AsyncRoute)) { return new AsyncRoute() }
+  if (!(this instanceof AsyncRoute)) return new AsyncRoute()
 
   this.internal = {}
   this.internal.method = 'GET'
@@ -76,11 +76,13 @@ AsyncRoute.prototype.config = function (config) {
 exports.routes = { async: AsyncRoute }
 
 var ErrorInspect = function (err) {
-  var i
+  var i, properties
 
-  if (!err) { return undefined }
+  if (!err) return
 
-  i = underscore.pick(err, 'message', 'isBoom', 'isServer', 'stack')
+  properties = [ 'message', 'isBoom', 'isServer' ]
+  if (!err.isBoom) properties.push('stack')
+  i = underscore.pick(err, properties)
   if ((err.output) && (err.output.payload)) { underscore.defaults(i, { payload: err.output.payload }) }
 
   return i
