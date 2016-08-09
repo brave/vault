@@ -32,11 +32,12 @@ v1.readSessions =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
+    var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toLowerCase()
     var limit = parseInt(request.query.limit, 10)
     var timestamp = request.query.timestamp
     var type = request.query.type
-    var sessions = runtime.db.get('sessions')
+    var sessions = runtime.db.get('sessions', debug)
 
     try { timestamp = (timestamp || 0) ? bson.Timestamp.fromString(timestamp) : bson.Timestamp.ZERO } catch (ex) {
       return reply(boom.badRequest('invalid value for the timestamp parameter: ' + timestamp))
@@ -86,11 +87,12 @@ v1.readTypes =
 { handler: function (runtime) {
   return async function (request, reply) {
     var entries, modifiers, query, result
+    var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toLowerCase()
     var sessionId = request.params.sessionId.toLowerCase()
     var limit = parseInt(request.query.limit, 10)
     var timestamp = request.query.timestamp
-    var sessions = runtime.db.get('sessions')
+    var sessions = runtime.db.get('sessions', debug)
 
     try { timestamp = (timestamp || 0) ? bson.Timestamp.fromString(timestamp) : bson.Timestamp.ZERO } catch (ex) {
       return reply(boom.badRequest('invalid value for the timestamp parameter: ' + timestamp))
@@ -139,10 +141,11 @@ v1.readSessionType =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result
+    var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toLowerCase()
     var sessionId = request.params.sessionId.toLowerCase()
     var type = request.params.type
-    var sessions = runtime.db.get('sessions')
+    var sessions = runtime.db.get('sessions', debug)
 
     result = await sessions.findOne({ userId: userId, sessionId: sessionId, type: type })
     if (!result) { return reply(boom.notFound('user/session/type entry does not exist')) }
@@ -181,8 +184,8 @@ v1.writeSessionType =
     var userId = request.params.userId.toLowerCase()
     var sessionId = request.params.sessionId.toLowerCase()
     var type = request.params.type
-    var users = runtime.db.get('users')
-    var sessions = runtime.db.get('sessions')
+    var users = runtime.db.get('users', debug)
+    var sessions = runtime.db.get('sessions', debug)
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
@@ -231,8 +234,8 @@ v1.deleteSessionType =
     var userId = request.params.userId.toLowerCase()
     var sessionId = request.params.sessionId.toLowerCase()
     var type = request.params.type
-    var users = runtime.db.get('users')
-    var sessions = runtime.db.get('sessions')
+    var users = runtime.db.get('users', debug)
+    var sessions = runtime.db.get('sessions', debug)
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
@@ -272,7 +275,7 @@ module.exports.routes =
 
 module.exports.initialize = async function (debug, runtime) {
   runtime.db.checkIndices(debug,
-  [ { category: runtime.db.get('sessions'),
+  [ { category: runtime.db.get('sessions', debug),
       name: 'sessions',
       property: 'userId_0_sessionId',
       empty: { userId: '', sessionId: '', type: '', timestamp: bson.Timestamp.ZERO },

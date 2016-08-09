@@ -15,8 +15,9 @@ v1.read =
 { handler: function (runtime) {
   return async function (request, reply) {
     var result, user
+    var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toLowerCase()
-    var users = runtime.db.get('users')
+    var users = runtime.db.get('users', debug)
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
@@ -55,7 +56,7 @@ v1.write =
     var userId = request.params.userId.toLowerCase()
     var timestamp = request.payload.timestamp
     var payload = request.payload.payload || {}
-    var users = runtime.db.get('users')
+    var users = runtime.db.get('users', debug)
 
     user = await users.findOne({ userId: userId })
     createP = !user
@@ -142,8 +143,8 @@ v1.delete =
     var result, user
     var debug = braveHapi.debug(module, request)
     var userId = request.params.userId.toLowerCase()
-    var sessions = runtime.db.get('sessions')
-    var users = runtime.db.get('users')
+    var sessions = runtime.db.get('sessions', debug)
+    var users = runtime.db.get('users', debug)
 
     user = await users.findOne({ userId: userId })
     if (!user) { return reply(boom.notFound('user entry does not exist: ' + userId)) }
@@ -179,7 +180,7 @@ module.exports.routes =
 
 module.exports.initialize = async function (debug, runtime) {
   runtime.db.checkIndices(debug,
-  [ { category: runtime.db.get('users'),
+  [ { category: runtime.db.get('users', debug),
       name: 'users',
       property: 'userId',
       empty: { userId: '', timestamp: bson.Timestamp.ZERO },
