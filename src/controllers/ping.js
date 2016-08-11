@@ -15,6 +15,12 @@ v1.ping =
   }
 },
 
+  auth:
+    { strategy: 'session',
+      scope: [ 'devops' ],
+      mode: 'required'
+    },
+
   description: 'Returns information about the server',
   tags: [ 'api' ],
 
