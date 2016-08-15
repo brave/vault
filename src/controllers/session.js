@@ -11,7 +11,7 @@ var sessionSchema = Joi.object().keys({
   userId: Joi.string().guid().required().description('the identity of the user entry'),
   sessionId: Joi.string().guid().required().description('the identity of the session'),
   type: Joi.string().min(1).required().description('the name of the type'),
-  header: Joi.object({
+  header: Joi.object().keys({
     signature: Joi.string().hex().length(128).required().description(
                  'a digital signature calculated over userId:nonce:JSON.stringify(payload)'
                ),

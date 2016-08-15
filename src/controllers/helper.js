@@ -58,8 +58,8 @@ exports.verify = async function (debug, user, data) {
 }
 
 exports.add_header_schema = function (payload) {
-  return Joi.object({
-    header: Joi.object({
+  return Joi.object().keys({
+    header: Joi.object().keys({
       signature: Joi.string().hex().length(128).required().description(
                    'a digital signature calculated over userId:nonce:JSON.stringify(payload)'
                  ),
@@ -74,9 +74,9 @@ exports.add_nonce_data = function (payload) {
 }
 
 exports.add_nonce_schema = function (payload) {
-  return Joi.object({
+  return Joi.object().keys({
     payload: payload.required(),
-    trailer: Joi.object({
+    trailer: Joi.object().keys({
       nonce: Joi.string().regex(/^\d+\.?\d*$/).required().description('a time-based, monotonically-increasing value')
     }).required()
   })
