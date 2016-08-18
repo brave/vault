@@ -95,15 +95,11 @@ exports.error = { inspect: ErrorInspect }
  */
 var WreckGet = async function (server, opts) {
   return new Promise((resolve, reject) => {
-    wreck.get(
-      server,
-      opts,
-      (err, response, body) => {
-        if (err) {
-          return reject(err)
-        }
-        resolve(body)
-      })
+    wreck.get(server, opts, (err, response, body) => {
+      if (err) return reject(err)
+
+      resolve(body)
+    })
   })
 }
 
@@ -112,15 +108,11 @@ var WreckGet = async function (server, opts) {
  */
 var WreckPost = async function (server, opts) {
   return new Promise((resolve, reject) => {
-    wreck.post(
-      server,
-      opts,
-      (err, response, body) => {
-        if (err) {
-          return reject(err)
-        }
-        resolve(body)
-      })
+    wreck.post(server, opts, (err, response, body) => {
+      if (err) return reject(err)
+
+      resolve(body)
+    })
   })
 }
 
