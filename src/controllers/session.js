@@ -198,7 +198,7 @@ v1.writeSessionType =
     state = { $currentDate: { timestamp: { $type: 'timestamp' } },
               $set: request.payload
             }
-    await sessions.update({ userId: userId, sessionId: sessionId, type }, state, { upsert: true })
+    await sessions.update({ userId: userId, sessionId: sessionId, type: type }, state, { upsert: true })
 
     reply(helper.add_nonce_data({}))
   }
