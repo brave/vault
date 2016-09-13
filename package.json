@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "0.8.37",
+  "version": "0.8.70",
   "description": "Brave personal data store vault.",
   "main": "index.js",
   "scripts": {
