@@ -85,6 +85,7 @@ server.register(
 
 server.route(routes.routes(debug, runtime))
 server.route({ method: 'GET', path: '/favicon.ico', handler: { file: './documentation/favicon.ico' } })
+server.route({ method: 'GET', path: '/robots.txt', handler: { file: './documentation/robots.txt' } })
 
 server.ext('onRequest', function (request, reply) {
   if (request.headers['x-request-id']) request.id = request.headers['x-request-id']
