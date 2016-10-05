@@ -22,15 +22,16 @@ var AsyncRoute = function () {
   this.internal = {}
   this.internal.method = 'GET'
   this.internal.path = '/'
-}
-
-AsyncRoute.prototype.post = function () {
-  this.internal.method = 'POST'
-  return this
+  this.internal.extras = {}
 }
 
 AsyncRoute.prototype.get = function () {
   this.internal.method = 'GET'
+  return this
+}
+
+AsyncRoute.prototype.post = function () {
+  this.internal.method = 'POST'
   return this
 }
 
@@ -54,6 +55,11 @@ AsyncRoute.prototype.path = function (path) {
   return this
 }
 
+AsyncRoute.prototype.extras = function (extras) {
+  this.internal.extras = extras
+  return this
+}
+
 AsyncRoute.prototype.config = function (config) {
   if (typeof config === 'function') { config = { handler: config } }
   if (typeof config.handler === 'undefined') { throw new Error('undefined handler for ' + JSON.stringify(this.internal)) }
@@ -68,7 +74,7 @@ AsyncRoute.prototype.config = function (config) {
     return {
       method: this.internal.method,
       path: this.internal.path,
-      config: payload
+      config: underscore.extend(payload, this.internal.extras)
     }
   }
 }
