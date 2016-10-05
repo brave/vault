@@ -41,6 +41,7 @@
     "monk": "https://github.com/brave/monk.git",
     "monotonic-timestamp": "0.0.9",
     "natural": "0.2.1",
+    "netmask": "1.0.6",
     "newrelic": "1.23.1",
     "priorityqueuejs": "^1.0.0",
     "request": "^2.64.0",
