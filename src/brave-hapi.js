@@ -96,9 +96,6 @@ var ErrorInspect = function (err) {
 
 exports.error = { inspect: ErrorInspect }
 
-/*
- * Async wrapper for wreck.get to return the response payload.
- */
 var WreckGet = async function (server, opts) {
   return new Promise((resolve, reject) => {
     wreck.get(server, opts, (err, response, body) => {
@@ -109,9 +106,6 @@ var WreckGet = async function (server, opts) {
   })
 }
 
-/*
- * Async wrapper for wreck.post to return the response payload.
- */
 var WreckPost = async function (server, opts) {
   return new Promise((resolve, reject) => {
     wreck.post(server, opts, (err, response, body) => {
@@ -122,6 +116,16 @@ var WreckPost = async function (server, opts) {
   })
 }
 
-exports.wreck = { get: WreckGet, post: WreckPost }
+var WreckPatch = async function (server, opts) {
+  return new Promise((resolve, reject) => {
+    wreck.patch(server, opts, (err, response, body) => {
+      if (err) return reject(err)
+
+      resolve(body)
+    })
+  })
+}
+
+exports.wreck = { get: WreckGet, patch: WreckPatch, post: WreckPost }
 
 module.exports = exports
