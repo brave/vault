@@ -4,6 +4,8 @@
 
 */
 
+var boom = require('boom')
+var Netmask = require('netmask').Netmask
 var underscore = require('underscore')
 var wreck = require('wreck')
 
@@ -14,6 +16,34 @@ exports.debug = function (info, request) {
 
   sdebug.initialize({ request: { id: request.id } })
   return sdebug
+}
+
+var whitelist = process.env.IP_WHITELIST && process.env.IP_WHITELIST.split(',')
+if (whitelist) {
+  var authorizedAddrs = [ '127.0.0.1' ]
+  var authorizedBlocks = []
+
+  whitelist.forEach((entry) => {
+    if ((entry.indexOf('/') !== -1) || (entry.split('.').length !== 4)) return authorizedBlocks.push(new Netmask(entry))
+
+    authorizedAddrs.push(entry)
+  })
+}
+
+exports.extras = {
+  ext: {
+    onPreAuth: {
+      method: function (request, reply) {
+        var ipaddr = (request.headers['x-forwarded-for'] || request.info.remoteAddress).split(', ')[0]
+
+        if ((!authorizedAddrs) ||
+              (authorizedAddrs.indexOf(ipaddr) !== -1) ||
+              (underscore.find(authorizedBlocks, (block) => { block.contains(ipaddr) }))) return reply.continue()
+
+        return reply(boom.notAcceptable())
+      }
+    }
+  }
 }
 
 var AsyncRoute = function () {
@@ -56,7 +86,7 @@ AsyncRoute.prototype.path = function (path) {
 }
 
 AsyncRoute.prototype.extras = function (extras) {
-  this.internal.extras = extras
+  this.internal.extras = extras || exports.extras
   return this
 }
 
