@@ -4,7 +4,8 @@ var underscore = require('underscore')
 
 var exports = {}
 
-exports.routes = function (debug, runtime) {
+exports.routes = async function (debug, runtime) {
+  var i, names
   var entries = {}
   var routes = [
     { method: 'GET',
@@ -12,19 +13,24 @@ exports.routes = function (debug, runtime) {
       config:
         { handler: function (request, reply) {
           reply('Welcome to the Brave Vault.')
+        },
+        auth: {
+          strategy: 'whitelist',
+          mode: 'required'
         }
       }
     }
   ]
 
-  fs.readdirSync(__dirname).forEach(name => {
+  var router = async function (name) {
     var module = require(path.join(__dirname, name))
+    var routing = module.routes
 
-    if (!underscore.isArray(module.routes)) { return }
+    if (typeof module.initialize === 'function') routing = (await module.initialize(debug, runtime)) || routing
 
-    if (typeof module.initialize === 'function') { module.initialize(debug, runtime) }
+    if (!underscore.isArray(routing)) return []
 
-    module.routes.forEach(route => {
+    routing.forEach(route => {
       var entry = route(runtime)
       var key = entry.method + ' ' + entry.path
 
@@ -36,7 +42,21 @@ exports.routes = function (debug, runtime) {
       if (entries[key]) { debug('duplicate route ' + key) } else { entries[key] = true }
       routes.push(entry)
     })
-  })
+  }
+
+  names = fs.readdirSync(__dirname)
+  for (i = names.length - 1; i >= 0; i--) {
+    // test not really needed, but for future safety...
+    if (names[i] === 'index.js') continue
+
+    try {
+      routes.concat(await router(names[i]))
+    } catch (ex) {
+      debug('error loading routes for ' + names[i] + ': ' + ex.toString())
+      console.log(ex.stack)
+      process.exit(1)
+    }
+  }
 
   return routes
 }

@@ -30,7 +30,7 @@ debug.initialize({ 'server': { id: server.info.id } })
 server.register(
 [ require('bell'),
   require('blipp'),
-/* TBD: waiting on adbot
+/*
   {
     register: require('crumb'),
     options: {
@@ -42,12 +42,18 @@ server.register(
   },
  */
   require('hapi-async-handler'),
+  require('hapi-auth-bearer-token'),
   require('hapi-auth-cookie'),
+  require('./hapi-auth-whitelist'),
   require('inert'),
   require('vision'),
   {
     register: require('hapi-swagger'),
     options: {
+      auth: {
+        strategy: 'whitelist',
+        mode: 'required'
+      },
       info: {
         title: npminfo.name,
         version: npminfo.version,
@@ -81,11 +87,18 @@ server.register(
       isSecure: runtime.login.isSecure
     })
   } else debug('github authentication disabled')
-})
 
-server.route(routes.routes(debug, runtime))
-server.route({ method: 'GET', path: '/favicon.ico', handler: { file: './documentation/favicon.ico' } })
-server.route({ method: 'GET', path: '/robots.txt', handler: { file: './documentation/robots.txt' } })
+  server.auth.strategy('simple', 'bearer-access-token', {
+    allowQueryToken: true,
+    allowMultipleHeaders: false,
+    allowTokenName: 'access_token',
+    validateFunc: function (token, callback) {
+      var tokenlist = process.env.TOKEN_LIST && process.env.TOKEN_LIST.split(',')
+
+      callback(null, ((!tokenlist) || (tokenlist.indexOf(token) !== -1)), { token: token }, null)
+    }
+  })
+})
 
 server.ext('onRequest', function (request, reply) {
   if (request.headers['x-request-id']) request.id = request.headers['x-request-id']
@@ -119,8 +132,10 @@ server.ext('onPreResponse', function (request, reply) {
     return reply.continue()
   }
 
-  request.auth.session.clear()
-  reply.redirect('/v1/login')
+  if (request && request.auth && request.auth.session && request.auth.session.clear) {
+    request.auth.session.clear()
+    reply.redirect('/v1/login')
+  }
 })
 
 server.on('log', function (event, tags) {
@@ -169,45 +184,56 @@ server.on('log', function (event, tags) {
   debug('end', { sdebug: params })
 })
 
-server.start(function (err) {
-  var children = {}
-  var f = (m) => {
-    m.children.forEach(entry => {
-      var p, version
-      var components = path.parse(entry.filename).dir.split(path.sep)
-      var i = components.indexOf('node_modules')
+var main = async function () {
+  var routing = await routes.routes(debug, runtime)
 
-      if (i >= 0) {
-        p = components[i + 1]
-        version = require(path.join(components.slice(0, i + 2).join(path.sep), 'package.json')).version
-        if (!children[p]) children[p] = version
-        else if (util.isArray(children[p])) {
-          if (children[p].indexOf(version) < 0) children[p].push(version)
-        } else if (children[p] !== version) children[p] = [ children[p], version ]
-      }
-      f(entry)
+  server.route(routing)
+  server.route({ method: 'GET', path: '/favicon.ico', handler: { file: './documentation/favicon.ico' } })
+  server.route({ method: 'GET', path: '/robots.txt', handler: { file: './documentation/robots.txt' } })
+
+  server.start((err) => {
+    var children = {}
+    var f = (m) => {
+      m.children.forEach(entry => {
+        var p, version
+        var components = path.parse(entry.filename).dir.split(path.sep)
+        var i = components.indexOf('node_modules')
+
+        if (i >= 0) {
+          p = components[i + 1]
+          version = require(path.join(components.slice(0, i + 2).join(path.sep), 'package.json')).version
+          if (!children[p]) children[p] = version
+          else if (util.isArray(children[p])) {
+            if (children[p].indexOf(version) < 0) children[p].push(version)
+          } else if (children[p] !== version) children[p] = [ children[p], version ]
+        }
+        f(entry)
+      })
+    }
+
+    if (err) {
+      debug('unable to start server', err)
+      throw err
+    }
+
+    debug('webserver started',
+    { protocol: server.info.protocol,
+      address: server.info.address,
+      port: runtime.config.port,
+      version: server.version,
+      env: underscore.pick(process.env,
+                           [ 'BITGO_CUSTOM_ROOT_URI', 'BITGO_ENVIRONMENT', 'DEBUG', 'DYNO', 'NEW_RELIC_APP_NAME', 'NODE_ENV' ])
     })
-  }
 
-  if (err) {
-    debug('unable to start server', err)
-    throw err
-  }
+    runtime.npminfo = underscore.pick(npminfo, 'name', 'version', 'description', 'author', 'license', 'bugs', 'homepage')
+    runtime.npminfo.children = {}
 
-  debug('webserver started',
-  { protocol: server.info.protocol,
-    address: server.info.address,
-    port: runtime.config.port,
-    version: server.version,
-    env: underscore.pick(process.env, [ 'DEBUG', 'NEW_RELIC_APP_NAME', 'NODE_ENV' ])
+    f(module)
+    underscore.keys(children).sort().forEach(m => { runtime.npminfo.children[m] = children[m] })
+
+    // Hook to notify start script.
+    if (process.send) { process.send('started') }
   })
+}
 
-  runtime.npminfo = underscore.pick(npminfo, 'name', 'version', 'description', 'author', 'license', 'bugs', 'homepage')
-  runtime.npminfo.children = {}
-
-  f(module)
-  underscore.keys(children).sort().forEach(m => { runtime.npminfo.children[m] = children[m] })
-
-  // Hook to notify start script.
-  if (process.send) { process.send('started') }
-})
+main()

@@ -1,10 +1,10 @@
 {
   "name": "vault",
-  "version": "0.8.70",
+  "version": "0.8.88",
   "description": "Brave personal data store vault.",
   "main": "index.js",
   "scripts": {
-    "lint": "gulp lint",
+    "lint": "standard",
     "server": "./node_modules/.bin/babel-node src/index.js",
     "start": "DEBUG=*,-babel,-mongo:*,mongo:queries ./node_modules/.bin/babel-node src/index.js",
     "test": "npm run test-security",
@@ -33,10 +33,11 @@
     "github": "0.2.4",
     "hapi": "^12.1.0",
     "hapi-async-handler": "^1.0.3",
+    "hapi-auth-bearer-token": "4.3.0",
     "hapi-auth-cookie": "3.1.0",
-    "hapi-swagger": "^6.1.0",
+    "hapi-swagger": "https://github.com/brave/hapi-swagger.git",
     "inert": "^3.2.0",
-    "joi": "https://github.com/mrose17/joi.git#a8597b9ef6d63f0ceeff7122a0e45cb1f99ba248",
+    "joi": "^9.0.0-2",
     "mongodb": "1.4.39",
     "monk": "https://github.com/brave/monk.git",
     "monotonic-timestamp": "0.0.9",
@@ -66,9 +67,11 @@
     "gulp-shell": "^0.5.1",
     "gulp-standard": "^5.2.2",
     "nsp": "^2.2.0",
-    "run-sequence": "^1.1.0"
+    "run-sequence": "^1.1.0",
+    "standard": "8.1.0"
   },
   "standard": {
+    "ignore": [ "config/config.*" ],
     "parser": "babel-eslint"
   }
 }
