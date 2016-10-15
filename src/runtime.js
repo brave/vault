@@ -1,3 +1,4 @@
+var Slack = require('node-slack')
 var underscore = require('underscore')
 
 var DB = require('./database')
@@ -18,8 +19,25 @@ underscore.keys(config).forEach((key) => {
   })
 })
 
-module.exports = {
+var runtime = {
   config: config,
   db: new DB(config),
   login: config.login
 }
+if (runtime.config.slack && runtime.config.slack.webhook) runtime.slack = new Slack(runtime.config.slack.webhook)
+
+runtime.notify = (debug, payload) => {
+  var params = runtime.config.slack
+
+  if (!runtime.slack) return debug('notify', 'slack webhook not configured')
+  underscore.defaults(payload, { channel: params.channel,
+                                 username: params.username || 'webhookbot',
+                                 icon_emoji: params.icon_emoji || ':ghost:',
+                                 icon_url: params.icon_url || ':ghost:',
+                                 text: 'ping.' })
+  runtime.slack.send(payload, (res, err, body) => {
+    if (err) debug('notify', err)
+  })
+}
+
+module.exports = runtime
