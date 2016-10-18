@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "0.8.88",
+  "version": "0.8.89",
   "description": "Brave personal data store vault.",
   "main": "index.js",
   "scripts": {
@@ -45,6 +45,7 @@
     "netmask": "1.0.6",
     "newrelic": "1.23.1",
     "node-slack": "0.0.6",
+    "proxy-agent": "^2.0.0",
     "priorityqueuejs": "^1.0.0",
     "request": "^2.64.0",
     "sdebug": "^0.9.0",
