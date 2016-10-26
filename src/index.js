@@ -235,7 +235,7 @@ var main = async function (id) {
     runtime.npminfo = underscore.pick(npminfo, 'name', 'version', 'description', 'author', 'license', 'bugs', 'homepage')
     runtime.npminfo.children = {}
     runtime.notify(debug, { text: require('os').hostname() + ' ' + npminfo.name + '@' + npminfo.version +
-                                  ' started ' + ((process.env.DYNO + '/') || '') + id })
+                                  ' started ' + (process.env.DYNO || '') + '/' + id })
 
     f(module)
     underscore.keys(children).sort().forEach(m => { runtime.npminfo.children[m] = children[m] })
