@@ -1,5 +1,7 @@
+if (!process.env.PORT) process.env.PORT = 3000
+
 module.exports =
-{ port                  : process.env.PORT                 || 30000
+{ server                : require('url').parse('http://' + '127.0.0.1' + ':' + process.env.PORT)
 , database              :
   { mongo               : process.env.MONGODB_URI          || 'localhost/test' }
 , slack                 :
