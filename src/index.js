@@ -9,10 +9,9 @@ if (!newrelic) {
   }
 }
 
-var Hapi = require('hapi')
-
 var braveHapi = require('./brave-hapi')
 var debug = new (require('sdebug'))('web')
+var Hapi = require('hapi')
 var path = require('path')
 var routes = require('./controllers/index')
 var underscore = require('underscore')
