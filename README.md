@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/brave/vault.svg)](https://travis-ci.org/brave/vault)
 
 # Brave Vault
+**NB: this repository is now deprecated. it is being replaced by something _wonderful!_**
+
 Brave personal data store vault.
 
 <img src='documentation/ecosystem.png' />
